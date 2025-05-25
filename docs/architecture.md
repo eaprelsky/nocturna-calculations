@@ -73,7 +73,7 @@ For constructing complex calculation configurations.
 
 ## Code Organization
 
-//TODO
+For a detailed breakdown of modules, classes, and public interfaces, see the [API Reference](./api-reference.md).
 
 ## Error Handling
 
