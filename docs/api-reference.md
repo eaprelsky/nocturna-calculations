@@ -781,4 +781,124 @@ class AstroConfig:
             calculation_methods: Dictionary of calculation method preferences
         """
         pass
-``` 
+```
+
+# Test Coverage Plan
+
+This section outlines the comprehensive set of tests required to achieve 100% test coverage for the Nocturna Calculations API. The tests are organized by class and function, ensuring that all features, edge cases, and error conditions are validated.
+
+## Chart Class
+- **Initialization**
+  - Test initialization with valid and invalid date/time formats.
+  - Test initialization with missing or invalid latitude/longitude.
+  - Test initialization with and without timezone and config.
+- **calculate_planetary_positions**
+  - Test correct calculation for all supported planets.
+  - Test with custom configuration (e.g., orbs, aspects).
+  - Test error handling for invalid chart data.
+- **calculate_aspects**
+  - Test detection of all major and minor aspects.
+  - Test aspect calculation with custom orbs.
+  - Test empty and edge-case charts (e.g., no planets).
+- **calculate_houses**
+  - Test house cusp calculation for all supported systems.
+  - Test with invalid or unsupported house system.
+- **calculate_fixed_stars**
+  - Test calculation for all configured fixed stars.
+  - Test with empty or custom fixed star lists.
+- **calculate_arabic_parts**
+  - Test calculation for all standard Arabic parts.
+  - Test with custom Arabic part definitions.
+- **calculate_dignities**
+  - Test correct dignity assignment for all planets.
+  - Test with custom dignity tables.
+- **calculate_antiscia**
+  - Test antiscia point calculation for all planets.
+- **calculate_declinations**
+  - Test declination calculation for all points.
+- **calculate_harmonics**
+  - Test harmonic position calculation for various harmonics.
+  - Test with invalid harmonic numbers.
+- **calculate_rectification**
+  - Test event-based and pattern-based rectification methods.
+  - Test with empty, single, and multiple events.
+  - Test with invalid time windows and methods.
+- **calculate_harmonic_rectification**
+  - Test harmonic rectification with valid/invalid harmonics.
+- **calculate_midpoint_rectification**
+  - Test midpoint rectification with various event sets.
+
+## Position Class
+- **Initialization**
+  - Test with valid and invalid longitude, latitude, distance, and declination values.
+  - Test default values for optional parameters.
+
+## Aspect Class
+- **Initialization**
+  - Test with valid and invalid planet names, angles, orbs, and aspect types.
+  - Test optional applying parameter.
+
+## Dignity Class
+- **Initialization**
+  - Test with valid and invalid planet names and dignity scores.
+  - Test default values for all parameters.
+
+## Calculation Methods
+- **calculate_primary_directions**
+  - Test calculation for all supported methods and planets.
+  - Test with invalid method names and empty planet lists.
+- **calculate_secondary_progressions**
+  - Test for both day-for-year and month-for-year methods.
+  - Test with invalid method names.
+- **calculate_solar_arc**
+  - Test standard and naibod methods.
+  - Test with invalid method names.
+- **calculate_solar_return / calculate_lunar_return / calculate_planetary_return**
+  - Test return chart calculation for all supported planets and locations.
+  - Test with missing or invalid location data.
+- **calculate_harmonic_chart / calculate_harmonic_aspects**
+  - Test for various harmonics and planet lists.
+  - Test with invalid harmonic numbers.
+- **calculate_antiscia_points / calculate_antiscia_aspects**
+  - Test for all planets and with custom planet lists.
+- **calculate_parallels / calculate_contraparallels**
+  - Test for all planets and with custom planet lists.
+
+## Rectification Methods
+- **calculate_event_based_rectification**
+  - Test with valid/invalid events, time windows, and direction methods.
+- **calculate_pattern_based_rectification**
+  - Test with various event sets and pattern types.
+- **calculate_multiple_events_rectification**
+  - Test with weighted and unweighted event lists.
+  - Test with invalid weights.
+
+## Rectification Result Classes
+- **Event Class**
+  - Test initialization with all parameter combinations.
+  - Test with invalid dates, locations, and weights.
+- **RectificationResult Class**
+  - Test initialization with all parameter combinations.
+  - Test with empty and populated lists/dictionaries.
+- **Pattern Class**
+  - Test initialization with valid/invalid types, planets, aspects, and scores.
+- **ValidationResult Class**
+  - Test initialization with all parameter combinations.
+  - Test with invalid method names and details.
+
+## Rectification Configuration
+- **RectificationConfig Class**
+  - Test initialization with all parameter combinations.
+  - Test with invalid values for confidence, time_step, and max_iterations.
+
+## Utility Functions
+- **ecliptic_to_equatorial / equatorial_to_ecliptic / ecliptic_to_horizontal**
+  - Test with valid and invalid coordinates and dates.
+  - Test edge cases (e.g., poles, equator).
+- **calculate_julian_day**
+  - Test with string and datetime inputs, with and without time.
+  - Test invalid date/time formats.
+- **calculate_sidereal_time**
+  - Test with valid/invalid Julian Day and longitude values.
+- **calculate_obliquity**
+  - Test with valid/invalid Julian Day values. 
