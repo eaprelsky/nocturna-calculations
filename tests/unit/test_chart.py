@@ -2,6 +2,9 @@ import pytest
 from datetime import datetime, time
 from nocturna_calculations.core.chart import Chart
 from nocturna_calculations.core.config import AstroConfig
+import pytz
+from nocturna.calculations.constants import HouseSystemType, CoordinateSystem
+from nocturna.calculations.position import Position
 
 # --- Chart Initialization Tests ---
 
@@ -364,4 +367,169 @@ def test_calculate_rectification_invalid_method(monkeypatch):
         raise ValueError("Invalid rectification method")
     monkeypatch.setattr(chart, "calculate_rectification", raise_error)
     with pytest.raises(ValueError):
-        chart.calculate_rectification([object()], (datetime(2024,1,1), datetime(2024,12,31)), method="unknown") 
+        chart.calculate_rectification([object()], (datetime(2024,1,1), datetime(2024,12,31)), method="unknown")
+
+class TestChart:
+    @pytest.fixture
+    def valid_date(self):
+        return datetime(2000, 1, 1, 12, 0, 0, tzinfo=pytz.UTC)
+
+    @pytest.fixture
+    def valid_location(self):
+        return Position(0.0, 51.5, 0.0, CoordinateSystem.GEOGRAPHIC)  # London coordinates
+
+    @pytest.fixture
+    def valid_chart(self, valid_date, valid_location):
+        return Chart(
+            date=valid_date,
+            location=valid_location,
+            house_system=HouseSystemType.PLACIDUS
+        )
+
+    def test_chart_initialization(self, valid_date, valid_location):
+        """Test basic chart initialization with valid parameters"""
+        chart = Chart(
+            date=valid_date,
+            location=valid_location,
+            house_system=HouseSystemType.PLACIDUS
+        )
+        assert chart.date == valid_date
+        assert chart.location == valid_location
+        assert chart.house_system == HouseSystemType.PLACIDUS
+        assert chart.timezone == pytz.UTC
+
+    def test_date_time_validation(self):
+        """Test date and time format validation"""
+        # Test valid date
+        valid_date = datetime(2000, 1, 1, 12, 0, 0, tzinfo=pytz.UTC)
+        location = Position(0.0, 51.5, 0.0, CoordinateSystem.GEOGRAPHIC)
+        chart = Chart(date=valid_date, location=location)
+        assert chart.date == valid_date
+
+        # Test invalid date
+        with pytest.raises(ValueError):
+            Chart(date="invalid_date", location=location)
+
+        # Test date without timezone
+        with pytest.raises(ValueError):
+            Chart(date=datetime(2000, 1, 1), location=location)
+
+    def test_coordinate_validation(self, valid_date):
+        """Test coordinate validation"""
+        # Test valid coordinates
+        valid_location = Position(0.0, 51.5, 0.0, CoordinateSystem.GEOGRAPHIC)
+        chart = Chart(date=valid_date, location=valid_location)
+        assert chart.location == valid_location
+
+        # Test invalid longitude
+        with pytest.raises(ValueError):
+            Chart(date=valid_date, location=Position(361.0, 51.5, 0.0, CoordinateSystem.GEOGRAPHIC))
+
+        # Test invalid latitude
+        with pytest.raises(ValueError):
+            Chart(date=valid_date, location=Position(0.0, 91.0, 0.0, CoordinateSystem.GEOGRAPHIC))
+
+    def test_timezone_handling(self, valid_location):
+        """Test timezone handling"""
+        # Test UTC
+        utc_date = datetime(2000, 1, 1, 12, 0, 0, tzinfo=pytz.UTC)
+        chart = Chart(date=utc_date, location=valid_location)
+        assert chart.timezone == pytz.UTC
+
+        # Test different timezone
+        london_tz = pytz.timezone('Europe/London')
+        london_date = datetime(2000, 1, 1, 12, 0, 0, tzinfo=london_tz)
+        chart = Chart(date=london_date, location=valid_location)
+        assert chart.timezone == london_tz
+
+        # Test timezone conversion
+        assert chart.date.utcoffset() == london_date.utcoffset()
+
+    def test_edge_cases(self):
+        """Test chart creation with edge cases"""
+        # Test far future date
+        future_date = datetime(2100, 1, 1, 12, 0, 0, tzinfo=pytz.UTC)
+        location = Position(0.0, 51.5, 0.0, CoordinateSystem.GEOGRAPHIC)
+        chart = Chart(date=future_date, location=location)
+        assert chart.date == future_date
+
+        # Test far past date
+        past_date = datetime(1900, 1, 1, 12, 0, 0, tzinfo=pytz.UTC)
+        chart = Chart(date=past_date, location=location)
+        assert chart.date == past_date
+
+        # Test extreme coordinates
+        north_pole = Position(0.0, 89.9, 0.0, CoordinateSystem.GEOGRAPHIC)
+        chart = Chart(date=future_date, location=north_pole)
+        assert chart.location == north_pole
+
+    def test_immutable_properties(self, valid_chart):
+        """Test that chart properties are immutable"""
+        with pytest.raises(AttributeError):
+            valid_chart.date = datetime.now(pytz.UTC)
+        with pytest.raises(AttributeError):
+            valid_chart.location = Position(0.0, 0.0, 0.0, CoordinateSystem.GEOGRAPHIC)
+        with pytest.raises(AttributeError):
+            valid_chart.house_system = HouseSystemType.KOCH
+        with pytest.raises(AttributeError):
+            valid_chart.timezone = pytz.timezone('Europe/London')
+
+    def test_state_transitions(self, valid_chart):
+        """Test chart state transitions"""
+        # Test house system change
+        new_chart = valid_chart.with_house_system(HouseSystemType.KOCH)
+        assert new_chart.house_system == HouseSystemType.KOCH
+        assert new_chart.date == valid_chart.date
+        assert new_chart.location == valid_chart.location
+
+        # Test timezone change
+        new_tz = pytz.timezone('Europe/London')
+        new_chart = valid_chart.with_timezone(new_tz)
+        assert new_chart.timezone == new_tz
+        assert new_chart.date.tzinfo == new_tz
+
+    def test_data_consistency(self, valid_chart):
+        """Test data consistency in chart calculations"""
+        # Test that planetary positions are consistent
+        positions1 = valid_chart.calculate_planetary_positions()
+        positions2 = valid_chart.calculate_planetary_positions()
+        assert positions1 == positions2
+
+        # Test that house cusps are consistent
+        houses1 = valid_chart.calculate_houses()
+        houses2 = valid_chart.calculate_houses()
+        assert houses1 == houses2
+
+    def test_missing_parameters(self):
+        """Test handling of missing required parameters"""
+        with pytest.raises(ValueError):
+            Chart(date=None, location=Position(0.0, 51.5, 0.0, CoordinateSystem.GEOGRAPHIC))
+
+        with pytest.raises(ValueError):
+            Chart(date=datetime.now(pytz.UTC), location=None)
+
+    def test_invalid_timezone_formats(self, valid_location):
+        """Test handling of invalid timezone formats"""
+        with pytest.raises(ValueError):
+            Chart(
+                date=datetime(2000, 1, 1, 12, 0, 0),
+                location=valid_location,
+                timezone="invalid_timezone"
+            )
+
+    def test_chart_serialization(self, valid_chart):
+        """Test chart serialization and deserialization"""
+        # Test serialization
+        serialized = valid_chart.to_dict()
+        assert isinstance(serialized, dict)
+        assert 'date' in serialized
+        assert 'location' in serialized
+        assert 'house_system' in serialized
+        assert 'timezone' in serialized
+
+        # Test deserialization
+        deserialized = Chart.from_dict(serialized)
+        assert deserialized.date == valid_chart.date
+        assert deserialized.location == valid_chart.location
+        assert deserialized.house_system == valid_chart.house_system
+        assert deserialized.timezone == valid_chart.timezone 

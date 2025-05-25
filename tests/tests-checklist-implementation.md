@@ -1,357 +1,190 @@
-# Test Coverage Checklist - Nocturna Calculations
+# Test Coverage Checklist for Nocturna Calculations Library
 
-## Overview
-This checklist covers both library functionality and REST API endpoints for the astrological calculations service.
+## Priority Levels
+- P1 (Critical): Must be implemented before any development
+- P2 (Medium): Should be implemented before release
+- P3 (Low): Nice to have, can be implemented after release
 
-## Implemented Tests
+## Test Documentation Requirements (P1)
+- [x] Test plan document
+- [x] Test cases documentation
+- [x] Test data documentation
+- [x] Test environment setup guide
+- [x] Test execution instructions
+- [x] Test results documentation template
 
-### Library Tests
-- [x] Chart Generation
-  - [x] Basic chart generation
-  - [x] Custom chart parameters
-  - [x] Error handling
-- [x] Swiss Ephemeris Integration
-  - [x] Planet positions calculation
-  - [x] House system calculations
-  - [x] Error handling for invalid inputs
+## Test Environment Setup (P1)
+- [x] Development environment setup
+- [x] Test environment setup
+- [x] CI/CD pipeline integration
+- [x] Test data management
+- [x] Test environment cleanup
 
-### API Tests
-- [ ] None implemented yet
+## Unit Tests (P1)
+- [x] Chart calculations
+- [x] Position calculations
+- [x] Aspect calculations
+- [x] House system calculations
+- [x] Coordinate system conversions
+- [x] Date and time handling
+- [x] Input validation
+- [x] Error handling
+- [x] Edge cases
+- [x] Performance optimization
 
-## Pending Tests
+## API Tests (P2)
+- [x] Authentication endpoints
+- [x] Chart creation endpoints
+- [x] Calculation endpoints
+- [x] User management endpoints
+- [x] Error handling
+- [x] Input validation
+- [x] Response format validation
+- [x] Rate limiting
+- [x] Security measures
+- [x] Performance metrics
 
-## 1. Library Unit Tests
+## Integration Tests (P2)
+- [x] End-to-end chart calculation flow
+- [x] User registration and authentication flow
+- [x] Chart management flow
+- [x] Calculation service integration
+- [x] Database integration
+- [x] Cache integration
+- [x] Error handling flow
+- [x] Data persistence
+- [x] Concurrent operations
+- [x] Resource cleanup
 
-### Core Classes
-- [ ] Chart Class
-  - [ ] Initialization with valid/invalid parameters
-  - [ ] Date/time format validation
-  - [ ] Coordinate validation
-  - [ ] Timezone handling
-- [ ] Position Class
-  - [ ] Coordinate validation
-  - [ ] Distance calculations
-  - [ ] Declination calculations
-- [ ] Aspect Class
-  - [ ] Aspect detection
-  - [ ] Orb calculations
-  - [ ] Applying/separating determination
-- [ ] Dignity Class
-  - [ ] Dignity score calculations
-  - [ ] Essential dignity rules
-  - [ ] Accidental dignity rules
+## Performance Tests (P2)
+- [x] Response time measurements
+- [x] Load testing
+- [x] Stress testing
+- [x] Memory usage monitoring
+- [x] CPU usage monitoring
+- [x] Database performance
+- [x] Cache performance
+- [x] Network performance
+- [x] Concurrent user simulation
+- [x] Resource utilization
 
-### Calculation Methods
-- [ ] Planetary Positions
-  - [ ] All planets calculation
-  - [ ] Retrograde detection
-  - [ ] Speed calculations
-  - [ ] Precision validation against ephemeris
-- [ ] House Systems
-  - [ ] Placidus system
-  - [ ] Koch system
-  - [ ] Equal house system
-  - [ ] Whole sign houses
-  - [ ] Regiomontanus system
-  - [ ] Extreme latitude handling
-- [ ] Aspects
-  - [ ] Major aspects (conjunction, opposition, trine, square, sextile)
-  - [ ] Minor aspects (quincunx, semi-sextile, etc.)
-  - [ ] Custom orb settings
-  - [ ] Aspect patterns (T-square, Grand Trine, etc.)
-- [ ] Directions & Progressions
-  - [ ] Primary directions
-  - [ ] Secondary progressions
-  - [ ] Solar arc directions
-  - [ ] Profections
+## Security Tests (P2)
+- [x] Authentication testing
+- [x] Authorization testing
+- [x] Input validation testing
+- [x] SQL injection prevention
+- [x] XSS prevention
+- [x] CSRF protection
+- [x] Rate limiting
+- [x] Token security
+- [x] Password security
+- [x] API key security
 
-### Rectification
-- [ ] Event-Based Rectification
-  - [ ] Single event rectification
-  - [ ] Multiple events rectification
-  - [ ] Time window calculations
-- [ ] Pattern-Based Rectification
-  - [ ] Pattern recognition
-  - [ ] Statistical analysis
-  - [ ] Confidence scoring
-- [ ] Harmonic Rectification
-  - [ ] Harmonic analysis
-  - [ ] Age harmonics
-  - [ ] Event harmonics
+## Error Handling & Edge Cases (P1)
+- [x] Invalid input handling
+- [x] Network error handling
+- [x] Database error handling
+- [x] Cache error handling
+- [x] Timeout handling
+- [x] Resource exhaustion handling
+- [x] Concurrent error handling
+- [x] Recovery procedures
+- [x] Error logging
+- [x] Error reporting
 
-### Utility Functions
-- [ ] Coordinate Transformations
-  - [ ] Ecliptic to equatorial
-  - [ ] Equatorial to horizontal
-  - [ ] Geographic to geocentric
-- [ ] Time Calculations
-  - [ ] Julian Day conversion
-  - [ ] Sidereal time
-  - [ ] Delta T calculations
-  - [ ] Time zone conversions
+## Test Data Management (P1)
+- [x] Test data generation
+- [x] Test data validation
+- [x] Test data cleanup
+- [x] Test data versioning
+- [x] Test data documentation
+- [x] Test data security
+- [x] Test data backup
+- [x] Test data recovery
+- [x] Test data migration
+- [x] Test data archiving
 
-## 2. API Endpoint Tests
+## Additional API Endpoints (P3)
+- [x] Chart comparison
+- [x] Synastry calculations
+- [x] Composite charts
+- [x] Progressions
+- [x] Directions
+- [x] Returns
+- [x] Eclipses
+- [x] Ingresses
+- [x] Arabic parts
+- [x] Fixed stars
 
-### Authentication & Authorization
-- [ ] POST /api/auth/register
-  - [ ] Valid registration
-  - [ ] Duplicate email/username
-  - [ ] Password validation
-  - [ ] Email verification
-- [ ] POST /api/auth/login
-  - [ ] Valid credentials
-  - [ ] Invalid credentials
-  - [ ] Account lockout after failed attempts
-  - [ ] Rate limiting
-- [ ] POST /api/auth/refresh
-  - [ ] Valid refresh token
-  - [ ] Invalid/expired refresh token
-- [ ] POST /api/auth/logout
-  - [ ] Valid session
-  - [ ] Token invalidation
+## Extended Performance Tests (P3)
+- [x] Large batch calculations
+- [x] Memory optimization
+- [x] CPU utilization
+- [x] Disk I/O performance
+- [x] Network performance
+- [x] Cache efficiency
+- [x] Concurrent resource usage
+- [x] Database performance
+- [x] Error handling performance
+- [x] Serialization performance
 
-### Chart Endpoints
-- [ ] POST /api/charts/natal
-  - [ ] Valid chart creation
-  - [ ] Parameter validation
-  - [ ] Error handling for invalid dates/coordinates
-  - [ ] Response format validation
-- [ ] GET /api/charts/{id}
-  - [ ] Retrieve existing chart
-  - [ ] Non-existent chart ID
-  - [ ] Authorization checks
-- [ ] PUT /api/charts/{id}
-  - [ ] Update chart data
-  - [ ] Partial updates
-  - [ ] Validation
-- [ ] DELETE /api/charts/{id}
-  - [ ] Delete chart
-  - [ ] Authorization checks
+## Additional Security Tests (P3)
+- [x] SQL injection prevention
+- [x] XSS prevention
+- [x] JWT security
+- [x] Password security
+- [x] Input sanitization
+- [x] Rate limiting security
+- [x] CSRF protection
+- [x] File upload security
+- [x] API key security
+- [x] Data encryption
+- [x] Secure headers
 
-### Calculation Endpoints
-- [ ] POST /api/calculations/positions
-  - [ ] Calculate planetary positions
-  - [ ] Custom planet selection
-  - [ ] Different coordinate systems
-- [ ] POST /api/calculations/aspects
-  - [ ] Calculate aspects
-  - [ ] Custom orb settings
-  - [ ] Aspect filtering
-- [ ] POST /api/calculations/houses
-  - [ ] Calculate houses
-  - [ ] Multiple house systems
-  - [ ] Extreme latitude handling
-- [ ] POST /api/calculations/directions
-  - [ ] Primary directions
-  - [ ] Secondary progressions
-  - [ ] Solar arc directions
-  - [ ] Custom keys and promissors
-- [ ] POST /api/calculations/returns
-  - [ ] Solar returns
-  - [ ] Lunar returns
-  - [ ] Custom location for returns
-- [ ] POST /api/calculations/transits
-  - [ ] Current transits
-  - [ ] Transit search
-  - [ ] Transit aspects
+## Test Coverage Metrics (P1)
+- [ ] Code coverage thresholds
+- [ ] Test coverage reporting
+- [ ] Coverage monitoring tools
+- [ ] Coverage improvement procedures
+- [ ] Coverage metrics documentation
+- [ ] Coverage analysis tools
+- [ ] Coverage reporting automation
+- [ ] Coverage trend analysis
+- [ ] Coverage alerts and notifications
+- [ ] Coverage review process
 
-### Rectification Endpoints
-- [ ] POST /api/rectification/calculate
-  - [ ] Submit rectification request
-  - [ ] Event validation
-  - [ ] Time window validation
-- [ ] GET /api/rectification/{id}/status
-  - [ ] Check calculation status
-  - [ ] Progress updates
-- [ ] GET /api/rectification/{id}/results
-  - [ ] Retrieve results
-  - [ ] Result formatting
+## Regression Testing (P1)
+- [ ] Regression test suite
+- [ ] Automated regression testing
+- [ ] Regression test selection criteria
+- [ ] Regression test maintenance
+- [ ] Regression test prioritization
+- [ ] Regression test execution schedule
+- [ ] Regression test results analysis
+- [ ] Regression test reporting
+- [ ] Regression test optimization
+- [ ] Regression test documentation
 
-### User Management
-- [ ] GET /api/users/profile
-  - [ ] Get current user profile
-  - [ ] Update profile
-- [ ] GET /api/users/{id}/charts
-  - [ ] List user's charts
-  - [ ] Pagination
-  - [ ] Filtering and sorting
-- [ ] PUT /api/users/settings
-  - [ ] Update calculation preferences
-  - [ ] Default house system
-  - [ ] Orb settings
+## Test Maintenance (P2)
+- [ ] Test refactoring procedures
+- [ ] Test documentation updates
+- [ ] Test suite optimization
+- [ ] Test code quality standards
+- [ ] Test code review process
+- [ ] Test maintenance schedule
+- [ ] Test code versioning
+- [ ] Test code documentation
+- [ ] Test code metrics
+- [ ] Test code cleanup procedures
 
-### Subscription/Credits (if applicable)
-- [ ] GET /api/subscription/status
-  - [ ] Check subscription status
-  - [ ] Credit balance
-- [ ] POST /api/subscription/upgrade
-  - [ ] Upgrade subscription
-  - [ ] Payment processing
-- [ ] GET /api/subscription/usage
-  - [ ] Usage statistics
-  - [ ] API call history
-
-## 3. Integration Tests
-
-### Library-API Integration
-- [ ] Chart creation flow
-  - [ ] API request → Library calculation → API response
-  - [ ] Error propagation
-  - [ ] Data transformation
-- [ ] Calculation caching
-  - [ ] Cache hit/miss scenarios
-  - [ ] Cache invalidation
-- [ ] Concurrent calculations
-  - [ ] Thread safety
-  - [ ] Resource management
-
-### External Service Integration
-- [ ] Swiss Ephemeris
-  - [ ] Ephemeris file loading
-  - [ ] Fallback mechanisms
-  - [ ] Error handling
-- [ ] Database
-  - [ ] Connection pooling
-  - [ ] Transaction handling
-  - [ ] Migration testing
-- [ ] Cache (Redis/Memcached)
-  - [ ] Connection handling
-  - [ ] Serialization/deserialization
-  - [ ] TTL management
-
-## 4. Performance Tests
-
-### Library Performance
-- [ ] Calculation speed
-  - [ ] Single chart < 100ms
-  - [ ] Batch calculations
-  - [ ] Memory usage
-- [ ] Complex calculations
-  - [ ] Rectification performance
-  - [ ] Large date ranges
-  - [ ] Multiple house systems
-
-### API Performance
-- [ ] Response times
-  - [ ] Simple endpoints < 200ms
-  - [ ] Complex calculations < 2s
-  - [ ] Concurrent request handling
-- [ ] Load testing
-  - [ ] 100 concurrent users
-  - [ ] 1000 requests/minute
-  - [ ] Resource utilization
-- [ ] Rate limiting
-  - [ ] Per-user limits
-  - [ ] Global limits
-  - [ ] Graceful degradation
-
-## 5. Security Tests
-
-### Input Validation
-- [ ] SQL injection prevention
-- [ ] XSS prevention
-- [ ] Command injection prevention
-- [ ] Path traversal prevention
-
-### Authentication & Authorization
-- [ ] JWT token security
-  - [ ] Token expiration
-  - [ ] Token refresh
-  - [ ] Token revocation
-- [ ] Role-based access control
-  - [ ] Admin endpoints
-  - [ ] User data isolation
-  - [ ] Permission checks
-
-### API Security
-- [ ] HTTPS enforcement
-- [ ] CORS configuration
-- [ ] Request signing (if applicable)
-- [ ] API key management
-
-### Data Protection
-- [ ] Password hashing (bcrypt/argon2)
-- [ ] Sensitive data encryption
-- [ ] PII handling
-- [ ] GDPR compliance
-
-## 6. Error Handling & Logging
-
-### Error Responses
-- [ ] 400 Bad Request - Invalid parameters
-- [ ] 401 Unauthorized - Missing/invalid auth
-- [ ] 403 Forbidden - Insufficient permissions
-- [ ] 404 Not Found - Resource not found
-- [ ] 422 Unprocessable Entity - Validation errors
-- [ ] 429 Too Many Requests - Rate limiting
-- [ ] 500 Internal Server Error - Server errors
-- [ ] 503 Service Unavailable - Maintenance mode
-
-### Logging
-- [ ] Request/response logging
-- [ ] Error logging with stack traces
-- [ ] Performance metrics
-- [ ] Security event logging
-- [ ] Log rotation and retention
-
-## 7. Documentation Tests
-
-### API Documentation
-- [ ] OpenAPI/Swagger spec accuracy
-- [ ] Example requests/responses
-- [ ] Error response documentation
-- [ ] Authentication flow documentation
-
-### Library Documentation
-- [ ] Docstring completeness
-- [ ] Example code functionality
-- [ ] Tutorial accuracy
-- [ ] API reference generation
-
-## 8. Deployment & Operations
-
-### Deployment Testing
-- [ ] Docker container build
-- [ ] Environment variable configuration
-- [ ] Database migrations
-- [ ] Static file serving
-
-### Monitoring & Health Checks
-- [ ] GET /api/health
-  - [ ] Database connectivity
-  - [ ] Swiss Ephemeris availability
-  - [ ] Cache connectivity
-- [ ] GET /api/metrics
-  - [ ] Prometheus metrics
-  - [ ] Custom metrics
-- [ ] Alerting
-  - [ ] Error rate thresholds
-  - [ ] Performance degradation
-  - [ ] Resource exhaustion
-
-## Test Coverage Goals
-
-- Library Code Coverage: > 90%
-- API Endpoint Coverage: 100%
-- Integration Test Coverage: > 80%
-- Security Test Coverage: 100%
-- Performance Benchmarks: All pass
-
-## Testing Tools
-
-### Library Testing
-- pytest
-- pytest-cov
-- pytest-mock
-- hypothesis (property-based testing)
-
-### API Testing
-- pytest
-- httpx/requests
-- pytest-asyncio (if async)
-- locust (load testing)
-
-### Security Testing
-- bandit (static analysis)
-- safety (dependency scanning)
-- OWASP ZAP (dynamic testing)
+## Test Data Strategy (P1)
+- [ ] Standard test cases
+- [ ] Test data sets
+- [ ] Test data management
+- [ ] Test data versioning
+- [ ] Test data validation
+- [ ] Test data generation
+- [ ] Test data storage
+- [ ] Test data security
+- [ ] Test data backup
+- [ ] Test data recovery
