@@ -901,4 +901,37 @@ This section outlines the comprehensive set of tests required to achieve 100% te
 - **calculate_sidereal_time**
   - Test with valid/invalid Julian Day and longitude values.
 - **calculate_obliquity**
-  - Test with valid/invalid Julian Day values. 
+  - Test with valid/invalid Julian Day values.
+
+## Additional Test Categories & Enhancements
+
+To ensure the highest quality and robustness, the following additional test categories are recommended:
+
+### Boundary and Extreme Value Testing
+- Explicitly test for astronomical boundary values (e.g., maximum/minimum declinations, longitudes, latitudes).
+- Test calculations at the poles, equator, and for extreme dates (e.g., leap years, far past/future).
+
+### Performance and Stress Testing
+- Test performance with very large event lists and long time windows.
+- Test rectification and calculation methods with high iteration counts (e.g., max_iterations in RectificationConfig).
+- Ensure calculations complete within reasonable time and resource limits.
+
+### Concurrency and Thread Safety (if applicable)
+- Test API behavior under concurrent access (e.g., multiple threads or async calls).
+- Check for race conditions or data corruption when used in parallel environments.
+
+### Serialization and Deserialization
+- Test saving and loading of all major objects (Chart, Event, RectificationResult, etc.) to/from common formats (e.g., JSON, pickle).
+- Ensure no data loss or corruption during serialization cycles.
+
+### Integration and End-to-End Testing
+- Test full calculation flows from input data to final output (e.g., create chart, calculate positions, aspects, returns, etc.).
+- Validate that all components work together as expected in real-world scenarios.
+
+### Negative and Exception Path Testing
+- Explicitly test for correct exception raising, error messages, and recovery for all invalid inputs and failure modes.
+- Ensure API fails gracefully and provides useful feedback.
+
+### Documentation and Example Validation
+- Validate that all docstrings, usage examples, and API documentation match actual behavior and outputs.
+- Test that example code in documentation runs without errors and produces expected results. 
