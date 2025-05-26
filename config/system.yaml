@@ -1,0 +1,47 @@
+# System Configuration
+system:
+  name: "Nocturna Calculations"
+  version: "1.0.0"
+  environment: "development"  # development, staging, production
+
+# Server Configuration
+server:
+  host: "127.0.0.1"  # localhost only for security
+  port: 8000
+  workers: 4
+  timeout: 60
+  max_requests: 1000
+  pid_file: "/tmp/nocturna.pid"
+  log_file: "logs/server.log"
+
+# Database Configuration
+database:
+  host: "localhost"
+  port: 5432
+  name: "nocturna"
+  user: "nocturna"
+  password: ""  # Should be set via environment variable
+  pool_size: 20
+  max_overflow: 10
+
+# Redis Configuration
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: ""  # Should be set via environment variable
+
+# Security
+security:
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+  rate_limit:
+    requests_per_minute: 60
+    burst: 10
+
+# Monitoring
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval: 30 

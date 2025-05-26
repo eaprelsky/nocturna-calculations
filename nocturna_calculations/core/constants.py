@@ -1095,8 +1095,6 @@ class HouseSystem(Enum):
     WHOLE_SIGN = "W"   # Whole sign house system
     CAMPANUS = "C"     # Campanus house system
     REGIOMONTANUS = "R" # Regiomontanus house system
-    MERIDIAN = "M"     # Meridian house system
-    MORINUS = "O"      # Morinus house system
 
 class ProgressedChart:
     """Class for progressed chart calculations and properties"""

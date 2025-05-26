@@ -68,10 +68,10 @@ async def add_request_id(request: Request, call_next):
     response.headers["X-Request-ID"] = request_id
     return response
 
-# Include routers
-app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-app.include_router(charts.router, prefix="/charts", tags=["Charts"])
-app.include_router(calculations.router, prefix="/calculations", tags=["Calculations"])
+# Include routers with /api prefix
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(charts.router, prefix="/api/charts", tags=["Charts"])
+app.include_router(calculations.router, prefix="/api/calculations", tags=["Calculations"])
 
 # Health check endpoint
 @app.get("/health")

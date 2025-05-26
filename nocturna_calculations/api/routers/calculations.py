@@ -26,31 +26,15 @@ from ..schemas import (
     PrimaryDirectionsResponse,
     SecondaryProgressionsResponse
 )
-from ..auth import get_current_user
+from .auth import get_current_user
 from ..cache import cache
 from ...core.chart import Chart as CoreChart
-from ...core.calculations import (
-    calculate_planetary_positions,
-    calculate_aspects,
-    calculate_houses,
-    calculate_fixed_stars,
-    calculate_arabic_parts,
-    calculate_dignities,
-    calculate_antiscia,
-    calculate_declinations,
-    calculate_harmonics,
-    calculate_rectification,
-    calculate_primary_directions,
-    calculate_secondary_progressions
-)
 
 router = APIRouter()
 
 def get_cache_key(chart_id: str, calculation_type: str, params: dict) -> str:
     """Generate cache key for calculation results."""
-    # Sort params to ensure consistent keys
     sorted_params = json.dumps(params, sort_keys=True)
-    # Create hash of parameters
     param_hash = hashlib.md5(sorted_params.encode()).hexdigest()
     return f"calc:{chart_id}:{calculation_type}:{param_hash}"
 
@@ -69,19 +53,16 @@ async def calculate_planetary_positions_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "planetary_positions",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -90,9 +71,8 @@ async def calculate_planetary_positions_endpoint(
         **chart.config
     )
     
-    result = calculate_planetary_positions(core_chart, **request.parameters)
+    result = core_chart.calculate_planetary_positions(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -112,19 +92,16 @@ async def calculate_aspects_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "aspects",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -133,9 +110,8 @@ async def calculate_aspects_endpoint(
         **chart.config
     )
     
-    result = calculate_aspects(core_chart, **request.parameters)
+    result = core_chart.calculate_aspects(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -155,19 +131,16 @@ async def calculate_houses_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "houses",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -176,9 +149,8 @@ async def calculate_houses_endpoint(
         **chart.config
     )
     
-    result = calculate_houses(core_chart, **request.parameters)
+    result = core_chart.calculate_houses(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -198,19 +170,16 @@ async def calculate_fixed_stars_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "fixed_stars",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -219,9 +188,8 @@ async def calculate_fixed_stars_endpoint(
         **chart.config
     )
     
-    result = calculate_fixed_stars(core_chart, **request.parameters)
+    result = core_chart.calculate_fixed_stars(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -241,19 +209,16 @@ async def calculate_arabic_parts_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "arabic_parts",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -262,9 +227,8 @@ async def calculate_arabic_parts_endpoint(
         **chart.config
     )
     
-    result = calculate_arabic_parts(core_chart, **request.parameters)
+    result = core_chart.calculate_arabic_parts(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -284,19 +248,16 @@ async def calculate_dignities_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "dignities",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -305,9 +266,8 @@ async def calculate_dignities_endpoint(
         **chart.config
     )
     
-    result = calculate_dignities(core_chart, **request.parameters)
+    result = core_chart.calculate_dignities(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -327,19 +287,16 @@ async def calculate_antiscia_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "antiscia",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -348,9 +305,8 @@ async def calculate_antiscia_endpoint(
         **chart.config
     )
     
-    result = calculate_antiscia(core_chart, **request.parameters)
+    result = core_chart.calculate_antiscia(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -370,19 +326,16 @@ async def calculate_declinations_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "declinations",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -391,9 +344,8 @@ async def calculate_declinations_endpoint(
         **chart.config
     )
     
-    result = calculate_declinations(core_chart, **request.parameters)
+    result = core_chart.calculate_declinations(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -413,19 +365,16 @@ async def calculate_harmonics_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "harmonics",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -434,9 +383,8 @@ async def calculate_harmonics_endpoint(
         **chart.config
     )
     
-    result = calculate_harmonics(core_chart, **request.parameters)
+    result = core_chart.calculate_harmonics(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -456,19 +404,16 @@ async def calculate_rectification_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "rectification",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -477,9 +422,8 @@ async def calculate_rectification_endpoint(
         **chart.config
     )
     
-    result = calculate_rectification(core_chart, **request.parameters)
+    result = core_chart.calculate_rectification(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -499,19 +443,16 @@ async def calculate_primary_directions_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "primary_directions",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -520,9 +461,8 @@ async def calculate_primary_directions_endpoint(
         **chart.config
     )
     
-    result = calculate_primary_directions(core_chart, **request.parameters)
+    result = core_chart.calculate_primary_directions(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -542,19 +482,16 @@ async def calculate_secondary_progressions_endpoint(
     if not chart:
         raise HTTPException(status_code=404, detail="Chart not found")
     
-    # Generate cache key
     cache_key = get_cache_key(
         str(chart.id),
         "secondary_progressions",
         request.parameters
     )
     
-    # Try to get from cache
     cached_result = cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Calculate if not in cache
     core_chart = CoreChart(
         datetime=chart.datetime,
         latitude=chart.latitude,
@@ -563,9 +500,8 @@ async def calculate_secondary_progressions_endpoint(
         **chart.config
     )
     
-    result = calculate_secondary_progressions(core_chart, **request.parameters)
+    result = core_chart.calculate_secondary_progressions(**request.parameters)
     
-    # Cache the result
     cache.set(cache_key, result)
     
     return result
@@ -605,29 +541,29 @@ async def websocket_endpoint(websocket: WebSocket):
             
             # Perform calculation based on type
             if request.calculation_type == "planetary_positions":
-                result = calculate_planetary_positions(chart, **request.parameters)
+                result = chart.calculate_planetary_positions(**request.parameters)
             elif request.calculation_type == "aspects":
-                result = calculate_aspects(chart, **request.parameters)
+                result = chart.calculate_aspects(**request.parameters)
             elif request.calculation_type == "houses":
-                result = calculate_houses(chart, **request.parameters)
+                result = chart.calculate_houses(**request.parameters)
             elif request.calculation_type == "fixed_stars":
-                result = calculate_fixed_stars(chart, **request.parameters)
+                result = chart.calculate_fixed_stars(**request.parameters)
             elif request.calculation_type == "arabic_parts":
-                result = calculate_arabic_parts(chart, **request.parameters)
+                result = chart.calculate_arabic_parts(**request.parameters)
             elif request.calculation_type == "dignities":
-                result = calculate_dignities(chart, **request.parameters)
+                result = chart.calculate_dignities(**request.parameters)
             elif request.calculation_type == "antiscia":
-                result = calculate_antiscia(chart, **request.parameters)
+                result = chart.calculate_antiscia(**request.parameters)
             elif request.calculation_type == "declinations":
-                result = calculate_declinations(chart, **request.parameters)
+                result = chart.calculate_declinations(**request.parameters)
             elif request.calculation_type == "harmonics":
-                result = calculate_harmonics(chart, **request.parameters)
+                result = chart.calculate_harmonics(**request.parameters)
             elif request.calculation_type == "rectification":
-                result = calculate_rectification(chart, **request.parameters)
+                result = chart.calculate_rectification(**request.parameters)
             elif request.calculation_type == "primary_directions":
-                result = calculate_primary_directions(chart, **request.parameters)
+                result = chart.calculate_primary_directions(**request.parameters)
             elif request.calculation_type == "secondary_progressions":
-                result = calculate_secondary_progressions(chart, **request.parameters)
+                result = chart.calculate_secondary_progressions(**request.parameters)
             else:
                 await websocket.send_json({
                     "error": f"Unknown calculation type: {request.calculation_type}"

@@ -4,7 +4,7 @@ Core chart class for astrological calculations
 from datetime import datetime, time as datetime_time
 from typing import Dict, Any, Optional, Union, List, Tuple
 import pytz
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from .config import Config
 from ..adapters.swisseph import SwissEphAdapter
@@ -35,21 +35,24 @@ class Chart(BaseModel):
     _adapter: Optional[SwissEphAdapter] = None
     _julian_day: Optional[float] = None
     
-    @validator('latitude')
+    @field_validator('latitude')
+    @classmethod
     def validate_latitude(cls, v):
         """Validate latitude value"""
         if not -90 <= v <= 90:
             raise ValueError("Latitude must be between -90 and 90 degrees")
         return v
     
-    @validator('longitude')
+    @field_validator('longitude')
+    @classmethod
     def validate_longitude(cls, v):
         """Validate longitude value"""
         if not -180 <= v <= 180:
             raise ValueError("Longitude must be between -180 and 180 degrees")
         return v
     
-    @validator('timezone')
+    @field_validator('timezone')
+    @classmethod
     def validate_timezone(cls, v):
         """Validate timezone"""
         try:

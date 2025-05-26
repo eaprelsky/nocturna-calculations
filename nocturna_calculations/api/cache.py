@@ -13,16 +13,18 @@ class RedisCache:
     
     def __init__(self):
         """Initialize Redis connection pool."""
+        # Initialize Redis connection pool using settings (attributes are uppercase)
         self.pool = redis.ConnectionPool(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            db=settings.redis_db,
-            max_connections=settings.redis_max_connections,
-            socket_timeout=settings.redis_socket_timeout,
-            socket_connect_timeout=settings.redis_socket_connect_timeout
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            db=settings.REDIS_DB,
+            max_connections=settings.REDIS_MAX_CONNECTIONS,
+            socket_timeout=settings.REDIS_SOCKET_TIMEOUT,
+            socket_connect_timeout=settings.REDIS_SOCKET_CONNECT_TIMEOUT,
         )
         self.redis = redis.Redis(connection_pool=self.pool)
-        self.prefix = settings.cache_prefix
+        # Prefix for all cache keys to avoid collisions
+        self.prefix = getattr(settings, "CACHE_PREFIX", "calc:")
     
     def _get_key(self, key: str) -> str:
         """Get full cache key with prefix."""
@@ -48,7 +50,7 @@ class RedisCache:
         """Set value in cache with optional TTL."""
         try:
             if ttl is None:
-                ttl = settings.cache_ttl
+                ttl = settings.CACHE_TTL
             
             data = pickle.dumps(value)
             return self.redis.setex(

@@ -3,6 +3,7 @@ Calculations module for astrological computations
 """
 
 from .house_systems import (
+    BaseHouseSystem,
     PlacidusHouseSystem,
     KochHouseSystem,
     EqualHouseSystem,
@@ -11,16 +12,20 @@ from .house_systems import (
     RegiomontanusHouseSystem,
     MeridianHouseSystem,
     MorinusHouseSystem,
-    get_house_system
+    get_house_system,
+    calculate_sidereal_time,
+    calculate_obliquity,
+    calculate_ascendant,
+    calculate_mc,
+    normalize_angle
 )
 from .utils import (
     calculate_julian_day,
-    calculate_obliquity,
-    calculate_nutation,
-    calculate_sidereal_time
+    calculate_nutation
 )
 
 __all__ = [
+    'BaseHouseSystem',
     'PlacidusHouseSystem',
     'KochHouseSystem',
     'EqualHouseSystem',
@@ -30,8 +35,11 @@ __all__ = [
     'MeridianHouseSystem',
     'MorinusHouseSystem',
     'get_house_system',
-    'calculate_julian_day',
+    'calculate_sidereal_time',
     'calculate_obliquity',
-    'calculate_nutation',
-    'calculate_sidereal_time'
+    'calculate_ascendant',
+    'calculate_mc',
+    'normalize_angle',
+    'calculate_julian_day',
+    'calculate_nutation'
 ] 

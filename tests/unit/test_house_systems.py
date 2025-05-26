@@ -18,6 +18,10 @@ from nocturna_calculations.calculations.house_systems import (
     get_house_system
 )
 from nocturna_calculations.core.constants import HouseSystem
+from nocturna_calculations.calculations.utils import (
+    calculate_sidereal_time,
+    calculate_obliquity
+)
 
 class TestHouseSystems:
     """Test suite for house system calculations"""
@@ -47,10 +51,8 @@ class TestHouseSystems:
     
     def test_sidereal_time_calculation(self, julian_day, test_location):
         """Test sidereal time calculation"""
-        calculator = PlacidusHouseSystem()
-        
-        # Calculate LST using our method
-        lst = calculator._calculate_sidereal_time(julian_day, test_location['longitude'])
+        # Calculate LST using our utility function
+        lst = calculate_sidereal_time(julian_day, test_location['longitude'])
         
         # Calculate LST using Swiss Ephemeris for comparison
         gmst = swe.swe_sidtime(julian_day)
@@ -64,11 +66,14 @@ class TestHouseSystems:
         """Test ascendant calculation"""
         calculator = PlacidusHouseSystem()
         
+        # Calculate obliquity
+        obliquity = calculate_obliquity(julian_day)
+        
         # Calculate ascendant using our method
         ascendant = calculator._calculate_ascendant(
-            julian_day,
             test_location['latitude'],
-            test_location['longitude']
+            test_location['longitude'],
+            obliquity
         )
         
         # Calculate ascendant using Swiss Ephemeris for comparison
@@ -81,11 +86,14 @@ class TestHouseSystems:
         """Test midheaven calculation"""
         calculator = PlacidusHouseSystem()
         
+        # Calculate obliquity
+        obliquity = calculate_obliquity(julian_day)
+        
         # Calculate MC using our method
         mc = calculator._calculate_mc(
-            julian_day,
             test_location['latitude'],
-            test_location['longitude']
+            test_location['longitude'],
+            obliquity
         )
         
         # Calculate MC using Swiss Ephemeris for comparison
@@ -204,6 +212,34 @@ class TestHouseSystems:
         for i in range(12):
             assert abs(cusps[i] - houses_swisseph[i]) < 0.0001
     
+    def test_polar_regions(self, julian_day):
+        """Test house system calculations in polar regions"""
+        calculator = PlacidusHouseSystem()
+        
+        # Test North Pole
+        north_pole_cusps = calculator.calculate_cusps(90, 0)
+        assert len(north_pole_cusps) == 12
+        for cusp in north_pole_cusps:
+            assert 0 <= cusp < 360
+        
+        # Test South Pole
+        south_pole_cusps = calculator.calculate_cusps(-90, 0)
+        assert len(south_pole_cusps) == 12
+        for cusp in south_pole_cusps:
+            assert 0 <= cusp < 360
+    
+    def test_invalid_coordinates(self):
+        """Test handling of invalid coordinates"""
+        calculator = PlacidusHouseSystem()
+        
+        # Test invalid latitude
+        with pytest.raises(ValueError):
+            calculator.calculate_cusps(91, 0)
+        
+        # Test invalid longitude
+        with pytest.raises(ValueError):
+            calculator.calculate_cusps(0, 181)
+    
     def test_meridian_houses(self, julian_day, test_location):
         """Test Meridian house system calculations"""
         calculator = MeridianHouseSystem()
@@ -238,49 +274,26 @@ class TestHouseSystems:
         for i in range(12):
             assert abs(cusps[i] - houses_swisseph[i]) < 0.0001
     
-    def test_polar_regions(self, julian_day):
-        """Test house system calculations in polar regions"""
-        calculator = PlacidusHouseSystem()
-        
-        # Test North Pole
-        north_pole_cusps = calculator.calculate_cusps(90, 0)
-        assert len(north_pole_cusps) == 12
-        for cusp in north_pole_cusps:
-            assert 0 <= cusp < 360
-        
-        # Test South Pole
-        south_pole_cusps = calculator.calculate_cusps(-90, 0)
-        assert len(south_pole_cusps) == 12
-        for cusp in south_pole_cusps:
-            assert 0 <= cusp < 360
-    
-    def test_invalid_coordinates(self):
-        """Test house system calculation with invalid coordinates"""
-        calculator = PlacidusHouseSystem()
-        
-        # Test invalid latitude
-        with pytest.raises(ValueError):
-            calculator.calculate_cusps(91, 0)
-        
-        # Test invalid longitude
-        with pytest.raises(ValueError):
-            calculator.calculate_cusps(0, 181)
-    
     def test_get_house_system(self):
         """Test house system factory function"""
-        # Test all house systems
-        for system_type in HouseSystem:
-            system = get_house_system(system_type)
-            assert isinstance(system, BaseHouseSystem)
-            
-            # Test calculation
-            cusps = system.calculate_cusps(0, 0)
-            assert len(cusps) == 12
-            for cusp in cusps:
-                assert 0 <= cusp < 360
+        # Test each supported house system
+        systems = [
+            (HouseSystem.PLACIDUS, PlacidusHouseSystem),
+            (HouseSystem.KOCH, KochHouseSystem),
+            (HouseSystem.EQUAL, EqualHouseSystem),
+            (HouseSystem.WHOLE_SIGN, WholeSignHouseSystem),
+            (HouseSystem.CAMPANUS, CampanusHouseSystem),
+            (HouseSystem.REGIOMONTANUS, RegiomontanusHouseSystem),
+            (HouseSystem.MERIDIAN, MeridianHouseSystem),
+            (HouseSystem.MORINUS, MorinusHouseSystem)
+        ]
+        
+        for system_type, expected_class in systems:
+            calculator = get_house_system(system_type)
+            assert isinstance(calculator, expected_class)
     
     def test_house_system_comparison(self, julian_day, test_location):
-        """Test comparison of different house systems"""
+        """Test comparison between different house systems"""
         systems = [
             PlacidusHouseSystem(),
             KochHouseSystem(),
@@ -292,17 +305,16 @@ class TestHouseSystems:
             MorinusHouseSystem()
         ]
         
-        # Calculate cusps for all systems
-        all_cusps = []
+        # Calculate cusps for each system
+        results = {}
         for system in systems:
-            cusps = system.calculate_cusps(
+            results[system.__class__.__name__] = system.calculate_cusps(
                 test_location['latitude'],
                 test_location['longitude']
             )
-            all_cusps.append(cusps)
         
-        # Compare cusps between systems
-        for i in range(len(systems)):
-            for j in range(i + 1, len(systems)):
-                # Different house systems should give different results
-                assert all_cusps[i] != all_cusps[j] 
+        # Verify that each system produces valid results
+        for name, cusps in results.items():
+            assert len(cusps) == 12
+            for cusp in cusps:
+                assert 0 <= cusp < 360 

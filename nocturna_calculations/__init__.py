@@ -16,18 +16,23 @@ from .core import (
 )
 from .adapters import SwissEphAdapter
 from .calculations import (
-    calculate_placidus_houses,
-    calculate_koch_houses,
-    calculate_equal_houses,
-    calculate_whole_sign_houses,
-    calculate_campanus_houses,
-    calculate_regiomontanus_houses,
-    calculate_meridian_houses,
-    calculate_morinus_houses,
-    calculate_julian_day,
+    BaseHouseSystem,
+    PlacidusHouseSystem,
+    KochHouseSystem,
+    EqualHouseSystem,
+    WholeSignHouseSystem,
+    CampanusHouseSystem,
+    RegiomontanusHouseSystem,
+    MeridianHouseSystem,
+    MorinusHouseSystem,
+    get_house_system,
+    calculate_sidereal_time,
     calculate_obliquity,
-    calculate_nutation,
-    calculate_sidereal_time
+    calculate_ascendant,
+    calculate_mc,
+    normalize_angle,
+    calculate_julian_day,
+    calculate_nutation
 )
 
 __all__ = [
@@ -38,16 +43,21 @@ __all__ = [
     'LunarReturn', 'ProgressionType', 'ProgressedChart', 'SolarArcDirection',
     'Position', 'Aspect', 'Chart', 'ChartCalculator', 'Config',
     'SwissEphAdapter',
-    'calculate_placidus_houses',
-    'calculate_koch_houses',
-    'calculate_equal_houses',
-    'calculate_whole_sign_houses',
-    'calculate_campanus_houses',
-    'calculate_regiomontanus_houses',
-    'calculate_meridian_houses',
-    'calculate_morinus_houses',
-    'calculate_julian_day',
+    'BaseHouseSystem',
+    'PlacidusHouseSystem',
+    'KochHouseSystem',
+    'EqualHouseSystem',
+    'WholeSignHouseSystem',
+    'CampanusHouseSystem',
+    'RegiomontanusHouseSystem',
+    'MeridianHouseSystem',
+    'MorinusHouseSystem',
+    'get_house_system',
+    'calculate_sidereal_time',
     'calculate_obliquity',
-    'calculate_nutation',
-    'calculate_sidereal_time'
+    'calculate_ascendant',
+    'calculate_mc',
+    'normalize_angle',
+    'calculate_julian_day',
+    'calculate_nutation'
 ] 

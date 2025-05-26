@@ -259,9 +259,277 @@ class WholeSignHouseSystem(BaseHouseSystem):
         
         return cusps
 
+class CampanusHouseSystem(BaseHouseSystem):
+    """Campanus house system implementation"""
+    
+    def __init__(self):
+        """Initialize Campanus house system calculator"""
+        super().__init__()
+        self.system = HouseSystem.CAMPANUS
+    
+    def _calculate_house_cusps(self) -> List[float]:
+        """Calculate house cusps using the Campanus system"""
+        # Calculate LST and obliquity
+        lst = calculate_sidereal_time(self._julian_day, self._longitude)
+        
+        # Calculate ascendant and MC
+        asc = calculate_ascendant(lst, self._latitude, self._obliquity)
+        mc = calculate_mc(lst, self._obliquity)
+        
+        # Calculate house cusps using Swiss Ephemeris
+        cusps = swe.swe_houses(self._julian_day, 0, self._latitude, self._longitude, b'C')[0]
+        return list(cusps)
+    
+    def _calculate_ascendant(
+        self,
+        latitude: float,
+        longitude: float,
+        obliquity: float
+    ) -> float:
+        """
+        Calculate the Ascendant (1st house cusp)
+        
+        Args:
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            obliquity: Obliquity of the ecliptic in degrees
+            
+        Returns:
+            Ascendant in degrees
+        """
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
+        
+        # Calculate ascendant using the utility function
+        return calculate_ascendant(lst, latitude, obliquity)
+    
+    def _calculate_mc(
+        self,
+        latitude: float,
+        longitude: float,
+        obliquity: float
+    ) -> float:
+        """
+        Calculate the Midheaven (10th house cusp)
+        
+        Args:
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            obliquity: Obliquity of the ecliptic in degrees
+            
+        Returns:
+            Midheaven in degrees
+        """
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
+        
+        # Calculate MC using the utility function
+        return calculate_mc(lst, obliquity)
+
+class RegiomontanusHouseSystem(BaseHouseSystem):
+    """Regiomontanus house system implementation"""
+    
+    def __init__(self):
+        """Initialize Regiomontanus house system calculator"""
+        super().__init__()
+        self.system = HouseSystem.REGIOMONTANUS
+    
+    def _calculate_house_cusps(self) -> List[float]:
+        """Calculate house cusps using the Regiomontanus system"""
+        # Calculate LST and obliquity
+        lst = calculate_sidereal_time(self._julian_day, self._longitude)
+        
+        # Calculate ascendant and MC
+        asc = calculate_ascendant(lst, self._latitude, self._obliquity)
+        mc = calculate_mc(lst, self._obliquity)
+        
+        # Calculate house cusps using Swiss Ephemeris
+        cusps = swe.swe_houses(self._julian_day, 0, self._latitude, self._longitude, b'R')[0]
+        return list(cusps)
+    
+    def _calculate_ascendant(
+        self,
+        latitude: float,
+        longitude: float,
+        obliquity: float
+    ) -> float:
+        """
+        Calculate the Ascendant (1st house cusp)
+        
+        Args:
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            obliquity: Obliquity of the ecliptic in degrees
+            
+        Returns:
+            Ascendant in degrees
+        """
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
+        
+        # Calculate ascendant using the utility function
+        return calculate_ascendant(lst, latitude, obliquity)
+    
+    def _calculate_mc(
+        self,
+        latitude: float,
+        longitude: float,
+        obliquity: float
+    ) -> float:
+        """
+        Calculate the Midheaven (10th house cusp)
+        
+        Args:
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            obliquity: Obliquity of the ecliptic in degrees
+            
+        Returns:
+            Midheaven in degrees
+        """
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
+        
+        # Calculate MC using the utility function
+        return calculate_mc(lst, obliquity)
+
+class MeridianHouseSystem(BaseHouseSystem):
+    """Meridian house system implementation"""
+    
+    def __init__(self):
+        """Initialize Meridian house system calculator"""
+        super().__init__()
+        self.system = HouseSystem.MERIDIAN
+    
+    def _calculate_house_cusps(self) -> List[float]:
+        """Calculate house cusps using the Meridian system"""
+        # Calculate LST and obliquity
+        lst = calculate_sidereal_time(self._julian_day, self._longitude)
+        
+        # Calculate ascendant and MC
+        asc = calculate_ascendant(lst, self._latitude, self._obliquity)
+        mc = calculate_mc(lst, self._obliquity)
+        
+        # Calculate house cusps using Swiss Ephemeris
+        cusps = swe.swe_houses(self._julian_day, 0, self._latitude, self._longitude, b'M')[0]
+        return list(cusps)
+    
+    def _calculate_ascendant(
+        self,
+        latitude: float,
+        longitude: float,
+        obliquity: float
+    ) -> float:
+        """
+        Calculate the Ascendant (1st house cusp)
+        
+        Args:
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            obliquity: Obliquity of the ecliptic in degrees
+            
+        Returns:
+            Ascendant in degrees
+        """
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
+        
+        # Calculate ascendant using the utility function
+        return calculate_ascendant(lst, latitude, obliquity)
+    
+    def _calculate_mc(
+        self,
+        latitude: float,
+        longitude: float,
+        obliquity: float
+    ) -> float:
+        """
+        Calculate the Midheaven (10th house cusp)
+        
+        Args:
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            obliquity: Obliquity of the ecliptic in degrees
+            
+        Returns:
+            Midheaven in degrees
+        """
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
+        
+        # Calculate MC using the utility function
+        return calculate_mc(lst, obliquity)
+
+class MorinusHouseSystem(BaseHouseSystem):
+    """Morinus house system implementation"""
+    
+    def __init__(self):
+        """Initialize Morinus house system calculator"""
+        super().__init__()
+        self.system = HouseSystem.MORINUS
+    
+    def _calculate_house_cusps(self) -> List[float]:
+        """Calculate house cusps using the Morinus system"""
+        # Calculate LST and obliquity
+        lst = calculate_sidereal_time(self._julian_day, self._longitude)
+        
+        # Calculate ascendant and MC
+        asc = calculate_ascendant(lst, self._latitude, self._obliquity)
+        mc = calculate_mc(lst, self._obliquity)
+        
+        # Calculate house cusps using Swiss Ephemeris
+        cusps = swe.swe_houses(self._julian_day, 0, self._latitude, self._longitude, b'O')[0]
+        return list(cusps)
+    
+    def _calculate_ascendant(
+        self,
+        latitude: float,
+        longitude: float,
+        obliquity: float
+    ) -> float:
+        """
+        Calculate the Ascendant (1st house cusp)
+        
+        Args:
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            obliquity: Obliquity of the ecliptic in degrees
+            
+        Returns:
+            Ascendant in degrees
+        """
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
+        
+        # Calculate ascendant using the utility function
+        return calculate_ascendant(lst, latitude, obliquity)
+    
+    def _calculate_mc(
+        self,
+        latitude: float,
+        longitude: float,
+        obliquity: float
+    ) -> float:
+        """
+        Calculate the Midheaven (10th house cusp)
+        
+        Args:
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            obliquity: Obliquity of the ecliptic in degrees
+            
+        Returns:
+            Midheaven in degrees
+        """
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
+        
+        # Calculate MC using the utility function
+        return calculate_mc(lst, obliquity)
+
 def get_house_system(system_type: HouseSystem) -> BaseHouseSystem:
     """
-    Get the appropriate house system calculator
+    Get house system calculator for the specified system type
     
     Args:
         system_type: Type of house system to use
@@ -273,7 +541,11 @@ def get_house_system(system_type: HouseSystem) -> BaseHouseSystem:
         HouseSystem.PLACIDUS: PlacidusHouseSystem,
         HouseSystem.KOCH: KochHouseSystem,
         HouseSystem.EQUAL: EqualHouseSystem,
-        HouseSystem.WHOLE_SIGN: WholeSignHouseSystem
+        HouseSystem.WHOLE_SIGN: WholeSignHouseSystem,
+        HouseSystem.CAMPANUS: CampanusHouseSystem,
+        HouseSystem.REGIOMONTANUS: RegiomontanusHouseSystem,
+        HouseSystem.MERIDIAN: MeridianHouseSystem,
+        HouseSystem.MORINUS: MorinusHouseSystem
     }
     
     if system_type not in systems:

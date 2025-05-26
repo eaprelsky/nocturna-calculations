@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from nocturna_calculations.api.database import get_db
 from nocturna_calculations.api.models import User, Chart
 from nocturna_calculations.api.routers.auth import get_current_user
+from nocturna_calculations.core.chart import Chart as CoreChart
 
 router = APIRouter()
 
@@ -39,7 +40,77 @@ class ChartResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+class NatalChartCreate(BaseModel):
+    date: str
+    time: str
+    latitude: float
+    longitude: float
+    timezone: str = "UTC"
+
+class NatalChartResponse(BaseModel):
+    chart_id: str
+    planets: dict
+    houses: dict
+    aspects: dict
+
 # Endpoints
+@router.post("/natal", response_model=NatalChartResponse)
+async def create_natal_chart(
+    chart_data: NatalChartCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create new natal chart"""
+    try:
+        # Create core chart instance
+        core_chart = CoreChart(
+            date=chart_data.date,
+            time=chart_data.time,
+            latitude=chart_data.latitude,
+            longitude=chart_data.longitude,
+            timezone=chart_data.timezone
+        )
+        
+        # Calculate chart data
+        planets = core_chart.calculate_planetary_positions()
+        houses = core_chart.calculate_houses()
+        aspects = core_chart.calculate_aspects()
+        
+        # Create database chart record
+        chart = Chart(
+            user_id=current_user.id,
+            date=datetime.strptime(f"{chart_data.date} {chart_data.time}", "%Y-%m-%d %H:%M:%S"),
+            latitude=chart_data.latitude,
+            longitude=chart_data.longitude,
+            timezone=chart_data.timezone,
+            config={
+                "house_system": "PLACIDUS",
+                "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
+                "orbs": {
+                    "conjunction": 10.0,
+                    "opposition": 10.0,
+                    "trine": 8.0,
+                    "square": 8.0,
+                    "sextile": 6.0
+                }
+            }
+        )
+        db.add(chart)
+        db.commit()
+        db.refresh(chart)
+        
+        return {
+            "chart_id": chart.id,
+            "planets": planets,
+            "houses": houses,
+            "aspects": aspects
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
 @router.post("", response_model=ChartResponse)
 async def create_chart(
     chart_data: ChartCreate,

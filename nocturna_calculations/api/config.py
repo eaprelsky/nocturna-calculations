@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     # Cache
     CACHE_TTL: int = 3600  # 1 hour in seconds
     
+    # Cache key prefix (optional)
+    CACHE_PREFIX: str = "calc:"
+    
     # Redis configuration
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
