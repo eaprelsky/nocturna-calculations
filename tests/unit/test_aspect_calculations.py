@@ -1,11 +1,11 @@
 import pytest
 from datetime import datetime
 import pytz
-from nocturna.calculations.aspect_calculations import AspectCalculator
-from nocturna.calculations.constants import AspectType, Planet
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
-from nocturna.calculations.chart import Chart
+from nocturna_calculations.calculations.aspect_calculations import AspectCalculator
+from nocturna_calculations.calculations.constants import AspectType, Planet
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
+from nocturna_calculations.calculations.chart import Chart
 
 class TestAspectCalculations:
     @pytest.fixture

@@ -3,8 +3,8 @@ from datetime import datetime, time
 from nocturna_calculations.core.chart import Chart
 from nocturna_calculations.core.config import AstroConfig
 import pytz
-from nocturna.calculations.constants import HouseSystemType, CoordinateSystem
-from nocturna.calculations.position import Position
+from nocturna_calculations.calculations.constants import HouseSystemType, CoordinateSystem
+from nocturna_calculations.calculations.position import Position
 
 # --- Chart Initialization Tests ---
 

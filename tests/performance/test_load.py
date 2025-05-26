@@ -4,9 +4,9 @@ import time
 from datetime import datetime, timedelta
 import pytz
 from locust import HttpUser, task, between
-from nocturna.calculations.chart import Chart
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
+from nocturna_calculations.calculations.chart import Chart
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
 
 class TestLoad:
     @pytest.fixture

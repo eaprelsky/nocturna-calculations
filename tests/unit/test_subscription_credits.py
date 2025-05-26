@@ -1,9 +1,9 @@
 import pytest
 from datetime import datetime, timedelta
 import pytz
-from nocturna.models.subscription import Subscription, SubscriptionType, SubscriptionStatus, CreditTransaction
-from nocturna.models.user import User
-from nocturna.exceptions import SubscriptionError, CreditError, ValidationError
+from nocturna_calculations.models.subscription import Subscription, SubscriptionType, SubscriptionStatus, CreditTransaction
+from nocturna_calculations.models.user import User
+from nocturna_calculations.exceptions import SubscriptionError, CreditError, ValidationError
 
 class TestSubscriptionCredits:
     @pytest.fixture

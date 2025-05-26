@@ -2,9 +2,9 @@ import pytest
 import math
 from datetime import datetime
 import pytz
-from nocturna.calculations.coordinates import CoordinateTransformer
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
+from nocturna_calculations.calculations.coordinates import CoordinateTransformer
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
 
 class TestCoordinateTransformations:
     @pytest.fixture

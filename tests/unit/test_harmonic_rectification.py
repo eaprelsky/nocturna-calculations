@@ -1,11 +1,11 @@
 import pytest
 from datetime import datetime, timedelta
 import pytz
-from nocturna.calculations.rectification import HarmonicRectification
-from nocturna.calculations.constants import HarmonicType, RectificationMethod
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
-from nocturna.calculations.chart import Chart
+from nocturna_calculations.calculations.rectification import HarmonicRectification
+from nocturna_calculations.calculations.constants import HarmonicType, RectificationMethod
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
+from nocturna_calculations.calculations.chart import Chart
 
 class TestHarmonicRectification:
     @pytest.fixture

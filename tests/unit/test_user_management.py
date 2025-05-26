@@ -1,9 +1,9 @@
 import pytest
 from datetime import datetime, timedelta
 import pytz
-from nocturna.models.user import User, UserProfile, UserSettings
-from nocturna.models.subscription import SubscriptionType, SubscriptionStatus
-from nocturna.exceptions import UserError, ValidationError
+from nocturna_calculations.models.user import User, UserProfile, UserSettings
+from nocturna_calculations.models.subscription import SubscriptionType, SubscriptionStatus
+from nocturna_calculations.exceptions import UserError, ValidationError
 
 class TestUserManagement:
     @pytest.fixture

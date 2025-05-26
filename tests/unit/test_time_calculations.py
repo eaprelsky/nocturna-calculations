@@ -1,8 +1,8 @@
 import pytest
 from datetime import datetime, timedelta
 import pytz
-from nocturna.calculations.time import TimeCalculator
-from nocturna.calculations.constants import TimeSystem
+from nocturna_calculations.calculations.time import TimeCalculator
+from nocturna_calculations.calculations.constants import TimeSystem
 
 class TestTimeCalculations:
     @pytest.fixture

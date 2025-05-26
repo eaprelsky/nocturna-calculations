@@ -2,10 +2,10 @@ import pytest
 import json
 from datetime import datetime, timedelta
 import pytz
-from nocturna.calculations.chart import Chart
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
-from nocturna.exceptions import ValidationError, AuthenticationError, AuthorizationError
+from nocturna_calculations.calculations.chart import Chart
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
+from nocturna_calculations.exceptions import ValidationError, AuthenticationError, AuthorizationError
 
 class TestIntegration:
     @pytest.fixture

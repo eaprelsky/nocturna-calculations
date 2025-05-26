@@ -1,12 +1,12 @@
 import pytest
 from datetime import datetime, timedelta
 import pytz
-from nocturna.calculations.directions import DirectionCalculator
-from nocturna.calculations.progressions import ProgressionCalculator
-from nocturna.calculations.constants import DirectionType, ProgressionType, Planet
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
-from nocturna.calculations.chart import Chart
+from nocturna_calculations.calculations.directions import DirectionCalculator
+from nocturna_calculations.calculations.progressions import ProgressionCalculator
+from nocturna_calculations.calculations.constants import DirectionType, ProgressionType, Planet
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
+from nocturna_calculations.calculations.chart import Chart
 
 class TestDirectionsProgressions:
     @pytest.fixture

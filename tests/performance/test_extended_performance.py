@@ -5,10 +5,10 @@ import psutil
 import os
 from datetime import datetime, timedelta
 import pytz
-from nocturna.calculations.chart import Chart
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
-from nocturna.exceptions import PerformanceError
+from nocturna_calculations.calculations.chart import Chart
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
+from nocturna_calculations.exceptions import PerformanceError
 
 class TestExtendedPerformance:
     @pytest.fixture

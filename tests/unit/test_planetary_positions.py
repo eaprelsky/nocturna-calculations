@@ -1,9 +1,9 @@
 import pytest
 from datetime import datetime
-from nocturna.calculations.planetary_positions import PlanetaryPositions
-from nocturna.calculations.constants import Planet
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
+from nocturna_calculations.calculations.planetary_positions import PlanetaryPositions
+from nocturna_calculations.calculations.constants import Planet
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
 
 class TestPlanetaryPositions:
     @pytest.fixture

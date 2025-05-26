@@ -1,8 +1,8 @@
 import pytest
-from nocturna.calculations.aspect import Aspect
-from nocturna.calculations.constants import AspectType
-from nocturna.calculations.position import Position
-from nocturna.calculations.constants import CoordinateSystem
+from nocturna_calculations.calculations.aspect import Aspect
+from nocturna_calculations.calculations.constants import AspectType
+from nocturna_calculations.calculations.position import Position
+from nocturna_calculations.calculations.constants import CoordinateSystem
 
 class TestAspect:
     @pytest.fixture

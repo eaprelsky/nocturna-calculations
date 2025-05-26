@@ -1062,3 +1062,110 @@ class SolarArcDirection:
         strength = aspect_weight * point_weight * orb_factor
         
         return min(max(strength, 0.0), 1.0)  # Ensure result is between 0 and 1 
+
+class HouseSystem(Enum):
+    """House systems for astrological calculations"""
+    PLACIDUS = "P"      # Placidus house system
+    KOCH = "K"         # Koch house system
+    EQUAL = "E"        # Equal house system
+    WHOLE_SIGN = "W"   # Whole sign house system
+    CAMPANUS = "C"     # Campanus house system
+    REGIOMONTANUS = "R" # Regiomontanus house system
+    MERIDIAN = "M"     # Meridian house system
+    MORINUS = "O"      # Morinus house system
+
+class ProgressedChart:
+    """Class for progressed chart calculations and properties"""
+    
+    # Progression rates
+    SECONDARY_RATE = 1.0  # 1 day = 1 year
+    TERTIARY_RATE = 12.0  # 1 day = 1 month
+    
+    @staticmethod
+    def calculate_progressed_date(
+        birth_date: datetime,
+        target_date: datetime,
+        progression_type: ProgressionType = ProgressionType.SECONDARY
+    ) -> datetime:
+        """
+        Calculate progressed date for given target date
+        
+        Args:
+            birth_date: Birth date and time
+            target_date: Target date to calculate progression for
+            progression_type: Type of progression to use
+            
+        Returns:
+            Progressed date and time
+        """
+        # Calculate years between birth and target
+        years_diff = target_date.year - birth_date.year
+        months_diff = target_date.month - birth_date.month
+        days_diff = target_date.day - birth_date.day
+        
+        # Convert to total days
+        total_days = years_diff * 365 + months_diff * 30 + days_diff
+        
+        # Calculate progressed days based on progression type
+        if progression_type == ProgressionType.SECONDARY:
+            progressed_days = total_days * ProgressedChart.SECONDARY_RATE
+        elif progression_type == ProgressionType.TERTIARY:
+            progressed_days = total_days * ProgressedChart.TERTIARY_RATE
+        else:
+            raise ValueError(f"Invalid progression type: {progression_type}")
+        
+        # Calculate progressed date
+        progressed_date = birth_date + timedelta(days=progressed_days)
+        
+        return progressed_date
+    
+    @staticmethod
+    def calculate_solar_arc(
+        birth_date: datetime,
+        target_date: datetime,
+        birth_sun_pos: float,
+        progressed_sun_pos: float
+    ) -> float:
+        """
+        Calculate solar arc for given dates
+        
+        Args:
+            birth_date: Birth date and time
+            target_date: Target date to calculate progression for
+            birth_sun_pos: Sun's position at birth
+            progressed_sun_pos: Sun's position at target date
+            
+        Returns:
+            Solar arc in degrees
+        """
+        # Calculate solar arc
+        solar_arc = (progressed_sun_pos - birth_sun_pos) % 360
+        
+        return solar_arc
+    
+    @staticmethod
+    def calculate_progressed_position(
+        original_pos: float,
+        solar_arc: float,
+        progression_type: ProgressionType = ProgressionType.SECONDARY
+    ) -> float:
+        """
+        Calculate progressed position
+        
+        Args:
+            original_pos: Original position in degrees
+            solar_arc: Solar arc in degrees
+            progression_type: Type of progression to use
+            
+        Returns:
+            Progressed position in degrees
+        """
+        if progression_type == ProgressionType.SOLAR_ARC:
+            # For solar arc, add the arc to the original position
+            progressed_pos = (original_pos + solar_arc) % 360
+        else:
+            # For secondary and tertiary, use the original position
+            # as the progressed position is calculated from the progressed date
+            progressed_pos = original_pos
+        
+        return progressed_pos 
