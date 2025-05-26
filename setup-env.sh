@@ -15,6 +15,7 @@ if [ ! -d "$LOG_DIR" ]; then
 fi
 
 # Clear previous log and ensure write permissions
+rm -f "$LOG_FILE"  # Remove old log if exists
 touch "$LOG_FILE"
 chmod 666 "$LOG_FILE"
 echo "Starting new installation at $(date)" > "$LOG_FILE"
@@ -26,9 +27,18 @@ exec 2> >(tee -a "$LOG_FILE" >&2)
 echo "🚀 Starting environment setup..."
 echo "Log file location: $LOG_FILE"
 
+# Debug information
+echo "Debug information:"
+echo "Current user: $(whoami)"
+echo "Current directory: $(pwd)"
+echo "PATH: $PATH"
+echo "SHELL: $SHELL"
+echo "HOME: $HOME"
+
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
-    echo "Please run as root (use sudo)"
+    echo "Please run as: sudo -E ./setup-env.sh"
+    echo "The -E flag is required to preserve your environment variables"
     exit 1
 fi
 
@@ -89,63 +99,73 @@ echo "🐍 Running Python setup scripts..."
 # Initialize conda
 echo "Initializing Conda..."
 
-# Try to find conda in common locations
+# Try to find conda in common WSL locations
 CONDA_PATHS=(
-    "$HOME/miniconda3/etc/profile.d/conda.sh"
-    "$HOME/anaconda3/etc/profile.d/conda.sh"
-    "/opt/conda/etc/profile.d/conda.sh"
-    "/usr/local/conda/etc/profile.d/conda.sh"
-    "/opt/miniconda3/etc/profile.d/conda.sh"
-    "/opt/anaconda3/etc/profile.d/conda.sh"
+    "/mnt/c/Users/$SUDO_USER/miniconda3"
+    "/mnt/c/Users/$SUDO_USER/anaconda3"
+    "/mnt/c/Users/$SUDO_USER/AppData/Local/Continuum/miniconda3"
+    "/mnt/c/Users/$SUDO_USER/AppData/Local/Continuum/anaconda3"
+    "$HOME/miniconda3"
+    "$HOME/anaconda3"
+    "/opt/conda"
 )
 
-# Also check if conda is in PATH
-if command -v conda &> /dev/null; then
-    echo "Found conda in PATH"
-    CONDA_PATH=$(which conda)
-    CONDA_DIR=$(dirname $(dirname "$CONDA_PATH"))
-    CONDA_PATHS+=("$CONDA_DIR/etc/profile.d/conda.sh")
-fi
-
-# Try to source conda.sh from found locations
-CONDA_INITIALIZED=false
-for conda_path in "${CONDA_PATHS[@]}"; do
-    if [ -f "$conda_path" ]; then
-        echo "Found conda.sh at: $conda_path"
-        . "$conda_path"
-        CONDA_INITIALIZED=true
+for CONDA_PATH in "${CONDA_PATHS[@]}"; do
+    if [ -f "$CONDA_PATH/etc/profile.d/conda.sh" ]; then
+        echo "Found conda at: $CONDA_PATH"
+        source "$CONDA_PATH/etc/profile.d/conda.sh"
         break
     fi
 done
 
-if [ "$CONDA_INITIALIZED" = false ]; then
-    echo "❌ Could not find conda.sh. Checking conda installation..."
+# Try to find conda in PATH
+if command -v conda &> /dev/null; then
+    echo "Found conda in PATH"
+    CONDA_PATH=$(which conda)
+    echo "Conda path: $CONDA_PATH"
+    CONDA_VERSION=$(conda --version)
+    echo "Conda version: $CONDA_VERSION"
     
-    # Try to run conda directly
-    if command -v conda &> /dev/null; then
-        echo "Conda is installed and available in PATH"
-        CONDA_VERSION=$(conda --version)
-        echo "Conda version: $CONDA_VERSION"
+    # Create conda environment if it doesn't exist
+    if ! conda env list | grep -q "^nocturna "; then
+        echo "Creating conda environment 'nocturna'..."
+        conda create -y -n nocturna python=3.11
     else
-        echo "❌ Conda is not installed or not in PATH"
-        echo "Visit: https://docs.conda.io/en/latest/miniconda.html"
-        exit 1
+        echo "Conda environment 'nocturna' already exists"
     fi
-fi
-
-# Run install_dev.py
-echo "📦 Running install_dev.py..."
-python scripts/install_dev.py
-
-# Run database migrations
-echo "🔄 Running database migrations..."
-python scripts/migrate.py
-
-echo "✅ Environment setup completed!"
-echo "
+    
+    # Activate conda environment
+    echo "Activating conda environment..."
+    eval "$(conda shell.bash hook)"
+    conda activate nocturna
+    
+    # Install dependencies
+    echo "Installing Python dependencies..."
+    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
+    pip install -r requirements-test.txt
+    
+    # Run install_dev.py
+    echo "📦 Running install_dev.py..."
+    python scripts/install_dev.py
+    
+    # Run database migrations
+    echo "🔄 Running database migrations..."
+    python scripts/migrate.py
+    
+    echo "✅ Environment setup completed!"
+    echo "
 To activate the Conda environment:
 conda activate nocturna
 "
+else
+    echo "❌ Conda is not installed or not in PATH"
+    echo "Current PATH: $PATH"
+    echo "Please ensure conda is installed and run the script with: sudo -E ./setup-env.sh"
+    echo "The -E flag is required to preserve your environment variables"
+    echo "If conda is installed but not found, please add it to your PATH"
+    exit 1
+fi
 
 echo "Installation completed at $(date)" >> "$LOG_FILE"
 echo "Log file saved at: $LOG_FILE" 
