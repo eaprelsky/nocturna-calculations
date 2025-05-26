@@ -1,14 +1,22 @@
 # API Dependencies
 fastapi>=0.100.0
 uvicorn>=0.23.0
-sqlalchemy>=2.0.0
-alembic>=1.11.0
-redis>=4.6.0
+python-multipart>=0.0.6
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
-python-multipart>=0.0.6
-httpx>=0.24.0
+email-validator>=2.0.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+sqlalchemy>=2.0.0
+alembic>=1.11.0
+psycopg2-binary>=2.9.0
+redis>=4.6.0
 prometheus-client>=0.17.0
+httpx>=0.24.0
+websockets>=11.0.0
+python-dotenv>=1.0.0
+tenacity>=8.2.0
+structlog>=23.1.0
 
 # Include core library dependencies
 -r requirements.txt 

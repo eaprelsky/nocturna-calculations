@@ -1,11 +1,17 @@
 -r requirements.txt
 pytest>=7.0.0
 pytest-cov>=4.0.0
-pytest-benchmark>=4.0.0
+pytest-benchmark>=5.1.0
+pytest-asyncio>=0.26.0
+pytest-xdist>=3.6.1
+pytest-regressions>=2.7.0
+pytest-timeout>=2.4.0
+pytest-datadir>=1.6.1
+pytest-mock>=3.14.0
 black>=23.0.0
 flake8>=6.0.0
 mypy>=1.0.0
 sphinx>=7.0.0
 sphinx-rtd-theme>=1.0.0
 pre-commit>=3.0.0
-gevent>=23.0.0 
+gevent>=23.9.1 
