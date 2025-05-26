@@ -2,6 +2,8 @@
 
 A Python library and REST API service for astrological calculations based on Swiss Ephemeris. This project provides both a comprehensive library for direct Python integration and a production-ready API server for remote access to astrological calculation services.
 
+THIS PROJECT IS YET UNDER ACTIVE DEVELOPMENT, THE DOCUMENTATION MAY NOT REFLECT THE ACTUAL STATE OF THE CODEBASE
+
 ## Features
 
 ### Library Features
