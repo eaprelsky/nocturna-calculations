@@ -4,7 +4,7 @@ Configuration for astrological calculations
 from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field
 
-class AstroConfig(BaseModel):
+class Config(BaseModel):
     """Configuration for astrological calculations"""
     
     # House system configuration

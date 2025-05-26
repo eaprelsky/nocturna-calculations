@@ -1,8 +1,8 @@
 import pytest
 from datetime import datetime, timedelta
 from nocturna_calculations.core.chart import Chart
-from nocturna_calculations.core.config import AstroConfig
-from nocturna_calculations.adapters.swisseph_adapter import SwissEphAdapter
+from nocturna_calculations.core.config import Config
+from nocturna_calculations.adapters.swisseph import SwissEphAdapter
 
 @pytest.fixture
 def swisseph_adapter():

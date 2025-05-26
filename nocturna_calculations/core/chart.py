@@ -1,34 +1,35 @@
 """
 Core chart class for astrological calculations
 """
-from datetime import datetime, time
+from datetime import datetime, time as datetime_time
 from typing import Dict, Any, Optional, Union, List, Tuple
 import pytz
 from pydantic import BaseModel, Field, validator
 
-from .config import AstroConfig
+from .config import Config
 from ..adapters.swisseph import SwissEphAdapter
 from .constants import (
     FixedStar, Asteroid, LunarNode, ArabicPart, 
     Harmonic, Midpoint, MidpointStructure,
     Antiscia, AntisciaType, Declination, DeclinationType,
-    Planet, HouseSystem, AspectType, Aspect,
+    Planet, HouseSystem, AspectType,
     SolarReturnType, LunarReturnType, ProgressionType,
     SolarArcDirection
 )
+from .aspect import Aspect
 
 class Chart(BaseModel):
     """Core chart class for astrological calculations"""
     
     # Required fields
     date: Union[str, datetime] = Field(..., description="Chart date")
-    time: Union[str, time] = Field(..., description="Chart time")
+    time: Union[str, datetime_time] = Field(..., description="Chart time")
     latitude: float = Field(..., description="Geographic latitude in degrees")
     longitude: float = Field(..., description="Geographic longitude in degrees")
     
     # Optional fields
     timezone: str = Field(default="UTC", description="Timezone for calculations")
-    config: Optional[AstroConfig] = Field(default=None, description="Calculation configuration")
+    config: Optional[Config] = Field(default=None, description="Calculation configuration")
     
     # Internal fields
     _adapter: Optional[SwissEphAdapter] = None
@@ -63,7 +64,7 @@ class Chart(BaseModel):
         
         # Set default config if not provided
         if self.config is None:
-            self.config = AstroConfig()
+            self.config = Config()
         
         # Initialize adapter
         self._adapter = SwissEphAdapter()

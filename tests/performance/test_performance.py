@@ -7,7 +7,7 @@ import psutil
 import os
 from datetime import datetime, time
 from nocturna_calculations.core.chart import Chart
-from nocturna_calculations.core.config import AstroConfig
+from nocturna_calculations.core.config import Config
 
 # --- Performance Test Setup ---
 
@@ -136,7 +136,7 @@ def test_concurrent_aspects():
 
 def test_large_fixed_stars_dataset():
     """Test calculation with large fixed stars dataset"""
-    config = AstroConfig(fixed_stars=["*"])  # All fixed stars
+    config = Config(fixed_stars=["*"])  # All fixed stars
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -155,7 +155,7 @@ def test_large_fixed_stars_dataset():
 
 def test_large_aspects_dataset():
     """Test calculation with large aspects dataset"""
-    config = AstroConfig(orbs={"conjunction": 15.0})  # Large orb for more aspects
+    config = Config(orbs={"conjunction": 15.0})  # Large orb for more aspects
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",

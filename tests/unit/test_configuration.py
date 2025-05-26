@@ -4,7 +4,7 @@ Configuration tests for chart calculations
 import pytest
 from datetime import datetime, time
 from nocturna_calculations.core.chart import Chart
-from nocturna_calculations.core.config import AstroConfig
+from nocturna_calculations.core.config import Config
 
 # --- Configuration Test Setup ---
 
@@ -23,7 +23,7 @@ def basic_chart():
 
 def test_placidus_house_system():
     """Test Placidus house system configuration"""
-    config = AstroConfig(house_system="Placidus")
+    config = Config(house_system="Placidus")
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -38,7 +38,7 @@ def test_placidus_house_system():
 
 def test_koch_house_system():
     """Test Koch house system configuration"""
-    config = AstroConfig(house_system="Koch")
+    config = Config(house_system="Koch")
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -53,7 +53,7 @@ def test_koch_house_system():
 
 def test_whole_sign_house_system():
     """Test Whole Sign house system configuration"""
-    config = AstroConfig(house_system="Whole Sign")
+    config = Config(house_system="Whole Sign")
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -70,7 +70,7 @@ def test_whole_sign_house_system():
 
 def test_custom_aspect_orbs():
     """Test custom aspect orb configuration"""
-    config = AstroConfig(orbs={
+    config = Config(orbs={
         "conjunction": 10.0,
         "opposition": 10.0,
         "trine": 8.0,
@@ -91,7 +91,7 @@ def test_custom_aspect_orbs():
 
 def test_minimum_aspect_orbs():
     """Test minimum aspect orb configuration"""
-    config = AstroConfig(orbs={
+    config = Config(orbs={
         "conjunction": 1.0,
         "opposition": 1.0,
         "trine": 1.0,
@@ -114,7 +114,7 @@ def test_minimum_aspect_orbs():
 
 def test_specific_fixed_stars():
     """Test specific fixed stars configuration"""
-    config = AstroConfig(fixed_stars=["Aldebaran", "Regulus", "Spica"])
+    config = Config(fixed_stars=["Aldebaran", "Regulus", "Spica"])
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -129,7 +129,7 @@ def test_specific_fixed_stars():
 
 def test_all_fixed_stars():
     """Test all fixed stars configuration"""
-    config = AstroConfig(fixed_stars=["*"])
+    config = Config(fixed_stars=["*"])
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -146,7 +146,7 @@ def test_all_fixed_stars():
 
 def test_specific_arabic_parts():
     """Test specific Arabic parts configuration"""
-    config = AstroConfig(arabic_parts=["Fortune", "Spirit", "Eros"])
+    config = Config(arabic_parts=["Fortune", "Spirit", "Eros"])
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -161,7 +161,7 @@ def test_specific_arabic_parts():
 
 def test_all_arabic_parts():
     """Test all Arabic parts configuration"""
-    config = AstroConfig(arabic_parts=["*"])
+    config = Config(arabic_parts=["*"])
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -178,7 +178,7 @@ def test_all_arabic_parts():
 
 def test_combined_configuration():
     """Test combined configuration settings"""
-    config = AstroConfig(
+    config = Config(
         house_system="Koch",
         orbs={"conjunction": 10.0, "opposition": 10.0},
         fixed_stars=["Aldebaran", "Regulus"],
@@ -212,28 +212,28 @@ def test_combined_configuration():
 def test_invalid_house_system():
     """Test invalid house system configuration"""
     with pytest.raises(ValueError):
-        AstroConfig(house_system="InvalidSystem")
+        Config(house_system="InvalidSystem")
 
 def test_invalid_aspect_orb():
     """Test invalid aspect orb configuration"""
     with pytest.raises(ValueError):
-        AstroConfig(orbs={"conjunction": -1.0})
+        Config(orbs={"conjunction": -1.0})
 
 def test_invalid_fixed_star():
     """Test invalid fixed star configuration"""
     with pytest.raises(ValueError):
-        AstroConfig(fixed_stars=["InvalidStar"])
+        Config(fixed_stars=["InvalidStar"])
 
 def test_invalid_arabic_part():
     """Test invalid Arabic part configuration"""
     with pytest.raises(ValueError):
-        AstroConfig(arabic_parts=["InvalidPart"])
+        Config(arabic_parts=["InvalidPart"])
 
 # --- Configuration Persistence Tests ---
 
 def test_configuration_persistence():
     """Test configuration persistence across calculations"""
-    config = AstroConfig(
+    config = Config(
         house_system="Koch",
         orbs={"conjunction": 10.0},
         fixed_stars=["Aldebaran"],

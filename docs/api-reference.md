@@ -15,7 +15,7 @@ class Chart:
         latitude: float,
         longitude: float,
         timezone: str = "UTC",
-        config: AstroConfig = None
+        config: Config = None
     ):
         """
         Initialize a new chart.
@@ -756,10 +756,10 @@ def calculate_obliquity(
 
 ## Configuration
 
-### AstroConfig
+### Config
 
 ```python
-class AstroConfig:
+class Config:
     def __init__(
         self,
         orbs: Dict[str, float] = None,

@@ -4,8 +4,8 @@ Error handling tests for chart calculations
 import pytest
 from datetime import datetime, time
 from nocturna_calculations.core.chart import Chart
-from nocturna_calculations.core.config import AstroConfig
-from nocturna_calculations.adapters.swisseph_adapter import SwissEphAdapter
+from nocturna_calculations.core.config import Config
+from nocturna_calculations.adapters.swisseph import SwissEphAdapter
 from nocturna_calculations.core.exceptions import (
     InvalidDateError,
     InvalidTimeError,
@@ -125,7 +125,7 @@ def test_calculation_with_missing_data():
 
 def test_calculation_with_invalid_house_system():
     """Test calculation with invalid house system"""
-    config = AstroConfig(house_system="InvalidSystem")
+    config = Config(house_system="InvalidSystem")
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -139,7 +139,7 @@ def test_calculation_with_invalid_house_system():
 
 def test_calculation_with_invalid_aspect_orb():
     """Test calculation with invalid aspect orb"""
-    config = AstroConfig(orbs={"conjunction": -1.0})  # Invalid orb
+    config = Config(orbs={"conjunction": -1.0})  # Invalid orb
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -205,7 +205,7 @@ def test_network_error_handling(monkeypatch):
 def test_invalid_config_values():
     """Test invalid configuration values"""
     with pytest.raises(ValueError):
-        AstroConfig(
+        Config(
             house_system="InvalidSystem",
             orbs={"conjunction": -1.0},
             fixed_stars=["InvalidStar"],
@@ -215,7 +215,7 @@ def test_invalid_config_values():
 def test_missing_config_values():
     """Test missing configuration values"""
     with pytest.raises(ValueError):
-        AstroConfig(
+        Config(
             house_system=None,
             orbs={},
             fixed_stars=[],

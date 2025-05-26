@@ -119,6 +119,30 @@ class Harmonic(Enum):
     HARMONIC_11 = 11 # Undecile harmonic
     HARMONIC_12 = 12 # Semi-sextile harmonic
 
+class Planet(Enum):
+    """Planets with their Swiss Ephemeris numbers"""
+    SUN = 0        # Sun
+    MOON = 1       # Moon
+    MERCURY = 2    # Mercury
+    VENUS = 3      # Venus
+    MARS = 4       # Mars
+    JUPITER = 5    # Jupiter
+    SATURN = 6     # Saturn
+    URANUS = 7     # Uranus
+    NEPTUNE = 8    # Neptune
+    PLUTO = 9      # Pluto
+    MEAN_NODE = 10 # Mean Lunar Node
+    TRUE_NODE = 11 # True Lunar Node
+    MEAN_APOGEE = 12 # Mean Lunar Apogee
+    OSCULATING_APOGEE = 13 # Osculating Lunar Apogee
+    EARTH = 14     # Earth
+    CHIRON = 15    # Chiron
+    PHOLUS = 16    # Pholus
+    CERES = 17     # Ceres
+    PALLAS = 18    # Pallas
+    JUNO = 19      # Juno
+    VESTA = 20     # Vesta
+
 class MidpointStructure(Enum):
     """Types of midpoint structures"""
     CONJUNCTION = 0    # 0° - Direct midpoint

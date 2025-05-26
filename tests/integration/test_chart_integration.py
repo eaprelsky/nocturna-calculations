@@ -4,8 +4,8 @@ Integration tests for chart calculations
 import pytest
 from datetime import datetime, time
 from nocturna_calculations.core.chart import Chart
-from nocturna_calculations.core.config import AstroConfig
-from nocturna_calculations.adapters.swisseph_adapter import SwissEphAdapter
+from nocturna_calculations.core.config import Config
+from nocturna_calculations.adapters.swisseph import SwissEphAdapter
 
 # --- Integration Test Setup ---
 
@@ -55,7 +55,7 @@ def test_full_chart_calculation(swisseph_adapter, basic_chart):
 
 def test_chart_with_custom_config(swisseph_adapter):
     """Test chart calculation with custom configuration"""
-    config = AstroConfig(
+    config = Config(
         house_system="Koch",
         orbs={"conjunction": 10.0, "opposition": 10.0},
         fixed_stars=["Aldebaran", "Regulus"],

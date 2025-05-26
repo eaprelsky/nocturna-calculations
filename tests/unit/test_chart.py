@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime, time
 from nocturna_calculations.core.chart import Chart
-from nocturna_calculations.core.config import AstroConfig
+from nocturna_calculations.core.config import Config
 import pytz
 from nocturna_calculations.calculations.constants import HouseSystemType, CoordinateSystem
 from nocturna_calculations.calculations.position import Position
@@ -64,7 +64,7 @@ def test_chart_init_invalid_longitude():
         )
 
 def test_chart_init_with_config():
-    config = AstroConfig(house_system="Koch")
+    config = Config(house_system="Koch")
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -98,7 +98,7 @@ def test_calculate_planetary_positions_valid(monkeypatch):
 
 
 def test_calculate_planetary_positions_custom_config(monkeypatch):
-    config = AstroConfig(orbs={"conjunction": 10.0})
+    config = Config(orbs={"conjunction": 10.0})
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",
@@ -138,7 +138,7 @@ def test_calculate_aspects_major_minor(monkeypatch):
 
 
 def test_calculate_aspects_custom_orbs(monkeypatch):
-    config = AstroConfig(orbs={"trine": 8.0})
+    config = Config(orbs={"trine": 8.0})
     chart = Chart(
         date="2024-03-20",
         time="12:00:00",

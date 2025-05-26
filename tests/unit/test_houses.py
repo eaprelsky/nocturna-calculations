@@ -4,7 +4,7 @@ House calculation tests for astrological charts
 import pytest
 from datetime import datetime, time
 from nocturna_calculations.core.chart import Chart
-from nocturna_calculations.core.config import AstroConfig
+from nocturna_calculations.core.config import Config
 
 # --- Test Data ---
 
@@ -23,7 +23,7 @@ def test_chart():
 
 def test_placidus_house_system(test_chart):
     """Test Placidus house system calculations"""
-    config = AstroConfig(house_system="Placidus")
+    config = Config(house_system="Placidus")
     test_chart.config = config
     
     houses = test_chart.calculate_houses()
@@ -44,7 +44,7 @@ def test_placidus_house_system(test_chart):
 
 def test_koch_house_system(test_chart):
     """Test Koch house system calculations"""
-    config = AstroConfig(house_system="Koch")
+    config = Config(house_system="Koch")
     test_chart.config = config
     
     houses = test_chart.calculate_houses()
@@ -63,7 +63,7 @@ def test_koch_house_system(test_chart):
 
 def test_whole_sign_house_system(test_chart):
     """Test Whole Sign house system calculations"""
-    config = AstroConfig(house_system="Whole Sign")
+    config = Config(house_system="Whole Sign")
     test_chart.config = config
     
     houses = test_chart.calculate_houses()
@@ -79,7 +79,7 @@ def test_whole_sign_house_system(test_chart):
 
 def test_equal_house_system(test_chart):
     """Test Equal House system calculations"""
-    config = AstroConfig(house_system="Equal")
+    config = Config(house_system="Equal")
     test_chart.config = config
     
     houses = test_chart.calculate_houses()
@@ -100,7 +100,7 @@ def test_equal_house_system(test_chart):
 
 def test_campanus_house_system(test_chart):
     """Test Campanus house system calculations"""
-    config = AstroConfig(house_system="Campanus")
+    config = Config(house_system="Campanus")
     test_chart.config = config
     
     houses = test_chart.calculate_houses()
@@ -131,7 +131,7 @@ def test_houses_at_equator():
     # Test different house systems
     systems = ["Placidus", "Koch", "Whole Sign", "Equal", "Campanus"]
     for system in systems:
-        config = AstroConfig(house_system=system)
+        config = Config(house_system=system)
         chart.config = config
         houses = chart.calculate_houses()
         
@@ -163,7 +163,7 @@ def test_houses_at_polar_regions():
     # Test different house systems
     systems = ["Placidus", "Koch", "Whole Sign", "Equal", "Campanus"]
     for system in systems:
-        config = AstroConfig(house_system=system)
+        config = Config(house_system=system)
         
         # North Pole
         north_chart.config = config
@@ -194,7 +194,7 @@ def test_houses_at_different_times():
         # Test different house systems
         systems = ["Placidus", "Koch", "Whole Sign", "Equal", "Campanus"]
         for system in systems:
-            config = AstroConfig(house_system=system)
+            config = Config(house_system=system)
             chart.config = config
             houses = chart.calculate_houses()
             
@@ -218,13 +218,13 @@ def test_house_system_validation():
     
     # Test invalid house system
     with pytest.raises(ValueError):
-        config = AstroConfig(house_system="InvalidSystem")
+        config = Config(house_system="InvalidSystem")
         chart.config = config
         chart.calculate_houses()
     
     # Test missing house system
     with pytest.raises(ValueError):
-        config = AstroConfig(house_system=None)
+        config = Config(house_system=None)
         chart.config = config
         chart.calculate_houses()
 
@@ -242,7 +242,7 @@ def test_houses_at_date_line():
     # Test different house systems
     systems = ["Placidus", "Koch", "Whole Sign", "Equal", "Campanus"]
     for system in systems:
-        config = AstroConfig(house_system=system)
+        config = Config(house_system=system)
         chart.config = config
         houses = chart.calculate_houses()
         
@@ -276,7 +276,7 @@ def test_houses_at_dst_transition():
     # Test different house systems
     systems = ["Placidus", "Koch", "Whole Sign", "Equal", "Campanus"]
     for system in systems:
-        config = AstroConfig(house_system=system)
+        config = Config(house_system=system)
         
         # Spring forward
         spring_chart.config = config

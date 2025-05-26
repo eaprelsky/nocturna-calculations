@@ -14,7 +14,7 @@ from nocturna_calculations.core.constants import (
     SolarReturnType, LunarReturnType, ProgressionType,
     SolarArcDirection
 )
-from nocturna_calculations.core.config import AstroConfig
+from nocturna_calculations.core.config import Config
 
 def test_fixed_stars_calculation():
     """Test fixed stars calculation"""
