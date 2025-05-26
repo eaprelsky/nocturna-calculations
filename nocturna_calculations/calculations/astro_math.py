@@ -1,12 +1,11 @@
 """
-Utility functions for astronomical calculations
+Basic astronomical calculations
 """
 import math
 import swisseph as swe
-from typing import Tuple, List
 from datetime import datetime
-from .house_systems import get_house_system
-from ..core.constants import HouseSystem
+from typing import Tuple
+
 
 def calculate_julian_day(date_time: datetime) -> float:
     """
@@ -25,6 +24,7 @@ def calculate_julian_day(date_time: datetime) -> float:
         date_time.hour + date_time.minute/60.0 + date_time.second/3600.0,
         swe.SE_GREG_CAL
     )
+
 
 def calculate_sidereal_time(julian_day: float, longitude: float) -> float:
     """
@@ -45,6 +45,7 @@ def calculate_sidereal_time(julian_day: float, longitude: float) -> float:
     lst = (gmst_degrees + longitude) % 360
     return lst
 
+
 def calculate_obliquity(julian_day: float) -> float:
     """
     Calculate the obliquity of the ecliptic for a given Julian day.
@@ -56,6 +57,7 @@ def calculate_obliquity(julian_day: float) -> float:
         Obliquity in degrees
     """
     return swe.swe_get_planet_attr(swe.SE_ECL_NUT, julian_day)[0]
+
 
 def calculate_ascendant(lst: float, latitude: float, obliquity: float) -> float:
     """
@@ -88,6 +90,7 @@ def calculate_ascendant(lst: float, latitude: float, obliquity: float) -> float:
     ascendant = math.degrees(math.atan2(tan_asc, 1))
     return (ascendant + 360) % 360
 
+
 def calculate_mc(lst: float, obliquity: float) -> float:
     """
     Calculate the Midheaven (MC) using spherical trigonometry.
@@ -110,6 +113,7 @@ def calculate_mc(lst: float, obliquity: float) -> float:
     mc = math.degrees(math.atan2(tan_mc, 1))
     return (mc + 360) % 360
 
+
 def normalize_angle(angle: float) -> float:
     """
     Normalize an angle to the range [0, 360).
@@ -122,43 +126,6 @@ def normalize_angle(angle: float) -> float:
     """
     return angle % 360
 
-def calculate_house_cusps(
-    ascendant: float,
-    mc: float,
-    latitude: float,
-    obliquity: float,
-    house_system: str
-) -> List[float]:
-    """
-    Calculate house cusps for a given house system.
-    
-    Args:
-        ascendant: Ascendant in degrees
-        mc: Midheaven in degrees
-        latitude: Geographic latitude in degrees
-        obliquity: Obliquity of the ecliptic in degrees
-        house_system: House system identifier
-        
-    Returns:
-        List of 12 house cusps in degrees
-    """
-    # Map house system string to enum
-    system_map = {
-        'P': HouseSystem.PLACIDUS,
-        'K': HouseSystem.KOCH,
-        'E': HouseSystem.EQUAL,
-        'W': HouseSystem.WHOLE_SIGN,
-        'C': HouseSystem.CAMPANUS,
-        'R': HouseSystem.REGIOMONTANUS,
-        'M': HouseSystem.MERIDIAN,
-        'O': HouseSystem.MORINUS
-    }
-    
-    # Get the appropriate house system calculator
-    calculator = get_house_system(system_map[house_system])
-    
-    # Calculate house cusps using the OOP implementation
-    return calculator.calculate_cusps(latitude, 0.0, obliquity=obliquity)
 
 def calculate_nutation(julian_day: float) -> Tuple[float, float]:
     """

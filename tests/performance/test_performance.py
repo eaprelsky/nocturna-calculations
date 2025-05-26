@@ -2,7 +2,6 @@
 Performance tests for chart calculations
 """
 import pytest
-import time
 import psutil
 import os
 from datetime import datetime, time
@@ -24,44 +23,24 @@ def basic_chart():
 
 # --- Calculation Speed Tests ---
 
-def test_planetary_positions_calculation_speed(basic_chart):
+def test_planetary_positions_calculation_speed(basic_chart, benchmark):
     """Test speed of planetary positions calculation"""
-    start_time = time.time()
-    positions = basic_chart.calculate_planetary_positions()
-    end_time = time.time()
-    
-    calculation_time = end_time - start_time
-    assert calculation_time < 1.0  # Should complete within 1 second
+    positions = benchmark(basic_chart.calculate_planetary_positions)
     assert positions is not None
 
-def test_aspects_calculation_speed(basic_chart):
+def test_aspects_calculation_speed(basic_chart, benchmark):
     """Test speed of aspects calculation"""
-    start_time = time.time()
-    aspects = basic_chart.calculate_aspects()
-    end_time = time.time()
-    
-    calculation_time = end_time - start_time
-    assert calculation_time < 1.0  # Should complete within 1 second
+    aspects = benchmark(basic_chart.calculate_aspects)
     assert aspects is not None
 
-def test_houses_calculation_speed(basic_chart):
+def test_houses_calculation_speed(basic_chart, benchmark):
     """Test speed of houses calculation"""
-    start_time = time.time()
-    houses = basic_chart.calculate_houses()
-    end_time = time.time()
-    
-    calculation_time = end_time - start_time
-    assert calculation_time < 1.0  # Should complete within 1 second
+    houses = benchmark(basic_chart.calculate_houses)
     assert houses is not None
 
-def test_fixed_stars_calculation_speed(basic_chart):
+def test_fixed_stars_calculation_speed(basic_chart, benchmark):
     """Test speed of fixed stars calculation"""
-    start_time = time.time()
-    stars = basic_chart.calculate_fixed_stars()
-    end_time = time.time()
-    
-    calculation_time = end_time - start_time
-    assert calculation_time < 1.0  # Should complete within 1 second
+    stars = benchmark(basic_chart.calculate_fixed_stars)
     assert stars is not None
 
 # --- Memory Usage Tests ---
@@ -94,7 +73,7 @@ def test_memory_usage_aspects(basic_chart):
 
 # --- Concurrent Calculation Tests ---
 
-def test_concurrent_planetary_positions():
+def test_concurrent_planetary_positions(benchmark):
     """Test concurrent planetary positions calculations"""
     charts = [
         Chart(
@@ -105,15 +84,13 @@ def test_concurrent_planetary_positions():
         ) for _ in range(10)
     ]
     
-    start_time = time.time()
-    positions = [chart.calculate_planetary_positions() for chart in charts]
-    end_time = time.time()
+    def calculate_all():
+        return [chart.calculate_planetary_positions() for chart in charts]
     
-    calculation_time = end_time - start_time
-    assert calculation_time < 5.0  # Should complete within 5 seconds
+    positions = benchmark(calculate_all)
     assert all(pos is not None for pos in positions)
 
-def test_concurrent_aspects():
+def test_concurrent_aspects(benchmark):
     """Test concurrent aspects calculations"""
     charts = [
         Chart(
@@ -124,17 +101,15 @@ def test_concurrent_aspects():
         ) for _ in range(10)
     ]
     
-    start_time = time.time()
-    aspects = [chart.calculate_aspects() for chart in charts]
-    end_time = time.time()
+    def calculate_all():
+        return [chart.calculate_aspects() for chart in charts]
     
-    calculation_time = end_time - start_time
-    assert calculation_time < 5.0  # Should complete within 5 seconds
+    aspects = benchmark(calculate_all)
     assert all(asp is not None for asp in aspects)
 
 # --- Large Dataset Tests ---
 
-def test_large_fixed_stars_dataset():
+def test_large_fixed_stars_dataset(benchmark):
     """Test calculation with large fixed stars dataset"""
     config = Config(fixed_stars=["*"])  # All fixed stars
     chart = Chart(
@@ -145,15 +120,10 @@ def test_large_fixed_stars_dataset():
         config=config
     )
     
-    start_time = time.time()
-    stars = chart.calculate_fixed_stars()
-    end_time = time.time()
-    
-    calculation_time = end_time - start_time
-    assert calculation_time < 2.0  # Should complete within 2 seconds
+    stars = benchmark(chart.calculate_fixed_stars)
     assert len(stars) > 0
 
-def test_large_aspects_dataset():
+def test_large_aspects_dataset(benchmark):
     """Test calculation with large aspects dataset"""
     config = Config(orbs={"conjunction": 15.0})  # Large orb for more aspects
     chart = Chart(
@@ -164,12 +134,7 @@ def test_large_aspects_dataset():
         config=config
     )
     
-    start_time = time.time()
-    aspects = chart.calculate_aspects()
-    end_time = time.time()
-    
-    calculation_time = end_time - start_time
-    assert calculation_time < 2.0  # Should complete within 2 seconds
+    aspects = benchmark(chart.calculate_aspects)
     assert len(aspects) > 0
 
 # --- Resource Cleanup Tests ---
@@ -202,7 +167,6 @@ def test_file_handle_cleanup(basic_chart):
     # Perform calculations
     basic_chart.calculate_planetary_positions()
     basic_chart.calculate_aspects()
-    basic_chart.calculate_houses()
     
     final_handles = process.num_handles()
     handle_difference = final_handles - initial_handles

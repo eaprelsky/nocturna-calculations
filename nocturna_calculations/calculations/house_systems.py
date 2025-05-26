@@ -7,12 +7,11 @@ import math
 import swisseph as swe
 from ..core.constants import HouseSystem
 from datetime import datetime
-from nocturna_calculations.calculations.utils import (
+from .astro_math import (
     calculate_sidereal_time,
     calculate_obliquity,
     calculate_ascendant,
     calculate_mc,
-    calculate_house_cusps,
     normalize_angle
 )
 
@@ -95,8 +94,9 @@ class PlacidusHouseSystem(BaseHouseSystem):
         asc = calculate_ascendant(lst, self._latitude, self._obliquity)
         mc = calculate_mc(lst, self._obliquity)
         
-        # Calculate house cusps
-        return calculate_house_cusps(asc, mc, self._latitude, self._obliquity, 'P')
+        # Calculate house cusps using Swiss Ephemeris
+        cusps = swe.swe_houses(self._julian_day, 0, self._latitude, self._longitude, b'P')[0]
+        return list(cusps)
     
     def _calculate_ascendant(
         self,
@@ -115,30 +115,11 @@ class PlacidusHouseSystem(BaseHouseSystem):
         Returns:
             Ascendant in degrees
         """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
         
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate ascendant
-        # Formula: tan(A) = (cos(ε) * sin(LST)) / (cos(LST) * cos(φ) - sin(ε) * sin(φ))
-        # where A is ascendant, ε is obliquity, LST is local sidereal time, φ is latitude
-        numerator = math.cos(obl_rad) * math.sin(sidereal_time)
-        denominator = math.cos(sidereal_time) * math.cos(lat_rad) - math.sin(obl_rad) * math.sin(lat_rad)
-        
-        if abs(denominator) < 1e-10:
-            # Handle polar regions
-            if latitude > 0:
-                return 0.0  # North Pole
-            else:
-                return 180.0  # South Pole
-        
-        ascendant = math.degrees(math.atan2(numerator, denominator))
-        return (ascendant + 360.0) % 360.0
+        # Calculate ascendant using the utility function
+        return calculate_ascendant(lst, latitude, obliquity)
     
     def _calculate_mc(
         self,
@@ -157,23 +138,11 @@ class PlacidusHouseSystem(BaseHouseSystem):
         Returns:
             Midheaven in degrees
         """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
         
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate MC
-        # Formula: tan(MC) = tan(LST) / cos(ε)
-        # where MC is midheaven, LST is local sidereal time, ε is obliquity
-        mc = math.degrees(math.atan2(
-            math.tan(sidereal_time),
-            math.cos(obl_rad)
-        ))
-        return (mc + 360.0) % 360.0
+        # Calculate MC using the utility function
+        return calculate_mc(lst, obliquity)
 
 class KochHouseSystem(BaseHouseSystem):
     """Koch house system implementation"""
@@ -192,8 +161,9 @@ class KochHouseSystem(BaseHouseSystem):
         asc = calculate_ascendant(lst, self._latitude, self._obliquity)
         mc = calculate_mc(lst, self._obliquity)
         
-        # Calculate house cusps
-        return calculate_house_cusps(asc, mc, self._latitude, self._obliquity, 'K')
+        # Calculate house cusps using Swiss Ephemeris
+        cusps = swe.swe_houses(self._julian_day, 0, self._latitude, self._longitude, b'K')[0]
+        return list(cusps)
     
     def _calculate_ascendant(
         self,
@@ -212,30 +182,11 @@ class KochHouseSystem(BaseHouseSystem):
         Returns:
             Ascendant in degrees
         """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
         
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate ascendant
-        # Formula: tan(A) = (cos(ε) * sin(LST)) / (cos(LST) * cos(φ) - sin(ε) * sin(φ))
-        # where A is ascendant, ε is obliquity, LST is local sidereal time, φ is latitude
-        numerator = math.cos(obl_rad) * math.sin(sidereal_time)
-        denominator = math.cos(sidereal_time) * math.cos(lat_rad) - math.sin(obl_rad) * math.sin(lat_rad)
-        
-        if abs(denominator) < 1e-10:
-            # Handle polar regions
-            if latitude > 0:
-                return 0.0  # North Pole
-            else:
-                return 180.0  # South Pole
-        
-        ascendant = math.degrees(math.atan2(numerator, denominator))
-        return (ascendant + 360.0) % 360.0
+        # Calculate ascendant using the utility function
+        return calculate_ascendant(lst, latitude, obliquity)
     
     def _calculate_mc(
         self,
@@ -254,23 +205,11 @@ class KochHouseSystem(BaseHouseSystem):
         Returns:
             Midheaven in degrees
         """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
+        # Calculate sidereal time
+        lst = calculate_sidereal_time(self._julian_day, longitude)
         
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate MC
-        # Formula: tan(MC) = tan(LST) / cos(ε)
-        # where MC is midheaven, LST is local sidereal time, ε is obliquity
-        mc = math.degrees(math.atan2(
-            math.tan(sidereal_time),
-            math.cos(obl_rad)
-        ))
-        return (mc + 360.0) % 360.0
+        # Calculate MC using the utility function
+        return calculate_mc(lst, obliquity)
 
 class EqualHouseSystem(BaseHouseSystem):
     """Equal house system implementation"""
@@ -288,50 +227,13 @@ class EqualHouseSystem(BaseHouseSystem):
         # Calculate ascendant
         asc = calculate_ascendant(lst, self._latitude, self._obliquity)
         
-        # Calculate house cusps
-        return calculate_house_cusps(asc, 0, self._latitude, self._obliquity, 'E')
-    
-    def _calculate_ascendant(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Ascendant (1st house cusp)
+        # Calculate equal house cusps (each 30 degrees from ascendant)
+        cusps = []
+        for i in range(12):
+            cusp = (asc + i * 30) % 360
+            cusps.append(cusp)
         
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Ascendant in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate ascendant
-        # Formula: tan(A) = (cos(ε) * sin(LST)) / (cos(LST) * cos(φ) - sin(ε) * sin(φ))
-        # where A is ascendant, ε is obliquity, LST is local sidereal time, φ is latitude
-        numerator = math.cos(obl_rad) * math.sin(sidereal_time)
-        denominator = math.cos(sidereal_time) * math.cos(lat_rad) - math.sin(obl_rad) * math.sin(lat_rad)
-        
-        if abs(denominator) < 1e-10:
-            # Handle polar regions
-            if latitude > 0:
-                return 0.0  # North Pole
-            else:
-                return 180.0  # South Pole
-        
-        ascendant = math.degrees(math.atan2(numerator, denominator))
-        return (ascendant + 360.0) % 360.0
+        return cusps
 
 class WholeSignHouseSystem(BaseHouseSystem):
     """Whole sign house system implementation"""
@@ -342,452 +244,27 @@ class WholeSignHouseSystem(BaseHouseSystem):
         self.system = HouseSystem.WHOLE_SIGN
     
     def _calculate_house_cusps(self) -> List[float]:
-        """Calculate house cusps using the Whole sign house system"""
+        """Calculate house cusps using the Whole sign system"""
         # Calculate LST and obliquity
         lst = calculate_sidereal_time(self._julian_day, self._longitude)
         
         # Calculate ascendant
         asc = calculate_ascendant(lst, self._latitude, self._obliquity)
         
-        # Calculate house cusps
-        return calculate_house_cusps(asc, 0, self._latitude, self._obliquity, 'W')
-    
-    def _calculate_ascendant(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Ascendant (1st house cusp)
+        # Calculate whole sign cusps (each 30 degrees from 0 Aries)
+        cusps = []
+        for i in range(12):
+            cusp = i * 30
+            cusps.append(cusp)
         
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Ascendant in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate ascendant
-        # Formula: tan(A) = (cos(ε) * sin(LST)) / (cos(LST) * cos(φ) - sin(ε) * sin(φ))
-        # where A is ascendant, ε is obliquity, LST is local sidereal time, φ is latitude
-        numerator = math.cos(obl_rad) * math.sin(sidereal_time)
-        denominator = math.cos(sidereal_time) * math.cos(lat_rad) - math.sin(obl_rad) * math.sin(lat_rad)
-        
-        if abs(denominator) < 1e-10:
-            # Handle polar regions
-            if latitude > 0:
-                return 0.0  # North Pole
-            else:
-                return 180.0  # South Pole
-        
-        ascendant = math.degrees(math.atan2(numerator, denominator))
-        return (ascendant + 360.0) % 360.0
-
-class CampanusHouseSystem(BaseHouseSystem):
-    """Campanus house system implementation"""
-    
-    def __init__(self):
-        """Initialize Campanus house system calculator"""
-        super().__init__()
-        self.system = HouseSystem.CAMPANUS
-    
-    def _calculate_house_cusps(self) -> List[float]:
-        """Calculate house cusps using the Campanus system"""
-        # Calculate LST and obliquity
-        lst = calculate_sidereal_time(self._julian_day, self._longitude)
-        
-        # Calculate ascendant and MC
-        asc = calculate_ascendant(lst, self._latitude, self._obliquity)
-        mc = calculate_mc(lst, self._obliquity)
-        
-        # Calculate house cusps
-        return calculate_house_cusps(asc, mc, self._latitude, self._obliquity, 'C')
-    
-    def _calculate_ascendant(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Ascendant (1st house cusp)
-        
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Ascendant in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate ascendant
-        # Formula: tan(A) = (cos(ε) * sin(LST)) / (cos(LST) * cos(φ) - sin(ε) * sin(φ))
-        # where A is ascendant, ε is obliquity, LST is local sidereal time, φ is latitude
-        numerator = math.cos(obl_rad) * math.sin(sidereal_time)
-        denominator = math.cos(sidereal_time) * math.cos(lat_rad) - math.sin(obl_rad) * math.sin(lat_rad)
-        
-        if abs(denominator) < 1e-10:
-            # Handle polar regions
-            if latitude > 0:
-                return 0.0  # North Pole
-            else:
-                return 180.0  # South Pole
-        
-        ascendant = math.degrees(math.atan2(numerator, denominator))
-        return (ascendant + 360.0) % 360.0
-    
-    def _calculate_mc(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Midheaven (10th house cusp)
-        
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Midheaven in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate MC
-        # Formula: tan(MC) = tan(LST) / cos(ε)
-        # where MC is midheaven, LST is local sidereal time, ε is obliquity
-        mc = math.degrees(math.atan2(
-            math.tan(sidereal_time),
-            math.cos(obl_rad)
-        ))
-        return (mc + 360.0) % 360.0
-
-class RegiomontanusHouseSystem(BaseHouseSystem):
-    """Regiomontanus house system implementation"""
-    
-    def __init__(self):
-        """Initialize Regiomontanus house system calculator"""
-        super().__init__()
-        self.system = HouseSystem.REGIOMONTANUS
-    
-    def _calculate_house_cusps(self) -> List[float]:
-        """Calculate house cusps using the Regiomontanus system"""
-        # Calculate LST and obliquity
-        lst = calculate_sidereal_time(self._julian_day, self._longitude)
-        
-        # Calculate ascendant and MC
-        asc = calculate_ascendant(lst, self._latitude, self._obliquity)
-        mc = calculate_mc(lst, self._obliquity)
-        
-        # Calculate house cusps
-        return calculate_house_cusps(asc, mc, self._latitude, self._obliquity, 'R')
-    
-    def _calculate_ascendant(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Ascendant (1st house cusp)
-        
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Ascendant in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate ascendant
-        # Formula: tan(A) = (cos(ε) * sin(LST)) / (cos(LST) * cos(φ) - sin(ε) * sin(φ))
-        # where A is ascendant, ε is obliquity, LST is local sidereal time, φ is latitude
-        numerator = math.cos(obl_rad) * math.sin(sidereal_time)
-        denominator = math.cos(sidereal_time) * math.cos(lat_rad) - math.sin(obl_rad) * math.sin(lat_rad)
-        
-        if abs(denominator) < 1e-10:
-            # Handle polar regions
-            if latitude > 0:
-                return 0.0  # North Pole
-            else:
-                return 180.0  # South Pole
-        
-        ascendant = math.degrees(math.atan2(numerator, denominator))
-        return (ascendant + 360.0) % 360.0
-    
-    def _calculate_mc(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Midheaven (10th house cusp)
-        
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Midheaven in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate MC
-        # Formula: tan(MC) = tan(LST) / cos(ε)
-        # where MC is midheaven, LST is local sidereal time, ε is obliquity
-        mc = math.degrees(math.atan2(
-            math.tan(sidereal_time),
-            math.cos(obl_rad)
-        ))
-        return (mc + 360.0) % 360.0
-
-class MeridianHouseSystem(BaseHouseSystem):
-    """Meridian house system implementation"""
-    
-    def __init__(self):
-        """Initialize Meridian house system calculator"""
-        super().__init__()
-        self.system = HouseSystem.MERIDIAN
-    
-    def _calculate_house_cusps(self) -> List[float]:
-        """Calculate house cusps using the Meridian system"""
-        # Calculate LST and obliquity
-        lst = calculate_sidereal_time(self._julian_day, self._longitude)
-        
-        # Calculate ascendant and MC
-        asc = calculate_ascendant(lst, self._latitude, self._obliquity)
-        mc = calculate_mc(lst, self._obliquity)
-        
-        # Calculate house cusps
-        return calculate_house_cusps(asc, mc, self._latitude, self._obliquity, 'M')
-    
-    def _calculate_ascendant(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Ascendant (1st house cusp)
-        
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Ascendant in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate ascendant
-        # Formula: tan(A) = (cos(ε) * sin(LST)) / (cos(LST) * cos(φ) - sin(ε) * sin(φ))
-        # where A is ascendant, ε is obliquity, LST is local sidereal time, φ is latitude
-        numerator = math.cos(obl_rad) * math.sin(sidereal_time)
-        denominator = math.cos(sidereal_time) * math.cos(lat_rad) - math.sin(obl_rad) * math.sin(lat_rad)
-        
-        if abs(denominator) < 1e-10:
-            # Handle polar regions
-            if latitude > 0:
-                return 0.0  # North Pole
-            else:
-                return 180.0  # South Pole
-        
-        ascendant = math.degrees(math.atan2(numerator, denominator))
-        return (ascendant + 360.0) % 360.0
-    
-    def _calculate_mc(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Midheaven (10th house cusp)
-        
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Midheaven in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate MC
-        # Formula: tan(MC) = tan(LST) / cos(ε)
-        # where MC is midheaven, LST is local sidereal time, ε is obliquity
-        mc = math.degrees(math.atan2(
-            math.tan(sidereal_time),
-            math.cos(obl_rad)
-        ))
-        return (mc + 360.0) % 360.0
-
-class MorinusHouseSystem(BaseHouseSystem):
-    """Morinus house system implementation"""
-    
-    def __init__(self):
-        """Initialize Morinus house system calculator"""
-        super().__init__()
-        self.system = HouseSystem.MORINUS
-    
-    def _calculate_house_cusps(self) -> List[float]:
-        """Calculate house cusps using the Morinus system"""
-        # Calculate LST and obliquity
-        lst = calculate_sidereal_time(self._julian_day, self._longitude)
-        
-        # Calculate ascendant and MC
-        asc = calculate_ascendant(lst, self._latitude, self._obliquity)
-        mc = calculate_mc(lst, self._obliquity)
-        
-        # Calculate house cusps
-        return calculate_house_cusps(asc, mc, self._latitude, self._obliquity, 'O')
-    
-    def _calculate_ascendant(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Ascendant (1st house cusp)
-        
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Ascendant in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate ascendant
-        # Formula: tan(A) = (cos(ε) * sin(LST)) / (cos(LST) * cos(φ) - sin(ε) * sin(φ))
-        # where A is ascendant, ε is obliquity, LST is local sidereal time, φ is latitude
-        numerator = math.cos(obl_rad) * math.sin(sidereal_time)
-        denominator = math.cos(sidereal_time) * math.cos(lat_rad) - math.sin(obl_rad) * math.sin(lat_rad)
-        
-        if abs(denominator) < 1e-10:
-            # Handle polar regions
-            if latitude > 0:
-                return 0.0  # North Pole
-            else:
-                return 180.0  # South Pole
-        
-        ascendant = math.degrees(math.atan2(numerator, denominator))
-        return (ascendant + 360.0) % 360.0
-    
-    def _calculate_mc(
-        self,
-        latitude: float,
-        longitude: float,
-        obliquity: float
-    ) -> float:
-        """
-        Calculate the Midheaven (10th house cusp)
-        
-        Args:
-            latitude: Geographic latitude in degrees
-            longitude: Geographic longitude in degrees
-            obliquity: Obliquity of the ecliptic in degrees
-            
-        Returns:
-            Midheaven in degrees
-        """
-        # Convert to radians
-        lat_rad = math.radians(latitude)
-        long_rad = math.radians(longitude)
-        obl_rad = math.radians(obliquity)
-        
-        # Calculate sidereal time (simplified)
-        # TODO: Implement proper sidereal time calculation
-        sidereal_time = 0.0
-        
-        # Calculate MC
-        # Formula: tan(MC) = tan(LST) / cos(ε)
-        # where MC is midheaven, LST is local sidereal time, ε is obliquity
-        mc = math.degrees(math.atan2(
-            math.tan(sidereal_time),
-            math.cos(obl_rad)
-        ))
-        return (mc + 360.0) % 360.0
+        return cusps
 
 def get_house_system(system_type: HouseSystem) -> BaseHouseSystem:
     """
-    Factory function to get a house system calculator.
+    Get the appropriate house system calculator
     
     Args:
-        system_type: Type of house system to create
+        system_type: Type of house system to use
         
     Returns:
         House system calculator instance
@@ -796,14 +273,10 @@ def get_house_system(system_type: HouseSystem) -> BaseHouseSystem:
         HouseSystem.PLACIDUS: PlacidusHouseSystem,
         HouseSystem.KOCH: KochHouseSystem,
         HouseSystem.EQUAL: EqualHouseSystem,
-        HouseSystem.WHOLE_SIGN: WholeSignHouseSystem,
-        HouseSystem.CAMPANUS: CampanusHouseSystem,
-        HouseSystem.REGIOMONTANUS: RegiomontanusHouseSystem,
-        HouseSystem.MERIDIAN: MeridianHouseSystem,
-        HouseSystem.MORINUS: MorinusHouseSystem
+        HouseSystem.WHOLE_SIGN: WholeSignHouseSystem
     }
     
     if system_type not in systems:
-        raise ValueError(f"Unknown house system: {system_type}")
+        raise ValueError(f"Unsupported house system: {system_type}")
     
     return systems[system_type]() 
