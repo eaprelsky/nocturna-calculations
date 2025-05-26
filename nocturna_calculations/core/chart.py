@@ -13,7 +13,8 @@ from .constants import (
     Harmonic, Midpoint, MidpointStructure,
     Antiscia, AntisciaType, Declination, DeclinationType,
     Planet, HouseSystem, AspectType, Aspect,
-    SolarReturnType
+    SolarReturnType, LunarReturnType, ProgressionType,
+    SolarArcDirection
 )
 
 class Chart(BaseModel):
@@ -394,4 +395,203 @@ class Chart(BaseModel):
             return_type,
             target_year,
             house_system
+        )
+    
+    def calculate_lunar_return(
+        self,
+        return_type: LunarReturnType = LunarReturnType.NEXT,
+        target_month: Optional[datetime] = None,
+        house_system: HouseSystem = HouseSystem.PLACIDUS
+    ) -> Dict:
+        """
+        Calculate lunar return chart
+        
+        Args:
+            return_type: Type of lunar return to calculate
+            target_month: Target month for specific lunar return
+            house_system: House system to use
+            
+        Returns:
+            Dictionary containing:
+            - return_time: Exact time of lunar return
+            - julian_day: Julian day of return
+            - planets: Dictionary of planet positions
+            - houses: Dictionary of house cusps
+            - angles: Dictionary of angle positions
+        """
+        return self._adapter.calculate_lunar_return(
+            self.date,
+            self.latitude,
+            self.longitude,
+            return_type,
+            target_month,
+            house_system
+        )
+        
+    def calculate_progressed_chart(
+        self,
+        target_date: datetime,
+        progression_type: ProgressionType = ProgressionType.SECONDARY,
+        house_system: HouseSystem = HouseSystem.PLACIDUS
+    ) -> Dict:
+        """
+        Calculate progressed chart
+        
+        Args:
+            target_date: Target date to calculate progression for
+            progression_type: Type of progression to use
+            house_system: House system to use
+            
+        Returns:
+            Dictionary containing:
+            - progressed_date: Progressed date and time
+            - julian_day: Julian day of progressed date
+            - planets: Dictionary of progressed planet positions
+            - houses: Dictionary of progressed house cusps
+            - angles: Dictionary of progressed angle positions
+            - solar_arc: Solar arc in degrees (for solar arc progression)
+        """
+        return self._adapter.calculate_progressed_chart(
+            self.date,
+            self.latitude,
+            self.longitude,
+            target_date,
+            progression_type,
+            house_system
+        )
+        
+    def calculate_harmonic_chart(
+        self,
+        harmonic: Union[int, Harmonic],
+        house_system: HouseSystem = HouseSystem.PLACIDUS,
+        orb: float = 1.0
+    ) -> Dict:
+        """
+        Calculate harmonic chart
+        
+        Args:
+            harmonic: Harmonic number (1-12) or Harmonic enum value
+            house_system: House system to use
+            orb: Orb for aspects in degrees (default: 1.0)
+            
+        Returns:
+            Dictionary containing:
+            - harmonic: Harmonic number used
+            - planets: Dictionary of harmonic planet positions
+            - houses: Dictionary of harmonic house cusps
+            - angles: Dictionary of harmonic angle positions
+            - aspects: List of harmonic aspects between planets
+        """
+        return self._adapter.calculate_harmonic_chart(
+            self._julian_day,
+            self.latitude,
+            self.longitude,
+            harmonic,
+            house_system,
+            orb
+        )
+    
+    def calculate_composite_chart(
+        self,
+        other_chart: 'Chart',
+        orb: float = 1.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate composite chart with another chart
+        
+        Args:
+            other_chart: Another Chart instance to calculate composite with
+            orb: Orb for aspects in degrees (default: 1.0)
+            
+        Returns:
+            Dictionary containing:
+            - planets: Dictionary of composite planet positions
+            - houses: Dictionary of composite house cusps
+            - angles: Dictionary of composite angle positions
+            - aspects: List of aspects between composite positions
+        """
+        # Get data from both charts
+        chart1_data = {
+            'planets': self.calculate_planetary_positions(),
+            'houses': self.calculate_houses()
+        }
+        
+        chart2_data = {
+            'planets': other_chart.calculate_planetary_positions(),
+            'houses': other_chart.calculate_houses()
+        }
+        
+        # Calculate composite chart
+        return self._adapter.calculate_composite_chart(
+            chart1_data,
+            chart2_data,
+            orb
+        )
+    
+    def calculate_synastry_chart(
+        self,
+        other_chart: 'Chart',
+        orb: float = 1.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate synastry chart with another chart
+        
+        Args:
+            other_chart: Another Chart instance
+            orb: Orb for aspect calculations in degrees (default: 1.0)
+            
+        Returns:
+            Dictionary containing:
+            - aspects: List of aspects between charts with their strengths
+            - total_strength: Overall synastry strength (0-1)
+            - planet_aspects: Dictionary of aspects per planet
+            - house_aspects: Dictionary of aspects per house
+        """
+        # Get data from both charts
+        chart1_data = {
+            'planets': self.calculate_planetary_positions(),
+            'houses': self.calculate_houses()
+        }
+        chart2_data = {
+            'planets': other_chart.calculate_planetary_positions(),
+            'houses': other_chart.calculate_houses()
+        }
+        
+        # Calculate synastry chart
+        return self._adapter.calculate_synastry_chart(
+            chart1_data,
+            chart2_data,
+            orb
+        )
+    
+    def calculate_solar_arc_directions(
+        self,
+        target_date: datetime,
+        direction_type: int = SolarArcDirection.DIRECT,
+        orb: float = 1.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate solar arc directions for given target date
+        
+        Args:
+            target_date: Target date for direction
+            direction_type: Type of direction (DIRECT/CONVERSE)
+            orb: Orb for aspects in degrees (default: 1.0)
+            
+        Returns:
+            Dictionary containing:
+            - solar_arc: Solar arc in degrees
+            - directed_planets: Dictionary of directed planet positions
+            - directed_houses: Dictionary of directed house cusps
+            - directed_angles: Dictionary of directed angle positions
+            - aspects: List of aspects between directed and natal positions
+            - total_strength: Overall direction strength (0-1)
+        """
+        return self._adapter.calculate_solar_arc_directions(
+            self.date,
+            self.latitude,
+            self.longitude,
+            target_date,
+            direction_type,
+            orb
         ) 

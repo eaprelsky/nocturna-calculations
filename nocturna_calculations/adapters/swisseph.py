@@ -12,7 +12,9 @@ from ..core.constants import (
     CoordinateSystem, FixedStar, Asteroid, LunarNode, 
     ArabicPart, Harmonic, Midpoint, MidpointStructure,
     Antiscia, AntisciaType, Declination, DeclinationType,
-    Planet, HouseSystem, AspectType, SolarReturnType, SolarReturn
+    Planet, HouseSystem, AspectType, SolarReturnType, SolarReturn,
+    LunarReturnType, LunarReturn, ProgressionType, ProgressedChart,
+    SolarArcDirection
 )
 
 class SwissEphAdapter:
@@ -659,3 +661,582 @@ class SwissEphAdapter:
         )
         
         # Calculate angles
+        angles = self.calculate_angles(
+            return_jd,
+            birth_latitude,
+            birth_longitude
+        )
+        
+        return {
+            "return_time": return_time,
+            "julian_day": return_jd,
+            "planets": planets,
+            "houses": houses,
+            "angles": angles
+        }
+    
+    def calculate_lunar_return(
+        self,
+        birth_date: datetime,
+        birth_latitude: float,
+        birth_longitude: float,
+        return_type: LunarReturnType = LunarReturnType.NEXT,
+        target_month: Optional[Tuple[int, int]] = None,
+        house_system: HouseSystem = HouseSystem.PLACIDUS
+    ) -> Dict:
+        """
+        Calculate lunar return chart
+        
+        Args:
+            birth_date: Birth date and time
+            birth_latitude: Birth latitude in degrees
+            birth_longitude: Birth longitude in degrees
+            return_type: Type of lunar return to calculate
+            target_month: Target month for specific return (required for SPECIFIC type)
+            house_system: House system to use
+            
+        Returns:
+            Dictionary containing:
+            - return_time: Exact time of lunar return
+            - julian_day: Julian day of return
+            - planets: Dictionary of planet positions
+            - houses: Dictionary of house cusps
+            - angles: Dictionary of angle positions
+        """
+        # Calculate exact return time
+        return_time, return_jd = LunarReturn.calculate_return_time(
+            birth_date,
+            birth_latitude,
+            birth_longitude,
+            return_type,
+            target_month
+        )
+        
+        # Calculate planetary positions
+        planets = self.calculate_planetary_positions(return_jd, swe.calc_ut(return_jd, swe.SUN, swe.SEFLG_SWIEPH)[0:])
+        
+        # Calculate house cusps
+        houses = self.calculate_houses(
+            return_jd,
+            birth_latitude,
+            birth_longitude
+        )
+        
+        # Calculate angles
+        angles = self.calculate_angles(
+            return_jd,
+            birth_latitude,
+            birth_longitude
+        )
+        
+        return {
+            "return_time": return_time,
+            "julian_day": return_jd,
+            "planets": planets,
+            "houses": houses,
+            "angles": angles
+        }
+    
+    def calculate_progressed_chart(
+        self,
+        birth_date: datetime,
+        birth_latitude: float,
+        birth_longitude: float,
+        target_date: datetime,
+        progression_type: ProgressionType = ProgressionType.SECONDARY,
+        house_system: HouseSystem = HouseSystem.PLACIDUS
+    ) -> Dict:
+        """
+        Calculate progressed chart
+        
+        Args:
+            birth_date: Birth date and time
+            birth_latitude: Birth latitude in degrees
+            birth_longitude: Birth longitude in degrees
+            target_date: Target date to calculate progression for
+            progression_type: Type of progression to use
+            house_system: House system to use
+            
+        Returns:
+            Dictionary containing:
+            - progressed_date: Progressed date and time
+            - julian_day: Julian day of progressed date
+            - planets: Dictionary of progressed planet positions
+            - houses: Dictionary of progressed house cusps
+            - angles: Dictionary of progressed angle positions
+            - solar_arc: Solar arc in degrees (for solar arc progression)
+        """
+        # Calculate progressed date
+        progressed_date = ProgressedChart.calculate_progressed_date(
+            birth_date,
+            target_date,
+            progression_type
+        )
+        
+        # Convert progressed date to Julian day
+        progressed_jd = swe.julday(
+            progressed_date.year,
+            progressed_date.month,
+            progressed_date.day,
+            progressed_date.hour + progressed_date.minute/60.0 + progressed_date.second/3600.0
+        )
+        
+        # Calculate planetary positions
+        planets = self.calculate_planetary_positions(progressed_jd, swe.calc_ut(progressed_jd, swe.SUN, swe.SEFLG_SWIEPH)[0:])
+        
+        # Calculate house cusps
+        houses = self.calculate_houses(
+            progressed_jd,
+            birth_latitude,
+            birth_longitude
+        )
+        
+        # Calculate angles
+        angles = self.calculate_angles(
+            progressed_jd,
+            birth_latitude,
+            birth_longitude
+        )
+        
+        # Calculate solar arc if needed
+        solar_arc = None
+        if progression_type == ProgressionType.SOLAR_ARC:
+            # Get birth Sun position
+            birth_jd = swe.julday(
+                birth_date.year,
+                birth_date.month,
+                birth_date.day,
+                birth_date.hour + birth_date.minute/60.0 + birth_date.second/3600.0
+            )
+            birth_sun = swe.calc_ut(birth_jd, swe.SUN, swe.SEFLG_SWIEPH)
+            birth_sun_pos = birth_sun[0]
+            
+            # Get progressed Sun position
+            progressed_sun = swe.calc_ut(progressed_jd, swe.SUN, swe.SEFLG_SWIEPH)
+            progressed_sun_pos = progressed_sun[0]
+            
+            # Calculate solar arc
+            solar_arc = ProgressedChart.calculate_solar_arc(
+                birth_date,
+                target_date,
+                birth_sun_pos,
+                progressed_sun_pos
+            )
+            
+            # Adjust positions by solar arc
+            for planet in planets.values():
+                planet['longitude'] = ProgressedChart.calculate_progressed_position(
+                    planet['longitude'],
+                    solar_arc,
+                    progression_type
+                )
+            
+            for house in houses['cusps']:
+                house = ProgressedChart.calculate_progressed_position(
+                    house,
+                    solar_arc,
+                    progression_type
+                )
+            
+            for angle in angles.values():
+                angle = ProgressedChart.calculate_progressed_position(
+                    angle,
+                    solar_arc,
+                    progression_type
+                )
+        
+        return {
+            "progressed_date": progressed_date,
+            "julian_day": progressed_jd,
+            "planets": planets,
+            "houses": houses,
+            "angles": angles,
+            "solar_arc": solar_arc
+        }
+        
+    def calculate_harmonic_chart(
+        self,
+        julian_day: float,
+        latitude: float,
+        longitude: float,
+        harmonic: Union[int, Harmonic],
+        house_system: HouseSystem = HouseSystem.PLACIDUS,
+        orb: float = 1.0
+    ) -> Dict:
+        """
+        Calculate harmonic chart
+        
+        Args:
+            julian_day: Julian day for calculations
+            latitude: Geographic latitude in degrees
+            longitude: Geographic longitude in degrees
+            harmonic: Harmonic number (1-12) or Harmonic enum value
+            house_system: House system to use
+            orb: Orb for aspects in degrees (default: 1.0)
+            
+        Returns:
+            Dictionary containing:
+            - harmonic: Harmonic number used
+            - planets: Dictionary of harmonic planet positions
+            - houses: Dictionary of harmonic house cusps
+            - angles: Dictionary of harmonic angle positions
+            - aspects: List of harmonic aspects between planets
+        """
+        # Convert harmonic to integer if enum
+        if isinstance(harmonic, Harmonic):
+            harmonic = harmonic.value
+        
+        # Calculate planetary positions
+        planets = self.calculate_planetary_positions(julian_day, swe.calc_ut(julian_day, swe.SUN, swe.SEFLG_SWIEPH)[0:])
+        
+        # Calculate house cusps
+        houses = self.calculate_houses(julian_day, latitude, longitude)
+        
+        # Calculate angles
+        angles = self.calculate_angles(julian_day, latitude, longitude)
+        
+        # Calculate harmonic positions
+        harmonic_planets = {}
+        for name, pos in planets.items():
+            harmonic_lon, harmonic_lat, harmonic_dist = HarmonicChart.calculate_harmonic_position(
+                pos['longitude'],
+                pos['latitude'],
+                pos['distance'],
+                harmonic
+            )
+            
+            harmonic_planets[name] = {
+                'longitude': harmonic_lon,
+                'latitude': harmonic_lat,
+                'distance': harmonic_dist,
+                'speed_long': pos['speed_long'] * harmonic,
+                'speed_lat': pos['speed_lat'] * harmonic,
+                'speed_dist': pos['speed_dist'] * harmonic,
+                'harmonic': harmonic
+            }
+        
+        # Calculate harmonic house cusps
+        harmonic_houses = {
+            'cusps': [HarmonicChart.calculate_harmonic_position(cusp, 0, 1, harmonic)[0] for cusp in houses['cusps']],
+            'angles': [HarmonicChart.calculate_harmonic_position(angle, 0, 1, harmonic)[0] for angle in houses['angles']],
+            'system': houses['system']
+        }
+        
+        # Calculate harmonic angles
+        harmonic_angles = {
+            name: HarmonicChart.calculate_harmonic_position(angle, 0, 1, harmonic)[0]
+            for name, angle in angles.items()
+        }
+        
+        # Calculate harmonic aspects
+        aspects = []
+        planet_names = list(harmonic_planets.keys())
+        
+        for i, name1 in enumerate(planet_names):
+            for name2 in planet_names[i+1:]:
+                pos1 = harmonic_planets[name1]
+                pos2 = harmonic_planets[name2]
+                
+                # Calculate harmonic aspect
+                aspect = HarmonicChart.calculate_harmonic_aspect(
+                    (pos1['longitude'], pos1['latitude'], pos1['distance']),
+                    (pos2['longitude'], pos2['latitude'], pos2['distance']),
+                    harmonic,
+                    orb
+                )
+                
+                if aspect:
+                    aspects.append({
+                        'planet1': name1,
+                        'planet2': name2,
+                        'aspect': aspect,
+                        'orb': abs(pos1['longitude'] - pos2['longitude']) % 360,
+                        'harmonic': harmonic
+                    })
+        
+        return {
+            "harmonic": harmonic,
+            "planets": harmonic_planets,
+            "houses": harmonic_houses,
+            "angles": harmonic_angles,
+            "aspects": aspects
+        }
+
+    def calculate_composite_chart(
+        self,
+        chart1_data: Dict[str, Any],
+        chart2_data: Dict[str, Any],
+        orb: float = 1.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate composite chart from two charts
+        
+        Args:
+            chart1_data: First chart data containing planets, houses, and angles
+            chart2_data: Second chart data containing planets, houses, and angles
+            orb: Orb for aspects in degrees (default: 1.0)
+            
+        Returns:
+            Dictionary containing:
+            - planets: Dictionary of composite planet positions
+            - houses: Dictionary of composite house cusps
+            - angles: Dictionary of composite angle positions
+            - aspects: List of aspects between composite positions
+        """
+        # Calculate composite planetary positions
+        composite_planets = {}
+        for name in chart1_data['planets'].keys():
+            if name in chart2_data['planets']:
+                pos1 = chart1_data['planets'][name]
+                pos2 = chart2_data['planets'][name]
+                
+                # Calculate composite position
+                composite_lon, composite_lat, composite_dist = CompositeChart.calculate_composite_position(
+                    (pos1['longitude'], pos1['latitude'], pos1['distance']),
+                    (pos2['longitude'], pos2['latitude'], pos2['distance'])
+                )
+                
+                # Calculate composite speeds
+                composite_speed_long = (pos1['speed_long'] + pos2['speed_long']) / 2
+                composite_speed_lat = (pos1['speed_lat'] + pos2['speed_lat']) / 2
+                composite_speed_dist = (pos1['speed_dist'] + pos2['speed_dist']) / 2
+                
+                composite_planets[name] = {
+                    'longitude': composite_lon,
+                    'latitude': composite_lat,
+                    'distance': composite_dist,
+                    'speed_long': composite_speed_long,
+                    'speed_lat': composite_speed_lat,
+                    'speed_dist': composite_speed_dist
+                }
+        
+        # Calculate composite house cusps
+        composite_houses = {
+            'cusps': [],
+            'angles': [],
+            'system': chart1_data['houses']['system']
+        }
+        
+        # Calculate composite cusps
+        for i in range(len(chart1_data['houses']['cusps'])):
+            cusp1 = chart1_data['houses']['cusps'][i]
+            cusp2 = chart2_data['houses']['cusps'][i]
+            composite_cusp = CompositeChart.calculate_composite_position(
+                (cusp1, 0, 1),
+                (cusp2, 0, 1)
+            )[0]
+            composite_houses['cusps'].append(composite_cusp)
+        
+        # Calculate composite angles
+        for i in range(len(chart1_data['houses']['angles'])):
+            angle1 = chart1_data['houses']['angles'][i]
+            angle2 = chart2_data['houses']['angles'][i]
+            composite_angle = CompositeChart.calculate_composite_position(
+                (angle1, 0, 1),
+                (angle2, 0, 1)
+            )[0]
+            composite_houses['angles'].append(composite_angle)
+        
+        # Calculate composite aspects
+        aspects = []
+        planet_names = list(composite_planets.keys())
+        
+        for i, name1 in enumerate(planet_names):
+            for name2 in planet_names[i+1:]:
+                pos1 = composite_planets[name1]
+                pos2 = composite_planets[name2]
+                
+                # Calculate composite aspect
+                aspect = CompositeChart.calculate_composite_aspect(
+                    (pos1['longitude'], pos1['latitude'], pos1['distance']),
+                    (pos2['longitude'], pos2['latitude'], pos2['distance']),
+                    orb
+                )
+                
+                if aspect:
+                    aspects.append({
+                        'planet1': name1,
+                        'planet2': name2,
+                        'aspect': aspect,
+                        'orb': abs(pos1['longitude'] - pos2['longitude']) % 360
+                    })
+        
+        return {
+            "planets": composite_planets,
+            "houses": composite_houses,
+            "aspects": aspects
+        }
+
+    def calculate_solar_arc_directions(
+        self,
+        birth_date: datetime,
+        birth_latitude: float,
+        birth_longitude: float,
+        target_date: datetime,
+        direction_type: int = SolarArcDirection.DIRECT,
+        orb: float = 1.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate solar arc directions for given dates
+        
+        Args:
+            birth_date: Birth date and time
+            birth_latitude: Birth latitude in degrees
+            birth_longitude: Birth longitude in degrees
+            target_date: Target date for direction
+            direction_type: Type of direction (DIRECT/CONVERSE)
+            orb: Orb for aspects in degrees (default: 1.0)
+            
+        Returns:
+            Dictionary containing:
+            - solar_arc: Solar arc in degrees
+            - directed_planets: Dictionary of directed planet positions
+            - directed_houses: Dictionary of directed house cusps
+            - directed_angles: Dictionary of directed angle positions
+            - aspects: List of aspects between directed and natal positions
+            - total_strength: Overall direction strength (0-1)
+        """
+        import swisseph as swe
+        
+        # Calculate Julian days
+        birth_jd = swe.julday(
+            birth_date.year,
+            birth_date.month,
+            birth_date.day,
+            birth_date.hour + birth_date.minute/60.0 + birth_date.second/3600.0
+        )
+        target_jd = swe.julday(
+            target_date.year,
+            target_date.month,
+            target_date.day,
+            target_date.hour + target_date.minute/60.0 + target_date.second/3600.0
+        )
+        
+        # Get Sun positions
+        birth_sun = swe.calc_ut(birth_jd, swe.SUN, swe.SEFLG_SWIEPH)
+        target_sun = swe.calc_ut(target_jd, swe.SUN, swe.SEFLG_SWIEPH)
+        
+        # Calculate solar arc
+        solar_arc = SolarArcDirection.calculate_solar_arc(
+            birth_date,
+            target_date,
+            birth_sun[0],
+            target_sun[0]
+        )
+        
+        # Get natal positions
+        natal_planets = self.calculate_planetary_positions(birth_jd)
+        natal_houses = self.calculate_houses(birth_jd, birth_latitude, birth_longitude)
+        
+        # Calculate directed positions
+        directed_planets = {}
+        for name, pos in natal_planets.items():
+            directed_pos = SolarArcDirection.calculate_directed_position(
+                pos['longitude'],
+                solar_arc,
+                direction_type
+            )
+            directed_planets[name] = {
+                'longitude': directed_pos,
+                'latitude': pos['latitude'],
+                'distance': pos['distance'],
+                'speed_long': pos['speed_long'],
+                'speed_lat': pos['speed_lat'],
+                'speed_dist': pos['speed_dist']
+            }
+        
+        # Calculate directed house cusps
+        directed_houses = {
+            'cusps': [],
+            'angles': [],
+            'system': natal_houses['system']
+        }
+        
+        for cusp in natal_houses['cusps']:
+            directed_cusp = SolarArcDirection.calculate_directed_position(
+                cusp,
+                solar_arc,
+                direction_type
+            )
+            directed_houses['cusps'].append(directed_cusp)
+        
+        # Calculate directed angles
+        directed_angles = {}
+        for name, angle in natal_houses['angles'].items():
+            directed_angle = SolarArcDirection.calculate_directed_position(
+                angle,
+                solar_arc,
+                direction_type
+            )
+            directed_angles[name] = directed_angle
+        
+        # Calculate aspects
+        aspects = []
+        total_strength = 0.0
+        
+        # Planet to planet aspects
+        for name1, pos1 in directed_planets.items():
+            for name2, pos2 in natal_planets.items():
+                aspect_result = SolarArcDirection.calculate_directed_aspect(
+                    pos1['longitude'],
+                    pos2['longitude'],
+                    orb
+                )
+                
+                if aspect_result:
+                    aspect, aspect_orb = aspect_result
+                    strength = SolarArcDirection.calculate_direction_strength(
+                        aspect,
+                        aspect_orb,
+                        'planet'
+                    )
+                    
+                    aspects.append({
+                        'directed_point': name1,
+                        'natal_point': name2,
+                        'aspect': aspect,
+                        'orb': aspect_orb,
+                        'strength': strength
+                    })
+                    
+                    total_strength += strength
+        
+        # Planet to angle aspects
+        for name, pos in directed_planets.items():
+            for angle_name, angle in natal_houses['angles'].items():
+                aspect_result = SolarArcDirection.calculate_directed_aspect(
+                    pos['longitude'],
+                    angle,
+                    orb
+                )
+                
+                if aspect_result:
+                    aspect, aspect_orb = aspect_result
+                    strength = SolarArcDirection.calculate_direction_strength(
+                        aspect,
+                        aspect_orb,
+                        'angle'
+                    )
+                    
+                    aspects.append({
+                        'directed_point': name,
+                        'natal_point': angle_name,
+                        'aspect': aspect,
+                        'orb': aspect_orb,
+                        'strength': strength
+                    })
+                    
+                    total_strength += strength
+        
+        # Normalize total strength
+        if aspects:
+            total_strength /= len(aspects)
+        
+        return {
+            'solar_arc': solar_arc,
+            'directed_planets': directed_planets,
+            'directed_houses': directed_houses,
+            'directed_angles': directed_angles,
+            'aspects': aspects,
+            'total_strength': total_strength
+        }
