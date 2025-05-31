@@ -126,9 +126,34 @@ test-integration: check-env ## Run integration tests only
 	pytest tests/integration/ -v
 
 .PHONY: test-api
-test-api: check-env ## Run API tests only
+test-api: check-test-env ## Run API tests only (requires nocturna-test environment)
 	$(call print_header,"Running API tests")
-	pytest tests/api/ -v
+	python run_api_tests.py --verbose --skip-env-check
+
+.PHONY: test-api-auth
+test-api-auth: check-test-env ## Run API authentication tests only
+	$(call print_header,"Running API authentication tests")
+	python run_api_tests.py --auth --verbose --skip-env-check
+
+.PHONY: test-api-charts
+test-api-charts: check-test-env ## Run API chart tests only
+	$(call print_header,"Running API chart tests")
+	python run_api_tests.py --charts --verbose --skip-env-check
+
+.PHONY: test-api-calculations
+test-api-calculations: check-test-env ## Run API calculation tests only
+	$(call print_header,"Running API calculation tests")
+	python run_api_tests.py --calculations --verbose --skip-env-check
+
+.PHONY: test-api-performance
+test-api-performance: check-test-env ## Run API performance tests only
+	$(call print_header,"Running API performance tests")
+	python run_api_tests.py --performance --verbose --skip-env-check
+
+.PHONY: test-api-quick
+test-api-quick: check-test-env ## Run API tests (quick, less verbose)
+	$(call print_header,"Running API tests (quick)")
+	python run_api_tests.py --skip-env-check
 
 .PHONY: coverage
 coverage: check-env ## Run tests with coverage report
@@ -270,6 +295,20 @@ check-dev:
 	@if [ "$(ENV_TYPE)" != "dev" ]; then \
 		$(call print_error,"Development environment not active"); \
 		echo "Please activate: conda activate nocturna-dev"; \
+		exit 1; \
+	fi
+
+.PHONY: check-test-env
+check-test-env:
+	@if [ "$(ENV_TYPE)" != "test" ]; then \
+		$(call print_error,"Test environment not active"); \
+		echo "API tests require the nocturna-test environment."; \
+		echo "Please run:"; \
+		echo "  make setup-test      # If not already set up"; \
+		echo "  conda activate nocturna-test"; \
+		echo ""; \
+		echo "Note: Keep your dev server running in another terminal:"; \
+		echo "  conda activate nocturna-dev && make dev"; \
 		exit 1; \
 	fi
 

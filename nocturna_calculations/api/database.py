@@ -4,7 +4,6 @@ Database connection and session management
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
-from contextlib import contextmanager
 from typing import Generator
 
 from nocturna_calculations.api.config import settings
@@ -21,7 +20,6 @@ engine = create_engine(
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@contextmanager
 def get_db() -> Generator[Session, None, None]:
     """Get database session with automatic cleanup"""
     db = SessionLocal()
