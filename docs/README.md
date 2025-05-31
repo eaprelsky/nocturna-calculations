@@ -38,6 +38,8 @@ Nocturna Calculations is a comprehensive solution for performing various astrolo
 
 ## Installation
 
+For detailed installation instructions, please refer to the [Installation Guide](installation/README.md).
+
 ### As a Python Library
 
 ```bash
@@ -110,21 +112,23 @@ chart_data = response.json()
 For detailed documentation, please refer to the following sections:
 
 ### Library Documentation
-- [Architecture](architecture.md)
+- [Common Architecture](architecture/common-architecture.md)
 - [API Reference](api-reference.md)
 - [Calculation Methods](calculation-methods.md)
 - [Rectification](rectification.md)
 
 ### API Documentation
-- [API Endpoints](api-endpoints.md)
-- [Authentication](api-authentication.md)
-- [Rate Limiting](api-rate-limiting.md)
-- [WebSocket Interface](api-websocket.md)
+- [API Specification](api-specification.md)
+
+### Installation & Setup
+- [Installation Guide](installation/README.md)
+- [Quick Start](installation/quickstart.md)
+- [Development Setup](installation/development-setup.md)
+- [Testing Setup](installation/testing-setup.md)
+- [Installation Architecture](architecture/installation-architecture.md)
 
 ### Development
 - [Contributing Guide](../CONTRIBUTING.md)
-- [Testing Guide](testing-guide.md)
-- [Deployment Guide](deployment-guide.md)
 
 ## Contributing
 

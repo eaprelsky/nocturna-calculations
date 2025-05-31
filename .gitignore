@@ -36,6 +36,7 @@ env/
 htmlcov/
 .pytest_cache/
 .tox/
+tmp/
 
 # Documentation
 docs/_build/
