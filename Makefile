@@ -85,7 +85,7 @@ setup-prod: ## Setup production environment only
 .PHONY: dev
 dev: check-dev ## Start development server
 	$(call print_header,"Starting development server")
-	uvicorn nocturna_calculations.api:app --reload --host 0.0.0.0 --port 8000
+	uvicorn nocturna_calculations.api.app:app --reload --host 0.0.0.0 --port 8000
 
 .PHONY: shell
 shell: check-dev ## Start interactive Python shell
