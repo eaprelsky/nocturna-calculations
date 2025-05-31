@@ -1,293 +1,174 @@
 # Nocturna Calculations
 
-A Python library and REST API service for astrological calculations based on Swiss Ephemeris. This project provides both a comprehensive library for direct Python integration and a production-ready API server for remote access to astrological calculation services.
+A comprehensive astrological calculations library and REST API service built with Python and powered by Swiss Ephemeris.
 
-THIS PROJECT IS YET UNDER ACTIVE DEVELOPMENT, THE DOCUMENTATION MAY NOT REFLECT THE ACTUAL STATE OF THE CODEBASE
+## 🚀 Quick Start
 
-## Features
-
-### Library Features
-- Natal chart calculations
-- Planetary positions and movements
-- House system calculations (Placidus, Koch, etc.)
-- Aspect calculations
-- Primary and secondary progressions
-- Solar and lunar returns
-- Eclipse calculations
-- Chart rectification
-- And more...
-
-### API Features
-- RESTful endpoints for all calculation methods
-- User authentication and authorization
-- Chart storage and management
-- Batch calculations
-- WebSocket support for real-time calculations
-- Rate limiting and usage tracking
-- API key management
-
-## Quick Start
-
-### Environment Management
-
-This project uses **three separate conda environments** for different purposes:
-
-- **`nocturna-dev`** (Python 3.11): Development work, debugging, feature development
-- **`nocturna-test`** (Python 3.9): Testing, benchmarking, compatibility testing  
-- **`nocturna-prod`** (Python 3.11): Production deployment, minimal dependencies
-
-### For Developers
 ```bash
-# Clone and setup development environment
-git clone https://github.com/eaprelsky/nocturna-calculations.git
+# Clone the repository
+git clone https://github.com/yourusername/nocturna-calculations.git
 cd nocturna-calculations
-make setup-dev
 
-# Activate environment and complete setup
-conda activate nocturna-dev
-python scripts/install_dev.py
+# Run complete setup (recommended)
+make setup
 
-# Start development server
-make dev-server
-```
-
-### For Testers/QA
-```bash
-# Setup testing environment
-make setup-test
-
-# Activate environment and run tests
-conda activate nocturna-test
-make test
-
-# Run benchmarks
-make benchmark
-```
-
-### For Production Deployment
-```bash
-# Setup production environment
-make setup-prod
-
-# Activate environment
-conda activate nocturna-prod
-```
-
-## Installation Options
-
-| Method | Use Case | Command |
-|--------|----------|---------|
-| **Development** | Feature development, debugging | `make setup-dev` |
-| **Testing** | Running tests, benchmarks | `make setup-test` |
-| **Production** | Deployment, production use | `make setup-prod` |
-
-See the [Installation Guide](docs/installation/README.md) for detailed setup instructions.
-
-## Environment Switching
-
-```bash
-# List available environments
-make list-env
-
-# Switch between environments
-make switch-env ENV=dev    # Development
-make switch-env ENV=test   # Testing  
-make switch-env ENV=prod   # Production
-
-# Validate current environment
-make validate-env
-```
-
-## Quick Commands
-
-```bash
-# Environment management
-make setup-dev          # Setup development environment
-make setup-test         # Setup testing environment  
-make setup-prod         # Setup production environment
-
-# Development
-make dev-server         # Start development server
-make jupyter            # Start Jupyter Lab
-make dev-shell          # Interactive Python shell
-
-# Testing
-make test              # Run full test suite
-make test-quick        # Quick unit tests
-make benchmark         # Performance benchmarks
-
-# Code quality
-make lint              # Code formatting and linting
-make type-check        # Type checking
-make security          # Security scanning
-make quality           # All quality checks
-
-# Database
-make db-setup          # Setup database
-make db-migrate        # Run migrations
-make db-status         # Check database status
-
-# Maintenance
-make clean             # Clean build artifacts
-make update-deps       # Update dependencies
-make health-check      # System health check
-```
-
-## Library Usage
-
-```python
-from nocturna_calculations import ChartCalculator
-from nocturna_calculations.adapters import SwissEphAdapter
-
-# Create calculator instance
-calculator = ChartCalculator(adapter=SwissEphAdapter())
-
-# Calculate natal chart
-chart = calculator.calculate_natal_chart(
-    date="2024-03-20",
-    time="12:00:00",
-    latitude=55.7558,
-    longitude=37.6173
-)
-
-# Get planetary positions
-planets = chart.get_planetary_positions()
-
-# Calculate aspects
-aspects = chart.calculate_aspects()
-```
-
-## API Usage
-
-```bash
-# Start the API server
-make dev-server
-
-# Make API requests
-curl -X POST http://localhost:8000/api/charts/natal \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "date": "2024-03-20",
-    "time": "12:00:00",
-    "latitude": 55.7558,
-    "longitude": 37.6173
-  }'
-```
-
-## Documentation
-
-Comprehensive documentation is available in the `docs/` directory:
-
-- **[Installation Guide](docs/installation/README.md)** - Setup for different environments
-- **[Development Guide](docs/development/README.md)** - Development workflow and tools
-- **[API Documentation](docs/api/README.md)** - REST API reference
-- **[Environment Management](environments/README.md)** - Conda environment details
-
-### Online Documentation
-- [API Reference (OpenAPI)](http://localhost:8000/docs) (when running locally)
-- [ReadTheDocs](https://nocturna-calculations.readthedocs.io/) (if available)
-
-## Contributing
-
-We welcome contributions! See our [Contributing Guide](docs/development/contributing-guide.md) for details.
-
-### Development Workflow
-
-```bash
-# 1. Setup development environment
-make setup-dev
+# Activate the environment
 conda activate nocturna-dev
 
-# 2. Complete database setup
-python scripts/install_dev.py
-
-# 3. Run tests before making changes
-make test-quick
-
-# 4. Make your changes
-# ... edit code ...
-
-# 5. Run quality checks
-make quality
-
-# 6. Run tests
-make test
-
-# 7. Submit pull request
+# Start the development server
+make dev
 ```
 
-### Testing
+Visit http://localhost:8000/docs for API documentation.
+
+## 📋 Prerequisites
+
+- **Python 3.9+**
+- **Conda** (Miniconda or Anaconda) - [Installation Guide](https://docs.conda.io/en/latest/miniconda.html)
+- **Git**
+- **PostgreSQL** and **Redis** (optional - will be installed automatically)
+
+## 🛠️ Installation
+
+### One-Command Setup (Recommended)
 
 ```bash
-# Switch to testing environment
-conda activate nocturna-test
-
-# Run specific test types
-make test-unit          # Unit tests
-make test-integration   # Integration tests
-make test-api          # API tests
-make benchmark         # Performance benchmarks
-
-# Code quality
-make lint              # Formatting and style
-make type-check        # Type checking
-make security          # Security scanning
+make setup
 ```
 
-## Project Structure
+This command will:
+
+- ✅ Create a development environment with all dependencies
+- ✅ Install and configure PostgreSQL and Redis
+- ✅ Setup the database and run migrations
+- ✅ Generate configuration files
+
+### Environment-Specific Setup
+
+```bash
+make setup-dev   # Development environment
+make setup-test  # Testing environment
+make setup-prod  # Production environment
+```
+
+### Manual Setup
+
+For more control over the installation process:
+
+```bash
+python scripts/bootstrap.py --help
+```
+
+See [Installation Guide](docs/installation/README.md) for detailed instructions.
+
+## 🏗️ Project Structure
 
 ```
 nocturna-calculations/
-├── environments/           # Conda environment definitions
-│   ├── development.yml    # Development environment
-│   ├── testing.yml        # Testing environment
-│   ├── production.yml     # Production environment
-│   └── README.md          # Environment documentation
-├── docs/                  # Documentation
-│   ├── installation/      # Installation guides
-│   ├── development/       # Development guides
-│   └── api/               # API documentation
-├── scripts/               # Installation and utility scripts
-│   └── environments/      # Environment management scripts
-├── nocturna_calculations/ # Main package
-├── tests/                 # Test suite
-├── Makefile              # Development automation
-└── README.md             # This file
+├── nocturna_calculations/     # Core library package
+│   ├── core/                  # Core calculations
+│   ├── api/                   # FastAPI application
+│   └── models/                # Data models
+├── environments/              # Conda environment definitions
+├── scripts/                   # Utility scripts
+│   ├── bootstrap.py          # Main setup script
+│   └── services/             # Service management
+├── tests/                     # Test suite
+├── docs/                      # Documentation
+├── Makefile                   # Command interface
+└── setup.py                   # Package configuration
 ```
 
-## System Requirements
+## 🎯 Key Features
 
-- **Operating System**: Linux, macOS, or Windows with WSL
-- **Conda**: Miniconda or Anaconda installed
-- **Database**: PostgreSQL (auto-installed in development)
-- **Cache**: Redis (auto-installed in development)
-- **Hardware**: 4GB+ RAM, 2GB+ storage
+- **Astrological Calculations**: Comprehensive ephemeris calculations using Swiss Ephemeris
+- **REST API**: Modern FastAPI-based web service
+- **Environment Management**: Separate environments for development, testing, and production
+- **Database Support**: PostgreSQL with migrations
+- **Caching**: Redis integration for performance
+- **Documentation**: Auto-generated API docs
+- **Testing**: Comprehensive test suite with pytest
 
-## License
+## 📚 Documentation
+
+- [Quick Start Guide](docs/installation/quickstart.md)
+- [Installation Overview](docs/installation/README.md)
+- [API Documentation](docs/api/README.md)
+- [Development Guide](docs/development/README.md)
+- [Architecture Documentation](docs/architecture/)
+
+## 🧪 Development
+
+### Common Commands
+
+| Command       | Description                 |
+| ------------- | --------------------------- |
+| `make dev`    | Start development server    |
+| `make test`   | Run test suite              |
+| `make format` | Format code with black      |
+| `make lint`   | Run code quality checks     |
+| `make docs`   | Build documentation         |
+| `make help`   | Show all available commands |
+
+### Running Tests
+
+```bash
+make test          # Run all tests
+make test-unit     # Run unit tests only
+make test-api      # Run API tests only
+make coverage      # Generate coverage report
+```
+
+### Code Quality
+
+```bash
+make format        # Auto-format code
+make lint          # Check code style
+make type-check    # Run type checking
+make security      # Run security checks
+```
+
+## 🚢 Deployment
+
+### Production Setup
+
+```bash
+make setup-prod
+conda activate nocturna-prod
+```
+
+See [Production Deployment Guide](docs/deployment/production.md) for detailed instructions.
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contact
+## 🙏 Acknowledgments
 
-- Author: Yegor Aprelsky
-- Email: yegor.aprelsky@gmail.com
-- GitHub: [eaprelsky](https://github.com/eaprelsky)
+- [Swiss Ephemeris](https://www.astro.com/swisseph/) for astronomical calculations
+- [FastAPI](https://fastapi.tiangolo.com/) for the web framework
+- [Pydantic](https://pydantic-docs.helpmanual.io/) for data validation
 
-## Help
+## 📞 Support
 
-```bash
-# Get help with available commands
-make help
+- 📧 Email: yegor.aprelsky@gmail.com
+- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/nocturna-calculations/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/nocturna-calculations/discussions)
 
-# Check system health
-make health-check
+## 🔄 Migration from Old System
 
-# Validate current environment
-make validate-env
+If you have an existing installation, see [Migration Guide](MIGRATION_GUIDE.md) for upgrading to the new unified installation system.
 
-# List all environments
-make list-env
-```
+---
 
-For detailed troubleshooting, see the [Installation Troubleshooting Guide](docs/installation/troubleshooting.md). 
+Built with ❤️ by the Nocturna team 

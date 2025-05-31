@@ -1,132 +1,126 @@
-# Installation Guide Overview
+# Installation Overview
 
-Welcome to the Nocturna Calculations installation guide. This project supports multiple installation methods and environments to accommodate different use cases.
+Nocturna Calculations provides a unified installation system that makes setup simple and consistent across all environments.
 
-## Quick Start
+## Architecture
 
-### For Developers
+The installation system follows a **single entry point** principle:
+
+```
+make setup → Bootstrap Script → Environment Setup → Service Installation → Configuration
+```
+
+## Installation Methods
+
+### 1. Quick Start (Recommended)
 ```bash
-# Clone and setup development environment
-git clone https://github.com/eaprelsky/nocturna-calculations.git
-cd nocturna-calculations
-make setup-dev
+make setup
 ```
+This is the recommended method for new users. It sets up everything automatically.
 
-### For Testers/QA
+### 2. Environment-Specific Setup
 ```bash
-# Setup testing environment
-make setup-test
+make setup-dev   # Development environment
+make setup-test  # Testing environment  
+make setup-prod  # Production environment
 ```
 
-### For Production Deployment
+### 3. Manual Setup
+For advanced users who want more control:
 ```bash
-# Setup production environment
-make setup-prod
+python scripts/bootstrap.py --env dev --skip-services
 ```
 
-## Installation Options
+## How It Works
 
-| Method | Use Case | Guide |
-|--------|----------|-------|
-| **Development Setup** | Feature development, debugging | [development-setup.md](development-setup.md) |
-| **Testing Setup** | Running tests, benchmarks | [testing-setup.md](testing-setup.md) |
-| **Production Setup** | Deployment, production use | [production-setup.md](production-setup.md) |
+### Unified Dependencies
+All dependencies are defined in `setup.py` with appropriate extras:
+- **Core**: Minimal dependencies for the library
+- **API**: Dependencies for running the API server
+- **Dev**: Development tools (includes test, docs, and performance tools)
+- **Test**: Testing frameworks and tools
+- **Docs**: Documentation generation tools
 
-## Environment Management
+### Environment Management
+Conda environments provide isolation:
+- `nocturna-dev`: Python 3.11 with all development tools
+- `nocturna-test`: Python 3.9 for compatibility testing
+- `nocturna-prod`: Python 3.11 with minimal dependencies
 
-This project uses **three separate conda environments** for different purposes:
+### Service Management
+Dedicated scripts handle PostgreSQL and Redis:
+- Automatic detection and installation
+- Cross-platform support (Linux, macOS, WSL)
+- Isolated configuration
 
-- **`nocturna-dev`** (Python 3.11): Development work, debugging, feature development
-- **`nocturna-test`** (Python 3.9): Testing, benchmarking, compatibility testing  
-- **`nocturna-prod`** (Python 3.11): Production deployment, minimal dependencies
+## Key Components
 
-See [Environment Management Guide](../development/environment-management.md) for detailed information.
+### 1. Makefile
+The single entry point for all operations:
+- Detects active environment
+- Provides consistent interface
+- Enforces best practices
 
-## Prerequisites
+### 2. Bootstrap Script
+`scripts/bootstrap.py` orchestrates setup:
+- Environment creation
+- Service installation
+- Database setup
+- Configuration generation
 
-### System Requirements
-- **Operating System**: Linux, macOS, or Windows with WSL
-- **Conda**: Miniconda or Anaconda installed
-- **Git**: For cloning the repository
-- **Database**: PostgreSQL (auto-installed in development)
-- **Cache**: Redis (auto-installed in development)
+### 3. Service Scripts
+`scripts/services/` contains dedicated scripts:
+- `setup_postgres.sh`: PostgreSQL management
+- `setup_redis.sh`: Redis management
 
-### Hardware Requirements
-- **RAM**: Minimum 4GB, recommended 8GB+
-- **Storage**: 2GB free space for development environment
-- **CPU**: Any modern processor (calculations are CPU-intensive)
+### 4. Environment Files
+`environments/` contains Conda definitions:
+- `base.yml`: Shared dependencies
+- `development.yml`: Dev tools
+- `testing.yml`: Test tools
+- `production.yml`: Runtime only
 
-## Installation Workflow
+## Benefits
 
-```mermaid
-graph TD
-    A[Clone Repository] --> B{Choose Environment}
-    B -->|Development| C[Development Setup]
-    B -->|Testing| D[Testing Setup]
-    B -->|Production| E[Production Setup]
-    
-    C --> F[Install Dependencies]
-    D --> F
-    E --> F
-    
-    F --> G[Setup Database]
-    G --> H[Configure Environment]
-    H --> I[Validate Installation]
-```
+1. **Simplicity**: One command to get started
+2. **Consistency**: Same process on all platforms
+3. **Isolation**: Clean environment separation
+4. **Flexibility**: Multiple setup options
+5. **Maintainability**: Single source of truth
 
-## Quick Commands
+## Migration from Old System
 
-```bash
-# Environment management
-make setup-dev          # Setup development environment
-make setup-test         # Setup testing environment  
-make setup-prod         # Setup production environment
+If you have an existing setup:
 
-# Environment switching
-make switch-env ENV=dev   # Switch to development
-make switch-env ENV=test  # Switch to testing
+1. **Backup your data**
+2. **Deactivate old environment**: `conda deactivate`
+3. **Run new setup**: `make setup`
+4. **Migrate configuration**: Copy `.env` settings
 
-# Validation
-make validate-env        # Validate current environment
-make health-check        # Full system health check
-
-# Development
-make dev-server          # Start development server
-make test               # Run test suite
-make benchmark          # Run benchmarks
-
-# Maintenance
-make clean-env          # Clean environments
-make update-deps        # Update dependencies
-```
+The old `nocturna` environment can coexist with new environments during migration.
 
 ## Troubleshooting
 
-Common issues and solutions:
+### Common Issues
 
-- **Conda not found**: See [troubleshooting.md](troubleshooting.md#conda-issues)
-- **Permission errors**: See [troubleshooting.md](troubleshooting.md#permission-issues)
-- **Database connection**: See [troubleshooting.md](troubleshooting.md#database-issues)
-- **Environment conflicts**: See [troubleshooting.md](troubleshooting.md#environment-conflicts)
+**Q: Command 'make' not found**  
+A: Install make for your platform or use the bootstrap script directly
 
-## Support
+**Q: Conda environment conflicts**  
+A: Remove old environments with `conda env remove -n environment-name`
 
-If you encounter issues:
+**Q: Service installation fails**  
+A: Use `make services-check` to diagnose, then `make services-install`
 
-1. Check the [troubleshooting guide](troubleshooting.md)
-2. Validate your environment: `make validate-env`
-3. Check existing [GitHub issues](https://github.com/eaprelsky/nocturna-calculations/issues)
-4. Create a new issue with:
-   - Your operating system
-   - Python/Conda versions
-   - Error messages
-   - Steps to reproduce
+### Getting Help
+
+1. Check specific guides in this directory
+2. Run `make help` for command reference
+3. See `scripts/bootstrap.py --help` for options
+4. Open a GitHub issue for bugs
 
 ## Next Steps
 
-After installation:
-
-1. **Developers**: Read the [Development Guide](../development/README.md)
-2. **Testers**: Read the [Testing Strategy](../development/testing-strategy.md)
-3. **Users**: Check the [API Documentation](../api/README.md)
-4. **Contributors**: Review [Contributing Guidelines](../development/contributing-guide.md) 
+- [Development Setup Guide](development-setup.md)
+- [Testing Setup Guide](testing-setup.md)
+- [Production Deployment](../deployment/production.md) 

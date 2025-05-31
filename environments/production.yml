@@ -3,28 +3,19 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.11  # Latest stable Python
-  - pip
+  # Python version (latest stable)
+  - python=3.11
   
-  # Core runtime dependencies only
-  - numpy>=1.24.0
-  - scipy>=1.10.0
+  # Minimal system dependencies
+  - pip>=23.0
+  - setuptools>=68.0
+  - wheel>=0.40.0
   
-  # Web server
-  - gunicorn>=21.0.0
+  # Production database clients only
+  - psycopg2>=2.9
+  - redis-py>=4.5
   
-  # Project-specific runtime dependencies
+  # Pip dependencies
   - pip:
-    - git+https://github.com/astrorigin/pyswisseph.git
-    - fastapi>=0.100.0
-    - uvicorn[standard]>=0.20.0
-    - alembic>=1.12.0
-    - sqlalchemy>=2.0.0
-    - psycopg2-binary>=2.9.0
-    - redis>=4.6.0
-    - pydantic>=2.0.0
-    - python-multipart>=0.0.6
-    - python-jose[cryptography]>=3.3.0
-    - passlib[bcrypt]>=1.7.4
-    - prometheus-client>=0.17.0
-    - asyncpg>=0.28.0 
+    # Install package with API extras only (no dev/test)
+    - nocturna-calculations[api] 

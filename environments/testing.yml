@@ -3,44 +3,27 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.9  # Using 3.9 for compatibility testing
-  - pip
+  # Python 3.9 for compatibility testing
+  - python=3.9
   
-  # Core testing frameworks
-  - pytest>=7.0.0
-  - pytest-cov>=4.0.0
-  - pytest-mock>=3.10.0
-  - pytest-xdist>=3.3.1
-  - pytest-timeout>=2.1.0
-  - pytest-asyncio>=0.21.1
-  - pytest-datadir>=1.4.1
-  - pytest-regressions>=2.4.1
-  - pytest-randomly>=3.12.0
+  # Testing frameworks from conda
+  - pytest>=7.0
+  - pytest-cov>=4.0
+  - pytest-asyncio>=0.21
   
-  # Testing utilities
-  - hypothesis>=6.82.0
-  - httpx>=0.24.1
+  # Database clients
+  - postgresql
+  - redis-py
   
   # Performance testing
-  - pytest-benchmark>=4.0.0
-  - locust>=2.15.1
+  - memory_profiler>=0.60
+  - line_profiler>=4.0
   
-  # Security and quality
-  - bandit>=1.7.5
-  - safety>=3.0.1
+  # System tools
+  - git
+  - make
   
-  # Code formatting and linting  
-  - black>=23.7.0
-  - flake8>=6.1.0
-  - mypy>=1.5.1
-  
-  # Documentation
-  - sphinx>=7.1.2
-  - sphinx-rtd-theme>=1.3.0
-  
-  # Development tools
-  - pre-commit>=3.3.3
-  
-  # Project-specific dependencies
+  # Pip dependencies
   - pip:
-    - git+https://github.com/astrorigin/pyswisseph.git
+    # Install package with testing extras
+    - -e ".[test,api]"
