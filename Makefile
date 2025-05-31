@@ -97,15 +97,16 @@ jupyter: check-dev ## Start Jupyter Lab
 	$(call print_header,"Starting Jupyter Lab")
 	jupyter lab
 
-.PHONY: docs
-docs: check-dev ## Build documentation
-	$(call print_header,"Building documentation")
-	cd docs && make html
+# Documentation targets - currently disabled as Sphinx is not used
+# .PHONY: docs
+# docs: check-dev ## Build documentation
+# 	$(call print_header,"Building documentation")
+# 	cd docs && make html
 
-.PHONY: docs-serve
-docs-serve: docs ## Serve documentation locally
-	$(call print_header,"Serving documentation at http://localhost:8080")
-	cd docs/_build/html && python -m http.server 8080
+# .PHONY: docs-serve
+# docs-serve: docs ## Serve documentation locally
+# 	$(call print_header,"Serving documentation at http://localhost:8080")
+# 	cd docs/_build/html && python -m http.server 8080
 
 ##@ Testing
 

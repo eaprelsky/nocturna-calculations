@@ -37,14 +37,12 @@ The Nocturna Calculations project uses **three separate conda environments** to 
 - Daily development work
 - Interactive debugging
 - Feature prototyping
-- Documentation writing
 - Code exploration
 
 **Key Dependencies**:
 - **Development Tools**: IPython, Jupyter, pdb++
 - **Code Quality**: Black, Flake8, MyPy, isort
 - **Debugging**: Memory profiler, line profiler
-- **Documentation**: Sphinx, MkDocs
 - **Database/Cache**: PostgreSQL, Redis clients
 - **Web Framework**: FastAPI, Uvicorn with debugging features
 
@@ -52,7 +50,6 @@ The Nocturna Calculations project uses **three separate conda environments** to 
 - Writing new features
 - Debugging issues
 - Interactive development sessions
-- Documentation work
 - Proof-of-concept development
 
 ### Testing Environment (`nocturna-test`)

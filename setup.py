@@ -36,11 +36,12 @@ API_DEPS = [
 
 # Development dependencies
 DEV_DEPS = [
-    "black>=23.0.0",
+    "black>=23.7.0",
     "flake8>=6.0.0",
-    "mypy>=1.0.0",
-    "pre-commit>=3.0.0",
-    "ipython>=8.0.0",
+    "mypy>=1.4.1",
+    "isort>=5.12.0",
+    "pre-commit>=3.3.3",
+    "ipython>=8.14.0",
     "jupyter>=1.0.0",
     "jupyterlab>=4.0.0",
     "notebook>=7.0.0",
@@ -48,11 +49,13 @@ DEV_DEPS = [
 
 # Testing dependencies
 TEST_DEPS = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "pytest-benchmark>=4.0.0",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
     "pytest-asyncio>=0.21.0",
-    "pytest-xdist>=3.6.1",
+    "pytest-xdist>=3.3.1",
+    "httpx>=0.24.1",
+    "coverage>=7.3.0",
+    "pytest-benchmark>=4.0.0",
     "pytest-regressions>=2.5.0",
     "pytest-timeout>=2.2.0",
     "pytest-datadir>=1.4.1",
@@ -61,15 +64,6 @@ TEST_DEPS = [
     "PyJWT>=2.8.0",
     "bandit>=1.7.5",
     "safety>=2.3.5",
-]
-
-# Documentation dependencies
-DOCS_DEPS = [
-    "sphinx>=7.0.0",
-    "sphinx-rtd-theme>=1.3.0",
-    "sphinx-autodoc-typehints>=1.24.0",
-    "sphinx-copybutton>=0.5.2",
-    "myst-parser>=2.0.0",
 ]
 
 # Performance analysis dependencies
@@ -86,11 +80,10 @@ setup(
     install_requires=CORE_DEPS,
     extras_require={
         "api": API_DEPS,
-        "dev": DEV_DEPS + TEST_DEPS + DOCS_DEPS + PERF_DEPS,
+        "dev": DEV_DEPS + TEST_DEPS + PERF_DEPS,
         "test": TEST_DEPS,
-        "docs": DOCS_DEPS,
         "perf": PERF_DEPS,
-        "all": API_DEPS + DEV_DEPS + TEST_DEPS + DOCS_DEPS + PERF_DEPS,
+        "all": API_DEPS + DEV_DEPS + TEST_DEPS + PERF_DEPS,
     },
     author="Yegor Aprelsky",
     author_email="yegor.aprelsky@gmail.com",
