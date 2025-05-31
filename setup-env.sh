@@ -146,10 +146,28 @@ conda run -n nocturna pip install -r "$SCRIPT_DIR/requirements-api.txt"
 log "Installing yq..."
 conda run -n nocturna pip install yq
 
+# Setup database and run migrations
+log "Setting up database and running migrations..."
+if [ -f "$SCRIPT_DIR/scripts/setup_db.sh" ]; then
+    chmod +x "$SCRIPT_DIR/scripts/setup_db.sh"
+    conda run -n nocturna "$SCRIPT_DIR/scripts/setup_db.sh" setup
+    conda run -n nocturna "$SCRIPT_DIR/scripts/setup_db.sh" migrate
+else
+    log "❌ Database setup script not found at $SCRIPT_DIR/scripts/setup_db.sh"
+    exit 1
+fi
+
 # Verify installation
 log "Verifying installation..."
 if ! conda run -n nocturna python -c "import uvicorn; print('Uvicorn version:', uvicorn.__version__)"; then
     log "❌ Failed to verify uvicorn installation"
+    exit 1
+fi
+
+# Verify database setup
+log "Verifying database setup..."
+if ! conda run -n nocturna "$SCRIPT_DIR/scripts/setup_db.sh" status; then
+    log "❌ Failed to verify database setup"
     exit 1
 fi
 

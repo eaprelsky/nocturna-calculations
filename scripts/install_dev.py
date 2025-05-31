@@ -4,13 +4,27 @@ Development environment installation script for Conda in WSL
 import os
 import sys
 import subprocess
-import psycopg2
+
+try:
+    import psycopg2
+except ImportError:
+    print("Installing psycopg2-binary...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "psycopg2-binary"])
+    import psycopg2
+
 from pathlib import Path
 from getpass import getpass
 
-def run_command(command, shell=False):
-    """Run a shell command and print output"""
+def run_command(command, shell=False, timeout=30):
+    """Run a shell command and print output with timeout"""
     print(f"Running: {command}")
+    
+    # If shell=True, command should be a string, otherwise a list
+    if shell and isinstance(command, list):
+        command = ' '.join(str(arg) for arg in command)
+    elif not shell and isinstance(command, str):
+        command = command.split()
+        
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -19,24 +33,42 @@ def run_command(command, shell=False):
         text=True
     )
     
-    for line in process.stdout:
-        print(line, end='')
-    
-    process.wait()
-    if process.returncode != 0:
-        raise Exception(f"Command failed with return code {process.returncode}")
+    try:
+        for line in process.stdout:
+            print(line, end='')
+        
+        process.wait(timeout=timeout)
+        if process.returncode != 0:
+            raise Exception(f"Command failed with return code {process.returncode}")
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+        raise Exception(f"Command timed out after {timeout} seconds")
+
+def check_service_running(service_name, check_command, timeout=5):
+    """Check if a service is running with timeout"""
+    try:
+        result = subprocess.run(
+            check_command,
+            capture_output=True,
+            text=True,
+            shell=True,
+            timeout=timeout
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
 
 def install_redis():
     """Install and configure Redis in WSL"""
     print("Checking Redis installation...")
     
-    # Check if Redis is installed
-    try:
-        run_command(["redis-cli", "ping"], shell=True)
+    # Check if Redis is installed and running
+    if check_service_running("Redis", "redis-cli ping"):
         print("Redis is already installed and running")
         return
-    except Exception:
-        print("Redis not found, installing...")
+    
+    print("Redis not found or not running, installing...")
     
     # Update package list
     run_command(["sudo", "apt-get", "update"], shell=True)
@@ -79,30 +111,27 @@ appendfilename "appendonly.aof"
     # Wait for Redis to be ready
     max_retries = 5
     for i in range(max_retries):
-        try:
-            run_command(["redis-cli", "ping"], shell=True)
+        if check_service_running("Redis", "redis-cli ping"):
             print("Redis is now running")
             break
-        except Exception:
-            if i < max_retries - 1:
-                print("Waiting for Redis to start...")
-                import time
-                time.sleep(2)
-            else:
-                print("Error: Redis failed to start")
-                sys.exit(1)
+        if i < max_retries - 1:
+            print("Waiting for Redis to start...")
+            import time
+            time.sleep(2)
+        else:
+            print("Error: Redis failed to start")
+            sys.exit(1)
 
 def install_postgresql():
     """Install PostgreSQL in WSL"""
     print("Checking PostgreSQL installation...")
     
-    # Check if PostgreSQL is installed
-    try:
-        run_command(["pg_isready"], shell=True)
+    # Check if PostgreSQL is installed and running
+    if check_service_running("PostgreSQL", "pg_isready"):
         print("PostgreSQL is already installed and running")
         return
-    except Exception:
-        print("PostgreSQL not found, installing...")
+    
+    print("PostgreSQL not found or not running, installing...")
     
     # Update package list
     run_command(["sudo", "apt-get", "update"], shell=True)
@@ -121,18 +150,16 @@ def install_postgresql():
     # Wait for PostgreSQL to be ready
     max_retries = 5
     for i in range(max_retries):
-        try:
-            run_command(["pg_isready"], shell=True)
+        if check_service_running("PostgreSQL", "pg_isready"):
             print("PostgreSQL is now running")
             break
-        except Exception:
-            if i < max_retries - 1:
-                print("Waiting for PostgreSQL to start...")
-                import time
-                time.sleep(2)
-            else:
-                print("Error: PostgreSQL failed to start")
-                sys.exit(1)
+        if i < max_retries - 1:
+            print("Waiting for PostgreSQL to start...")
+            import time
+            time.sleep(2)
+        else:
+            print("Error: PostgreSQL failed to start")
+            sys.exit(1)
 
 def create_database(db_name, user, password, host="localhost", port=5432):
     """Create PostgreSQL database"""
@@ -170,41 +197,51 @@ def setup_postgres_user(username, password):
     """Set up PostgreSQL user"""
     print(f"Setting up PostgreSQL user '{username}'...")
     
-    # Check if user exists
     try:
-        run_command([
-            "sudo", "-u", "postgres",
-            "psql", "-tAc",
-            f"SELECT 1 FROM pg_roles WHERE rolname='{username}'"
-        ], shell=True)
+        # Check if user exists
+        check_user_cmd = f"sudo -u postgres psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='{username}'\""
+        result = subprocess.run(
+            check_user_cmd,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
         
-        # Create user if doesn't exist
-        run_command([
-            "sudo", "-u", "postgres",
-            "psql", "-c",
-            f"CREATE USER {username} WITH PASSWORD '{password}'"
-        ], shell=True)
+        user_exists = "1" in result.stdout
         
-        # Grant privileges
-        run_command([
-            "sudo", "-u", "postgres",
-            "psql", "-c",
-            f"ALTER USER {username} WITH SUPERUSER"
-        ], shell=True)
+        if not user_exists:
+            print(f"Creating PostgreSQL user '{username}'...")
+            # Create user
+            create_user_cmd = f"sudo -u postgres psql -c \"CREATE USER {username} WITH PASSWORD '{password}'\""
+            subprocess.run(create_user_cmd, shell=True, check=True, timeout=10)
+            
+            # Grant privileges
+            grant_privileges_cmd = f"sudo -u postgres psql -c \"ALTER USER {username} WITH SUPERUSER\""
+            subprocess.run(grant_privileges_cmd, shell=True, check=True, timeout=10)
+            
+            print(f"PostgreSQL user '{username}' created successfully")
+        else:
+            print(f"PostgreSQL user '{username}' already exists")
+            # Update password for existing user
+            update_password_cmd = f"sudo -u postgres psql -c \"ALTER USER {username} WITH PASSWORD '{password}'\""
+            subprocess.run(update_password_cmd, shell=True, check=True, timeout=10)
+            print(f"Password updated for PostgreSQL user '{username}'")
         
-        print(f"PostgreSQL user '{username}' created successfully")
-        
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         print(f"Error setting up PostgreSQL user: {e}")
+        sys.exit(1)
+    except subprocess.TimeoutExpired:
+        print("Error: PostgreSQL user setup timed out")
         sys.exit(1)
 
 def setup_conda_environment():
     """Create and activate Conda environment"""
-    env_name = "nocturna"
+    env_name = "nocturna-dev"
     
     # Check if conda is available
     try:
-        run_command(["conda", "--version"], shell=True)
+        run_command(["conda", "--version"])
     except Exception:
         print("Error: conda is not installed or not in PATH")
         sys.exit(1)
@@ -213,8 +250,7 @@ def setup_conda_environment():
     result = subprocess.run(
         ["conda", "env", "list"],
         capture_output=True,
-        text=True,
-        shell=True
+        text=True
     )
     
     if env_name not in result.stdout:
@@ -224,7 +260,7 @@ def setup_conda_environment():
             "-n", env_name,
             "python=3.11",
             "-y"
-        ], shell=True)
+        ])
     else:
         print(f"Conda environment '{env_name}' already exists")
     
@@ -232,8 +268,7 @@ def setup_conda_environment():
     result = subprocess.run(
         ["conda", "env", "list"],
         capture_output=True,
-        text=True,
-        shell=True
+        text=True
     )
     
     # Parse conda env list output to find the environment path
@@ -259,25 +294,17 @@ def install_dependencies(pip_path):
     """Install project dependencies"""
     print("Installing dependencies...")
     
-    # First install conda packages
-    run_command([
-        "conda", "install",
-        "-n", "nocturna",
-        "psycopg2",
-        "redis-py",
-        "prometheus-client",
-        "-y"
-    ], shell=True)
-    
-    # Then install pip packages
+    # Skip conda package installation due to potential permission conflicts
+    # Install all packages via pip from requirements files instead
+    print("Installing packages via pip...")
     run_command([str(pip_path), "install", "-r", "requirements.txt"])
     run_command([str(pip_path), "install", "-r", "requirements-api.txt"])
     run_command([str(pip_path), "install", "-r", "requirements-dev.txt"])
     
     # Setup database and run migrations using the shell script
     print("\nSetting up database...")
-    run_command(["./scripts/setup_db.sh", "setup"], shell=True)
-    run_command(["./scripts/setup_db.sh", "migrate"], shell=True)
+    run_command(["./scripts/setup_db.sh", "setup"])
+    run_command(["./scripts/setup_db.sh", "migrate"])
 
 def create_env_file(db_name, user, password, host="localhost", port=5432):
     """Create .env file with database configuration"""
@@ -316,7 +343,7 @@ CACHE_PREFIX=nocturna:
     print("Created .env file")
 
 def main():
-    """Main installation function"""
+    """Main installation function."""
     print("Starting development environment setup...")
     
     # Install PostgreSQL
@@ -331,7 +358,14 @@ def main():
     db_user = input("PostgreSQL username [postgres]: ") or "postgres"
     db_password = getpass("PostgreSQL password: ")
     db_host = input("Database host [localhost]: ") or "localhost"
-    db_port = input("Database port [5432]: ") or "5432"
+    db_port_input = input("Database port [5432]: ") or "5432"
+    
+    # Convert port to integer
+    try:
+        db_port = int(db_port_input)
+    except ValueError:
+        print(f"Invalid port number: {db_port_input}. Using default 5432")
+        db_port = 5432
     
     # Set up PostgreSQL user
     setup_postgres_user(db_user, db_password)
@@ -339,25 +373,37 @@ def main():
     # Create database
     create_database(db_name, db_user, db_password, db_host, db_port)
     
-    # Setup conda environment
-    python_path, pip_path, env_name = setup_conda_environment()
-    
-    # Install dependencies
-    install_dependencies(pip_path)
-    
-    # Create .env file
+    # Create .env file first, before other operations
     create_env_file(db_name, db_user, db_password, db_host, db_port)
     
-    # Run migrations
-    print("\nRunning database migrations...")
-    run_command([str(python_path), "scripts/migrate.py"])
-    
-    print("\nDevelopment environment setup complete!")
-    print("\nTo activate the conda environment:")
-    print(f"    conda activate {env_name}")
-    
-    print("\nTo start the development server:")
-    print("    python -m nocturna_calculations.api.app")
+    # Setup conda environment
+    try:
+        python_path, pip_path, env_name = setup_conda_environment()
+        
+        # Install dependencies
+        install_dependencies(pip_path)
+        
+        # Run migrations
+        print("\nRunning database migrations...")
+        run_command([str(python_path), "scripts/migrate.py"])
+        
+        print("\nDevelopment environment setup complete!")
+        print("\nTo activate the conda environment:")
+        print(f"    conda activate {env_name}")
+        
+        print("\nTo start the development server:")
+        print("    python -m nocturna_calculations.api.app")
+        
+    except Exception as e:
+        print(f"Warning: Conda environment setup failed: {e}")
+        print("You can set up the Python environment manually:")
+        print("1. Create a virtual environment")
+        print("2. Install requirements from requirements.txt, requirements-api.txt, requirements-dev.txt")
+        print("3. Run migrations manually")
+        print("\nThe .env file has been created successfully.")
+        
+        # Still exit successfully since basic setup is done
+        print("\nBasic setup (PostgreSQL, Redis, .env) completed successfully!")
 
 if __name__ == "__main__":
     main() 
