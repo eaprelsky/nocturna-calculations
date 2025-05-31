@@ -2,19 +2,21 @@ import os
 import pytest
 from pathlib import Path
 from typing import Generator, Dict, Any
-import gevent.monkey
-import gevent.hub
 
-# Configure gevent
-gevent.monkey.patch_all()
+# Remove gevent monkey patching for API tests since we're using requests
+# import gevent.monkey
+# import gevent.hub
 
-@pytest.fixture(scope="session", autouse=True)
-def gevent_hub():
-    """Configure and cleanup gevent hub for tests."""
-    hub = gevent.hub.get_hub()
-    yield hub
-    # Cleanup
-    hub.destroy()
+# # Configure gevent
+# gevent.monkey.patch_all()
+
+# @pytest.fixture(scope="session", autouse=True)
+# def gevent_hub():
+#     """Configure and cleanup gevent hub for tests."""
+#     hub = gevent.hub.get_hub()
+#     yield hub
+#     # Cleanup
+#     hub.destroy()
 
 # Test data directory
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
