@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional, Union, List, Tuple
 import pytz
 from pydantic import BaseModel, Field, field_validator
 
-from .config import Config
+from .config import Config as ChartConfig
 from ..adapters.swisseph import SwissEphAdapter
 from .constants import (
     FixedStar, Asteroid, LunarNode, ArabicPart, 
@@ -29,11 +29,20 @@ class Chart(BaseModel):
     
     # Optional fields
     timezone: str = Field(default="UTC", description="Timezone for calculations")
-    config: Optional[Config] = Field(default=None, description="Calculation configuration")
+    config: Optional[ChartConfig] = Field(default=None, description="Calculation configuration")
     
     # Internal fields
     _adapter: Optional[SwissEphAdapter] = None
     _julian_day: Optional[float] = None
+    
+    class Config:
+        # Allow private attributes
+        underscore_attrs_are_private = True
+        # Don't try to serialize private attributes
+        fields = {
+            "_adapter": {"exclude": True},
+            "_julian_day": {"exclude": True}
+        }
     
     @field_validator('latitude')
     @classmethod
@@ -67,7 +76,7 @@ class Chart(BaseModel):
         
         # Set default config if not provided
         if self.config is None:
-            self.config = Config()
+            self.config = ChartConfig()
         
         # Initialize adapter
         self._adapter = SwissEphAdapter()
@@ -106,69 +115,123 @@ class Chart(BaseModel):
             dt.hour + dt.minute/60.0 + dt.second/3600.0
         )
     
-    def calculate_planetary_positions(self) -> Dict[str, Any]:
+    def calculate_planetary_positions(self, planets: List[str] = None) -> Dict[str, Any]:
         """Calculate planetary positions for the chart"""
         import swisseph as swe
         
-        # Define planets to calculate
-        planets = [
-            swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS,
-            swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO
-        ]
+        # Define default planets to calculate if none specified
+        if planets is None:
+            planets = ["SUN", "MOON", "MERCURY", "VENUS", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"]
+        
+        # Map planet names to swisseph constants
+        planet_constants = {
+            "SUN": swe.SUN,
+            "MOON": swe.MOON,
+            "MERCURY": swe.MERCURY,
+            "VENUS": swe.VENUS,
+            "MARS": swe.MARS,
+            "JUPITER": swe.JUPITER,
+            "SATURN": swe.SATURN,
+            "URANUS": swe.URANUS,
+            "NEPTUNE": swe.NEPTUNE,
+            "PLUTO": swe.PLUTO
+        }
+        
+        # Convert planet names to constants
+        planet_list = [planet_constants[p] for p in planets if p in planet_constants]
         
         # Calculate positions
         positions = self._adapter.calculate_planetary_positions(
             self._julian_day,
-            planets
+            planet_list
         )
         
         # Convert to more readable format
         result = {}
         planet_names = {
-            swe.SUN: "Sun",
-            swe.MOON: "Moon",
-            swe.MERCURY: "Mercury",
-            swe.VENUS: "Venus",
-            swe.MARS: "Mars",
-            swe.JUPITER: "Jupiter",
-            swe.SATURN: "Saturn",
-            swe.URANUS: "Uranus",
-            swe.NEPTUNE: "Neptune",
-            swe.PLUTO: "Pluto"
+            swe.SUN: "SUN",
+            swe.MOON: "MOON",
+            swe.MERCURY: "MERCURY",
+            swe.VENUS: "VENUS",
+            swe.MARS: "MARS",
+            swe.JUPITER: "JUPITER",
+            swe.SATURN: "SATURN",
+            swe.URANUS: "URANUS",
+            swe.NEPTUNE: "NEPTUNE",
+            swe.PLUTO: "PLUTO"
         }
         
-        for planet, pos in positions.items():
-            result[planet_names[planet]] = pos
+        for planet_const, pos in positions.items():
+            planet_name = planet_names.get(planet_const, f"PLANET_{planet_const}")
+            result[planet_name] = {
+                "longitude": pos["longitude"],
+                "latitude": pos["latitude"],
+                "distance": pos["distance"],
+                "speed": pos["speed_long"],
+                "is_retrograde": pos["speed_long"] < 0
+            }
         
         return result
     
     def calculate_houses(self, system: str = None) -> Dict[str, Any]:
         """Calculate house cusps and angles"""
         # Use configured house system if not specified
-        if system is None:
-            system = self.config.house_system
+        if system is None and self.config:
+            system = getattr(self.config, 'house_system', 'PLACIDUS')
+        elif system is None:
+            system = 'PLACIDUS'
         
         # Calculate houses
-        houses = self._adapter.calculate_houses(
+        houses_data = self._adapter.calculate_houses(
             self._julian_day,
             self.latitude,
             self.longitude
         )
         
-        return houses
+        # Format the result
+        result = {
+            "cusps": houses_data["cusps"],
+            "angles": {
+                "ASC": houses_data["angles"][0],
+                "MC": houses_data["angles"][1],
+                "DESC": (houses_data["angles"][0] + 180) % 360,
+                "IC": (houses_data["angles"][1] + 180) % 360
+            },
+            "system": system
+        }
+        
+        return result
     
-    def calculate_aspects(self) -> Dict[str, Any]:
+    def calculate_aspects(self, aspects: List[str] = None) -> Dict[str, Any]:
         """Calculate aspects between planets"""
         # Get planetary positions
         positions = self.calculate_planetary_positions()
         
+        # Default orbs configuration
+        default_orbs = {
+            "conjunction": 10.0,
+            "opposition": 10.0,
+            "trine": 8.0,
+            "square": 8.0,
+            "sextile": 6.0,
+            "semisextile": 3.0,
+            "semisquare": 3.0,
+            "sesquisquare": 3.0,
+            "quincunx": 3.0
+        }
+        
+        # Use configured orbs if available
+        orbs = default_orbs
+        if self.config and hasattr(self.config, 'orbs'):
+            orbs.update(self.config.orbs)
+        
         # Calculate aspects
-        aspects = self._adapter.calculate_aspects(
+        aspects_list = self._adapter.calculate_aspects(
             positions,
-            self.config.orbs
+            orbs
         )
         
-        return aspects
+        return {"aspects": aspects_list}
     
     def calculate_fixed_stars(self, stars: List[FixedStar] = None) -> Dict[str, Any]:
         """
@@ -236,8 +299,8 @@ class Chart(BaseModel):
         """
         # Get house cusps for ASC and MC
         houses = self.calculate_houses()
-        ascendant = houses['angles'][0]  # ASC is first angle
-        mc = houses['angles'][1]  # MC is second angle
+        ascendant = houses['angles']['ASC']  # ASC is first angle
+        mc = houses['angles']['MC']  # MC is second angle
         
         # Get planetary positions
         planet_positions = self.calculate_planetary_positions()

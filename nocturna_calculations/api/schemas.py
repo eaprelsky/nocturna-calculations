@@ -11,6 +11,17 @@ class CalculationRequest(BaseModel):
     chart_id: str
     parameters: Dict[str, Any] = Field(default_factory=dict)
 
+class DirectCalculationRequest(BaseModel):
+    """Schema for direct calculation requests with date/time/location data."""
+    date: str
+    time: str
+    latitude: float
+    longitude: float
+    timezone: str = "UTC"
+    planets: Optional[List[str]] = None
+    aspects: Optional[List[str]] = None
+    house_system: Optional[str] = None
+
 class CalculationResponse(BaseModel):
     """Base schema for calculation responses."""
     success: bool = True

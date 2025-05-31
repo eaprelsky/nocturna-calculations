@@ -2,7 +2,7 @@
 Calculations router for the Nocturna Calculations API.
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 import json
@@ -12,6 +12,7 @@ from ..database import get_db
 from ..models import Chart, Calculation
 from ..schemas import (
     CalculationRequest,
+    DirectCalculationRequest,
     CalculationResponse,
     PlanetaryPositionsResponse,
     AspectsResponse,
@@ -40,120 +41,90 @@ def get_cache_key(chart_id: str, calculation_type: str, params: dict) -> str:
 
 @router.post("/planetary-positions", response_model=PlanetaryPositionsResponse)
 async def calculate_planetary_positions_endpoint(
-    request: CalculationRequest,
+    request: DirectCalculationRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     """Calculate planetary positions."""
-    chart = db.query(Chart).filter(
-        Chart.id == request.chart_id,
-        Chart.user_id == current_user.id
-    ).first()
-    
-    if not chart:
-        raise HTTPException(status_code=404, detail="Chart not found")
-    
-    cache_key = get_cache_key(
-        str(chart.id),
-        "planetary_positions",
-        request.parameters
-    )
-    
-    cached_result = cache.get(cache_key)
-    if cached_result:
-        return cached_result
-    
-    core_chart = CoreChart(
-        datetime=chart.datetime,
-        latitude=chart.latitude,
-        longitude=chart.longitude,
-        altitude=chart.altitude,
-        **chart.config
-    )
-    
-    result = core_chart.calculate_planetary_positions(**request.parameters)
-    
-    cache.set(cache_key, result)
-    
-    return result
+    try:
+        # Create core chart instance from direct data
+        core_chart = CoreChart(
+            date=request.date,
+            time=request.time,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            timezone=request.timezone
+        )
+        
+        # Get planets from request or use default
+        planets = request.planets or ["SUN", "MOON", "MERCURY", "VENUS", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"]
+        
+        result = core_chart.calculate_planetary_positions(planets=planets)
+        
+        return {"positions": result}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e)
+        )
 
 @router.post("/aspects", response_model=AspectsResponse)
 async def calculate_aspects_endpoint(
-    request: CalculationRequest,
+    request: DirectCalculationRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     """Calculate aspects between planets."""
-    chart = db.query(Chart).filter(
-        Chart.id == request.chart_id,
-        Chart.user_id == current_user.id
-    ).first()
-    
-    if not chart:
-        raise HTTPException(status_code=404, detail="Chart not found")
-    
-    cache_key = get_cache_key(
-        str(chart.id),
-        "aspects",
-        request.parameters
-    )
-    
-    cached_result = cache.get(cache_key)
-    if cached_result:
-        return cached_result
-    
-    core_chart = CoreChart(
-        datetime=chart.datetime,
-        latitude=chart.latitude,
-        longitude=chart.longitude,
-        altitude=chart.altitude,
-        **chart.config
-    )
-    
-    result = core_chart.calculate_aspects(**request.parameters)
-    
-    cache.set(cache_key, result)
-    
-    return result
+    try:
+        # Create core chart instance from direct data
+        core_chart = CoreChart(
+            date=request.date,
+            time=request.time,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            timezone=request.timezone
+        )
+        
+        # Get aspects from request or use default
+        aspects = request.aspects or ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"]
+        
+        result = core_chart.calculate_aspects(aspects=aspects)
+        
+        return {"aspects": result}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e)
+        )
 
 @router.post("/houses", response_model=HousesResponse)
 async def calculate_houses_endpoint(
-    request: CalculationRequest,
+    request: DirectCalculationRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     """Calculate house cusps."""
-    chart = db.query(Chart).filter(
-        Chart.id == request.chart_id,
-        Chart.user_id == current_user.id
-    ).first()
-    
-    if not chart:
-        raise HTTPException(status_code=404, detail="Chart not found")
-    
-    cache_key = get_cache_key(
-        str(chart.id),
-        "houses",
-        request.parameters
-    )
-    
-    cached_result = cache.get(cache_key)
-    if cached_result:
-        return cached_result
-    
-    core_chart = CoreChart(
-        datetime=chart.datetime,
-        latitude=chart.latitude,
-        longitude=chart.longitude,
-        altitude=chart.altitude,
-        **chart.config
-    )
-    
-    result = core_chart.calculate_houses(**request.parameters)
-    
-    cache.set(cache_key, result)
-    
-    return result
+    try:
+        # Create core chart instance from direct data
+        core_chart = CoreChart(
+            date=request.date,
+            time=request.time,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            timezone=request.timezone
+        )
+        
+        # Get house system from request or use default
+        house_system = request.house_system or "PLACIDUS"
+        
+        result = core_chart.calculate_houses(house_system=house_system)
+        
+        return {"houses": result}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e)
+        )
 
 @router.post("/fixed-stars", response_model=FixedStarsResponse)
 async def calculate_fixed_stars_endpoint(

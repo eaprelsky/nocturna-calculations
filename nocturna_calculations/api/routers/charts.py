@@ -62,6 +62,38 @@ async def create_natal_chart(
 ):
     """Create new natal chart"""
     try:
+        # Validate data before creating chart
+        # Check date format
+        try:
+            datetime.strptime(chart_data.date, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid date format. Expected YYYY-MM-DD"
+            )
+        
+        # Check time format
+        try:
+            datetime.strptime(chart_data.time, "%H:%M:%S")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid time format. Expected HH:MM:SS"
+            )
+        
+        # Validate coordinates
+        if not -90 <= chart_data.latitude <= 90:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Latitude must be between -90 and 90 degrees"
+            )
+        
+        if not -180 <= chart_data.longitude <= 180:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Longitude must be between -180 and 180 degrees"
+            )
+        
         # Create core chart instance
         core_chart = CoreChart(
             date=chart_data.date,
@@ -105,10 +137,14 @@ async def create_natal_chart(
             "houses": houses,
             "aspects": aspects
         }
+    except HTTPException:
+        # Re-raise HTTP exceptions (validation errors)
+        raise
     except Exception as e:
+        # Catch-all for other errors
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail=f"Error creating chart: {str(e)}"
         )
 
 @router.post("", response_model=ChartResponse)

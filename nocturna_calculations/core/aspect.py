@@ -37,6 +37,10 @@ class Aspect:
         # Get maximum orb for this aspect type
         max_orb = AspectType[self.aspect_type.upper()].value / 10
         
+        # Avoid division by zero
+        if max_orb <= 0:
+            return 1.0 if self.orb == 0 else 0.0
+        
         # Calculate strength (1.0 for exact aspect, 0.0 for orb >= max_orb)
         return max(0.0, 1.0 - (self.orb / max_orb))
     

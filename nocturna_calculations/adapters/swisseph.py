@@ -22,14 +22,15 @@ class SwissEphAdapter:
     
     def __init__(self):
         """Initialize Swiss Ephemeris adapter"""
-        self.version = swe.version()
-        self.ephe_path = os.getenv('EPHE_PATH', swe.get_ephe_path())
+        self.version = swe.version
+        self.ephe_path = os.getenv('EPHE_PATH', '/usr/share/ephe')  # Default path
         
-        # Set ephemeris path
-        swe.set_ephe_path(self.ephe_path)
+        # Set ephemeris path if it exists
+        if os.path.exists(self.ephe_path):
+            swe.set_ephe_path(self.ephe_path)
         
-        # Set calculation flags
-        self.flags = swe.SEFLG_SWIEPH | swe.SEFLG_SPEED
+        # Set calculation flags - use the correct constant names
+        self.flags = swe.FLG_SWIEPH | swe.FLG_SPEED
     
     def calculate_planetary_positions(
         self,
@@ -50,17 +51,37 @@ class SwissEphAdapter:
         
         for planet in planets:
             # Calculate planet position
-            result = swe.calc_ut(julian_day, planet, self.flags)
+            result, ret_flag = swe.calc_ut(julian_day, planet, self.flags)
             
-            # Extract position data
-            positions[planet] = {
-                'longitude': result[0],  # Longitude in degrees
-                'latitude': result[1],   # Latitude in degrees
-                'distance': result[2],   # Distance in AU
-                'speed_long': result[3], # Speed in longitude
-                'speed_lat': result[4],  # Speed in latitude
-                'speed_dist': result[5]  # Speed in distance
-            }
+            # Extract position data (result is a tuple with longitude, latitude, distance, speed_lon, speed_lat, speed_dist)
+            if len(result) >= 6:
+                positions[planet] = {
+                    'longitude': result[0],  # Longitude in degrees
+                    'latitude': result[1],   # Latitude in degrees
+                    'distance': result[2],   # Distance in AU
+                    'speed_long': result[3], # Speed in longitude
+                    'speed_lat': result[4],  # Speed in latitude
+                    'speed_dist': result[5]  # Speed in distance
+                }
+            elif len(result) >= 3:
+                positions[planet] = {
+                    'longitude': result[0],  # Longitude in degrees
+                    'latitude': result[1],   # Latitude in degrees
+                    'distance': result[2],   # Distance in AU
+                    'speed_long': 0.0,       # Default speed
+                    'speed_lat': 0.0,        # Default speed
+                    'speed_dist': 0.0        # Default speed
+                }
+            else:
+                # Fallback for unexpected result format
+                positions[planet] = {
+                    'longitude': result[0] if len(result) > 0 else 0.0,
+                    'latitude': result[1] if len(result) > 1 else 0.0,
+                    'distance': 1.0,         # Default distance
+                    'speed_long': 0.0,       # Default speed
+                    'speed_lat': 0.0,        # Default speed
+                    'speed_dist': 0.0        # Default speed
+                }
         
         return positions
     
@@ -82,12 +103,12 @@ class SwissEphAdapter:
             Dict containing house cusps and angles
         """
         # Calculate houses using Placidus system
-        result = swe.houses(julian_day, self.flags, latitude, longitude, b'P')
+        cusps, ascmc = swe.houses(julian_day, latitude, longitude, b'P')
         
         return {
-            'cusps': result[0],      # House cusps (13 values)
-            'angles': result[1],     # Angles (ASC, MC, ARMC, Vertex)
-            'system': 'P'            # Placidus system
+            'cusps': list(cusps),     # House cusps
+            'angles': list(ascmc),    # Angles (ASC, MC, ARMC, Vertex)
+            'system': 'PLACIDUS'      # Placidus system
         }
     
     def calculate_aspects(
