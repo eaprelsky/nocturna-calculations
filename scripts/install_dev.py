@@ -273,6 +273,11 @@ def install_dependencies(pip_path):
     run_command([str(pip_path), "install", "-r", "requirements.txt"])
     run_command([str(pip_path), "install", "-r", "requirements-api.txt"])
     run_command([str(pip_path), "install", "-r", "requirements-dev.txt"])
+    
+    # Setup database and run migrations using the shell script
+    print("\nSetting up database...")
+    run_command(["./scripts/setup_db.sh", "setup"], shell=True)
+    run_command(["./scripts/setup_db.sh", "migrate"], shell=True)
 
 def create_env_file(db_name, user, password, host="localhost", port=5432):
     """Create .env file with database configuration"""
