@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     RATE_LIMIT_FREE: int = 100  # requests per hour
     RATE_LIMIT_BASIC: int = 1000
     RATE_LIMIT_PRO: int = 10000
+    RATE_LIMIT_DEFAULT: int = 100
+    RATE_LIMIT_PREMIUM: int = 1000
+    RATE_LIMIT_WINDOW: int = 3600
     
     # Cache
     CACHE_TTL: int = 3600  # 1 hour in seconds
@@ -57,9 +60,13 @@ class Settings(BaseSettings):
     REDIS_SOCKET_TIMEOUT: int = 5
     REDIS_SOCKET_CONNECT_TIMEOUT: int = 5
     
+    # Additional API settings that might come from env
+    API_VERSION_PREFIX: str = "/v1"
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "allow"  # Allow extra fields from .env
 
 @lru_cache()
 def get_settings() -> Settings:

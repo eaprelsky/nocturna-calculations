@@ -8,7 +8,7 @@
 
 # Environment variables
 PROJECT_NAME := nocturna-calculations
-PYTHON := python
+PYTHON := python3
 BOOTSTRAP := $(PYTHON) scripts/bootstrap.py
 
 # Active environment detection

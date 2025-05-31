@@ -14,7 +14,7 @@ from alembic.config import Config
 from alembic import command
 from alembic.script import ScriptDirectory
 from alembic.runtime.migration import MigrationContext
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from nocturna_calculations.api.config import settings
@@ -28,7 +28,7 @@ def check_database_connection():
     try:
         engine = create_engine(settings.DATABASE_URL)
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(text("SELECT 1"))
         logger.info("Database connection successful")
         return True
     except SQLAlchemyError as e:
