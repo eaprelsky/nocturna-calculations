@@ -155,6 +155,41 @@ test-api-quick: check-test-env ## Run API tests (quick, less verbose)
 	$(call print_header,"Running API tests (quick)")
 	python run_api_tests.py --skip-env-check
 
+.PHONY: test-admin
+test-admin: check-env ## Run admin functionality tests
+	$(call print_header,"Running admin tests")
+	pytest tests/unit/test_admin_management.py tests/api/test_admin_api.py tests/integration/test_admin_integration.py tests/security/test_admin_security.py -v
+
+.PHONY: test-admin-unit
+test-admin-unit: check-env ## Run admin unit tests only
+	$(call print_header,"Running admin unit tests")
+	pytest tests/unit/test_admin_management.py -v
+
+.PHONY: test-admin-api
+test-admin-api: check-test-env ## Run admin API tests only
+	$(call print_header,"Running admin API tests")
+	pytest tests/api/test_admin_api.py -v -m api
+
+.PHONY: test-admin-integration
+test-admin-integration: check-env ## Run admin integration tests only
+	$(call print_header,"Running admin integration tests")
+	pytest tests/integration/test_admin_integration.py -v -m integration
+
+.PHONY: test-admin-security
+test-admin-security: check-env ## Run admin security tests only
+	$(call print_header,"Running admin security tests")
+	pytest tests/security/test_admin_security.py -v
+
+.PHONY: test-admin-postgres
+test-admin-postgres: check-env ## Run admin tests against PostgreSQL database
+	$(call print_header,"Running admin PostgreSQL integration tests")
+	pytest tests/integration/test_admin_integration_postgres.py -v -m postgres
+
+.PHONY: test-admin-full
+test-admin-full: check-env ## Run all admin tests including PostgreSQL tests
+	$(call print_header,"Running comprehensive admin test suite")
+	pytest tests/unit/test_admin_management.py tests/api/test_admin_api.py tests/integration/test_admin_integration.py tests/integration/test_admin_integration_postgres.py tests/security/test_admin_security.py -v
+
 .PHONY: coverage
 coverage: check-env ## Run tests with coverage report
 	$(call print_header,"Running tests with coverage")

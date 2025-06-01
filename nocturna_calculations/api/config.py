@@ -2,7 +2,8 @@
 API configuration module
 """
 from pydantic_settings import BaseSettings
-from typing import List
+from pydantic import ConfigDict
+from typing import List, Optional
 import os
 from functools import lru_cache
 
@@ -63,10 +64,17 @@ class Settings(BaseSettings):
     # Additional API settings that might come from env
     API_VERSION_PREFIX: str = "/v1"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "allow"  # Allow extra fields from .env
+    # User Management Settings
+    ALLOW_USER_REGISTRATION: bool = True
+    REGISTRATION_REQUIRES_APPROVAL: bool = False  # Future enhancement
+    MAX_USERS_LIMIT: Optional[int] = None  # Future enhancement
+    
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="allow",  # Allow extra fields from .env
+        frozen=True,  # Make the model immutable
+    )
 
 @lru_cache()
 def get_settings() -> Settings:

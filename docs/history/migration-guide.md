@@ -163,7 +163,7 @@ python scripts/bootstrap.py --all
 ## Need Help?
 
 - Run `make help` to see all available commands
-- Check `docs/installation/quickstart.md` for quick reference
+- Check `docs/installation/quick-start.md` for quick reference
 - Open an issue on GitHub if you encounter problems
 
 ## Rollback Plan

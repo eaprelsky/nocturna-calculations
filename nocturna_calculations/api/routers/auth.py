@@ -14,6 +14,7 @@ import uuid
 from nocturna_calculations.api.database import get_db
 from nocturna_calculations.api.models import User, Token
 from nocturna_calculations.api.config import settings
+from nocturna_calculations.api.exceptions import RegistrationDisabledException
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -40,6 +41,11 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     expires_in: int
+
+class RegistrationSettingsResponse(BaseModel):
+    allow_user_registration: bool
+    registration_requires_approval: bool
+    max_users_limit: Optional[int]
 
 # Helper functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -114,6 +120,10 @@ async def get_current_admin_user(
 @router.post("/register", response_model=UserResponse)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register new user"""
+    # Check if registration is allowed
+    if not settings.ALLOW_USER_REGISTRATION:
+        raise RegistrationDisabledException()
+    
     # Check if user exists
     if db.query(User).filter(User.email == user_data.email).first():
         raise HTTPException(
@@ -224,4 +234,13 @@ async def verify_admin_access(admin_user: User = Depends(get_current_admin_user)
         "user_id": admin_user.id,
         "email": admin_user.email,
         "username": admin_user.username
-    } 
+    }
+
+@router.get("/admin/registration-settings", response_model=RegistrationSettingsResponse)
+async def get_registration_settings(admin_user: User = Depends(get_current_admin_user)):
+    """Get current registration settings"""
+    return RegistrationSettingsResponse(
+        allow_user_registration=settings.ALLOW_USER_REGISTRATION,
+        registration_requires_approval=settings.REGISTRATION_REQUIRES_APPROVAL,
+        max_users_limit=settings.MAX_USERS_LIMIT
+    ) 

@@ -193,4 +193,4 @@ Tips for optimizing performance:
    aspects = calculator.calculate_aspects(parallel=True)
    ```
 
-For more detailed information about specific features, refer to the [API Reference](../api-reference.md). 
+For more detailed information about specific features, refer to the [API Reference](../api/reference.md). 

@@ -280,4 +280,4 @@ This guide provides recommendations for using Nocturna Calculations effectively 
        raise CalculationError("Failed to calculate chart. Please try again.")
    ```
 
-For more detailed information about specific features, refer to the [API Reference](../api-reference.md). 
+For more detailed information about specific features, refer to the [API Reference](../api/reference.md). 

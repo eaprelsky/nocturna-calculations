@@ -112,5 +112,5 @@ Now that you've learned the basics, you can:
 
 1. Explore more advanced features in the [Advanced Usage Guide](advanced-usage.md)
 2. Learn about best practices in the [Best Practices Guide](best-practices.md)
-3. Check the [API Reference](../api-reference.md) for detailed API documentation
-4. Read about calculation methods in [Calculation Methods](../calculation-methods.md) 
+3. Check the [API Reference](../api/reference.md) for detailed API documentation
+4. Read about calculation methods in [Calculation Methods](../reference/calculation-methods.md) 

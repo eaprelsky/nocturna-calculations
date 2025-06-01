@@ -266,4 +266,4 @@ The system implements a comprehensive error handling strategy:
 - Database connectivity
 - External service availability
 
-For detailed API documentation, see the [API Reference](./api-reference.md) and [API Endpoints](./api-endpoints.md). 
+For detailed API documentation, see the [API Reference](../api/reference.md) and [API Endpoints](./api-endpoints.md). 

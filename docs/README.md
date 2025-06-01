@@ -112,20 +112,20 @@ chart_data = response.json()
 For detailed documentation, please refer to the following sections:
 
 ### Library Documentation
-- [Common Architecture](architecture/common-architecture.md)
-- [API Reference](api-reference.md)
-- [Calculation Methods](calculation-methods.md)
-- [Rectification](rectification.md)
+- [Architecture Overview](architecture/overview.md)
+- [API Reference](api/reference.md)
+- [Calculation Methods](reference/calculation-methods.md)
+- [Rectification](reference/rectification.md)
 
 ### API Documentation
-- [API Specification](api-specification.md)
+- [API Specification](api/specification.md)
 
 ### Installation & Setup
 - [Installation Guide](installation/README.md)
-- [Quick Start](installation/quickstart.md)
+- [Quick Start](installation/quick-start.md)
 - [Development Setup](installation/development-setup.md)
 - [Testing Setup](installation/testing-setup.md)
-- [Installation Architecture](architecture/installation-architecture.md)
+- [Installation Flow](architecture/installation-flow.md)
 
 ### Development
 - [Contributing Guide](../CONTRIBUTING.md)

@@ -269,7 +269,7 @@ This guide helps you resolve common issues when using Nocturna Calculations.
 
 If you're still experiencing issues:
 
-1. Check the [API Reference](../api-reference.md) for detailed API documentation
+1. Check the [API Reference](../api/reference.md) for detailed API documentation
 2. Review the [Best Practices](best-practices.md) guide for optimization tips
 3. Search for similar issues in the [GitHub Issues](https://github.com/eaprelsky/nocturna-calculations/issues)
 4. Create a new issue with:

@@ -91,9 +91,9 @@ nocturna-calculations/
 
 ## 📚 Documentation
 
-- [Quick Start Guide](docs/installation/quickstart.md)
+- [Quick Start Guide](docs/installation/quick-start.md)
 - [Installation Overview](docs/installation/README.md)
-- [API Documentation](docs/api/README.md)
+- [API Documentation](docs/api/specification.md)
 - [Development Guide](docs/development/README.md)
 - [Architecture Documentation](docs/architecture/)
 
