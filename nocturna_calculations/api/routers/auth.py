@@ -33,6 +33,7 @@ class UserResponse(BaseModel):
     username: str
     first_name: Optional[str]
     last_name: Optional[str]
+    is_superuser: bool
     created_at: datetime
 
 class TokenResponse(BaseModel):
@@ -97,6 +98,17 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+async def get_current_admin_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """Get current user and verify admin privileges"""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    return current_user
 
 # Endpoints
 @router.post("/register", response_model=UserResponse)
@@ -197,4 +209,19 @@ async def logout(
         db.delete(token)
         db.commit()
     
-    return {"success": True} 
+    return {"success": True}
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
+    """Get current user information"""
+    return current_user
+
+@router.get("/admin/verify")
+async def verify_admin_access(admin_user: User = Depends(get_current_admin_user)):
+    """Verify admin access - returns 200 if user is admin, 403 if not"""
+    return {
+        "is_admin": True,
+        "user_id": admin_user.id,
+        "email": admin_user.email,
+        "username": admin_user.username
+    } 

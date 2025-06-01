@@ -208,6 +208,23 @@ db-reset: ## Reset database (WARNING: destroys data)
 	@echo "This will destroy all data. Are you sure? [y/N]" && read ans && [ $${ans:-N} = y ]
 	./scripts/setup_db.sh reset
 
+##@ Admin Management
+
+.PHONY: admin-create
+admin-create: check-env ## Create a new admin user
+	$(call print_header,"Creating admin user")
+	python scripts/create_admin.py create
+
+.PHONY: admin-promote
+admin-promote: check-env ## Promote existing user to admin
+	$(call print_header,"Promoting user to admin")
+	python scripts/create_admin.py promote
+
+.PHONY: admin-list
+admin-list: check-env ## List all admin users
+	$(call print_header,"Listing admin users")
+	python scripts/create_admin.py list
+
 ##@ Services
 
 .PHONY: services-install
