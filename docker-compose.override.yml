@@ -1,0 +1,38 @@
+# Docker Compose Override for Development
+# This file extends docker-compose.yml for development use
+# Use: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+
+version: '3.8'
+
+services:
+  # Development configuration for API service
+  app:
+    # Override command for development with auto-reload
+    command: ["uvicorn", "nocturna_calculations.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    
+    # Mount source code for live editing
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    
+    # Development environment variables
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - ALLOW_USER_REGISTRATION=true  # Enable for development
+    
+    # Enable development ports if needed
+    ports:
+      - "8000:8000"
+
+  # Expose database port for development tools
+  db:
+    ports:
+      - "5432:5432"
+
+  # Expose Redis port for development tools  
+  redis:
+    ports:
+      - "6379:6379"
+    # Remove password for development
+    command: redis-server --appendonly yes 

@@ -4,6 +4,21 @@ A comprehensive astrological calculations library and REST API service built wit
 
 ## 🚀 Quick Start
 
+### Option 1: Docker Deployment (Recommended for Production)
+
+```bash
+# Clone the repository
+git clone https://github.com/eaprelsky/nocturna-calculations.git
+cd nocturna-calculations
+
+# Setup and deploy with Docker
+make docker-deploy
+```
+
+Visit http://localhost:8000/docs for API documentation.
+
+### Option 2: Development Setup
+
 ```bash
 # Clone the repository
 git clone https://github.com/eaprelsky/nocturna-calculations.git
@@ -19,16 +34,60 @@ conda activate nocturna-dev
 make dev
 ```
 
-Visit http://localhost:8000/docs for API documentation.
-
 ## 📋 Prerequisites
 
+### For Docker Deployment
+- **Docker** (20.10+) and **Docker Compose** (2.0+)
+- **2GB RAM** minimum
+- **10GB disk space** minimum
+
+### For Development Setup
 - **Python 3.9+**
 - **Conda** (Miniconda or Anaconda) - [Installation Guide](https://docs.conda.io/en/latest/miniconda.html)
 - **Git**
 - **PostgreSQL** and **Redis** (optional - will be installed automatically)
 
-## 🛠️ Installation
+## 🐳 Docker Deployment
+
+### Quick Docker Setup
+
+```bash
+# One-command deployment
+make docker-deploy
+```
+
+This will:
+- ✅ Build the Docker image
+- ✅ Start PostgreSQL and Redis containers
+- ✅ Run database migrations
+- ✅ Setup admin user and service token
+- ✅ Configure for service component mode
+
+### Docker Commands
+
+```bash
+make docker-check         # Check Docker prerequisites
+make docker-setup         # Setup environment files
+make docker-build         # Build application image
+make docker-up             # Start all services
+make docker-down           # Stop all services
+make docker-logs           # View service logs
+make docker-status         # Check service status
+make docker-shell          # Open shell in container
+```
+
+### Service Component Mode
+
+Docker deployment configures Nocturna as a **service component** for integration with your main backend:
+
+- 🚫 **Disabled user registration**
+- 👤 **Admin user** for system management
+- 🔑 **Service token** for API integration
+- 🔒 **Production-ready security** defaults
+
+See [Docker Deployment Guide](docs/deployment/docker.md) for complete documentation.
+
+## 🛠️ Development Installation
 
 ### One-Command Setup (Recommended)
 
@@ -72,6 +131,7 @@ nocturna-calculations/
 ├── environments/              # Conda environment definitions
 ├── scripts/                   # Utility scripts
 │   ├── bootstrap.py          # Main setup script
+│   ├── setup_production.py   # Production deployment setup
 │   ├── testing/              # Testing utilities
 │   │   ├── run_api_tests.py  # API integration tests
 │   │   └── run_tests.sh      # Comprehensive test runner
@@ -79,9 +139,16 @@ nocturna-calculations/
 ├── tests/                     # Test suite
 ├── docs/                      # Documentation
 │   ├── releases/             # Release notes and documentation
+│   ├── deployment/           # Deployment guides
 │   ├── architecture/         # Architecture documentation
 │   ├── installation/         # Installation guides
 │   └── ...                   # Other documentation
+├── config/                    # Configuration files
+│   ├── production.env        # Production environment template
+│   └── ...
+├── Dockerfile                 # Docker image definition
+├── docker-compose.yml         # Multi-service orchestration
+├── requirements.txt           # Python dependencies
 ├── Makefile                   # Command interface
 └── setup.py                   # Package configuration
 ```
@@ -90,6 +157,8 @@ nocturna-calculations/
 
 - **Astrological Calculations**: Comprehensive ephemeris calculations using Swiss Ephemeris
 - **REST API**: Modern FastAPI-based web service
+- **Docker Support**: Production-ready containerized deployment
+- **Service Component**: Designed for integration with larger systems
 - **Environment Management**: Separate environments for development, testing, and production
 - **Database Support**: PostgreSQL with migrations
 - **Caching**: Redis integration for performance
@@ -99,6 +168,7 @@ nocturna-calculations/
 ## 📚 Documentation
 
 - [Quick Start Guide](docs/installation/quick-start.md)
+- [Docker Deployment Guide](docs/deployment/docker.md) - **⭐ Recommended for Production**
 - [Installation Overview](docs/installation/README.md)
 - [API Documentation](docs/api/specification.md)
 - [Development Guide](docs/development/README.md)
@@ -117,6 +187,16 @@ nocturna-calculations/
 | `make lint`   | Run code quality checks     |
 | `make docs`   | Build documentation         |
 | `make help`   | Show all available commands |
+
+### Docker Development Commands
+
+| Command                    | Description                        |
+| -------------------------- | ---------------------------------- |
+| `make docker-deploy`       | Complete Docker deployment        |
+| `make docker-up`           | Start Docker services              |
+| `make docker-logs`         | View service logs                  |
+| `make docker-shell`        | Open shell in API container       |
+| `make docker-setup-production` | Configure production settings |
 
 ### Running Tests
 
@@ -138,7 +218,29 @@ make security      # Run security checks
 
 ## 🚢 Deployment
 
-### Production Setup
+### Production Docker Deployment (Recommended)
+
+```bash
+# Clone and setup
+git clone <repository-url>
+cd nocturna-calculations
+
+# Configure environment
+make docker-setup
+# Edit .env with your production values
+
+# Deploy
+make docker-deploy
+```
+
+**Benefits of Docker deployment:**
+- 🐳 Isolated, reproducible environment
+- 🔧 Automated setup and configuration
+- 📊 Built-in monitoring and health checks
+- 🔒 Security best practices
+- 🚀 Easy scaling and management
+
+### Traditional Production Setup
 
 ```bash
 make setup-prod
@@ -146,6 +248,22 @@ conda activate nocturna-prod
 ```
 
 See [Production Deployment Guide](docs/deployment/production.md) for detailed instructions.
+
+### Deployment Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Your Main     │◄──►│  Nocturna API    │    │   PostgreSQL    │
+│   Backend       │    │  (Service)       │◄──►│   + Redis       │
+│                 │    │  Port: 8000      │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                        │
+         ▼                        ▼
+┌─────────────────┐    ┌──────────────────┐
+│   Frontend      │    │   Admin Panel    │
+│   Application   │    │   (Optional)     │
+└─────────────────┘    └──────────────────┘
+```
 
 ## 🤝 Contributing
 

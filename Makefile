@@ -12,6 +12,12 @@ PYTHON := python3
 BOOTSTRAP := $(PYTHON) scripts/bootstrap.py
 API_TESTS := $(PYTHON) scripts/testing/run_api_tests.py
 
+# Docker configuration
+DOCKER_IMAGE := nocturna-calculations
+DOCKER_TAG := latest
+COMPOSE_FILE := docker-compose.yml
+ENV_FILE := .env
+
 # Active environment detection
 ACTIVE_ENV := $(CONDA_DEFAULT_ENV)
 ifeq ($(ACTIVE_ENV),nocturna-dev)
@@ -282,6 +288,105 @@ services-check: ## Check service status
 	@echo ""
 	@echo "Redis:"
 	@./scripts/services/setup_redis.sh check || true
+
+##@ Docker Deployment
+
+.PHONY: docker-check
+docker-check: ## Check Docker prerequisites
+	$(call print_header,"Checking Docker prerequisites")
+	@command -v docker >/dev/null 2>&1 || { echo "❌ Docker is not installed"; exit 1; }
+	@command -v docker-compose >/dev/null 2>&1 || { echo "❌ Docker Compose is not installed"; exit 1; }
+	@docker info >/dev/null 2>&1 || { echo "❌ Docker daemon is not running"; exit 1; }
+	$(call print_success,"Docker prerequisites met")
+
+.PHONY: docker-setup
+docker-setup: docker-check ## Setup Docker environment
+	$(call print_header,"Setting up Docker environment")
+	@if [ ! -f $(ENV_FILE) ]; then \
+		echo "Creating .env file from production template..."; \
+		cp config/production.env $(ENV_FILE); \
+		$(call print_warning,"Please update $(ENV_FILE) with your production values"); \
+		echo "Required changes:"; \
+		echo "  - SECRET_KEY (generate with: openssl rand -hex 32)"; \
+		echo "  - ADMIN_PASSWORD"; \
+		echo "  - POSTGRES_PASSWORD"; \
+		echo "  - CORS_ORIGINS"; \
+	fi
+	$(call print_success,"Docker environment setup complete")
+
+.PHONY: docker-build
+docker-build: docker-check ## Build Docker image
+	$(call print_header,"Building Docker image")
+	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
+	$(call print_success,"Docker image built: $(DOCKER_IMAGE):$(DOCKER_TAG)")
+
+.PHONY: docker-up
+docker-up: docker-check ## Start all services with Docker Compose
+	$(call print_header,"Starting Docker services")
+	docker-compose -f $(COMPOSE_FILE) up -d
+	$(call print_success,"Services started. API available at http://localhost:8000")
+
+.PHONY: docker-down
+docker-down: ## Stop all Docker services
+	$(call print_header,"Stopping Docker services")
+	docker-compose -f $(COMPOSE_FILE) down
+	$(call print_success,"Services stopped")
+
+.PHONY: docker-restart
+docker-restart: docker-down docker-up ## Restart all Docker services
+
+.PHONY: docker-logs
+docker-logs: ## View Docker service logs
+	$(call print_header,"Docker service logs")
+	docker-compose -f $(COMPOSE_FILE) logs -f
+
+.PHONY: docker-logs-api
+docker-logs-api: ## View API service logs only
+	$(call print_header,"API service logs")
+	docker-compose -f $(COMPOSE_FILE) logs -f app
+
+.PHONY: docker-status
+docker-status: ## Check Docker service status
+	$(call print_header,"Docker service status")
+	docker-compose -f $(COMPOSE_FILE) ps
+
+.PHONY: docker-setup-production
+docker-setup-production: docker-check ## Setup production environment
+	$(call print_header,"Setting up production deployment")
+	@if [ ! -f $(ENV_FILE) ]; then \
+		$(call print_error,"$(ENV_FILE) not found. Run 'make docker-setup' first"); \
+		exit 1; \
+	fi
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/setup_production.py
+	$(call print_success,"Production setup complete")
+
+.PHONY: docker-setup-production-dry
+docker-setup-production-dry: docker-check ## Dry run production setup
+	$(call print_header,"Production setup dry run")
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/setup_production.py --dry-run
+
+.PHONY: docker-migrate
+docker-migrate: ## Run database migrations in Docker
+	$(call print_header,"Running database migrations")
+	docker-compose -f $(COMPOSE_FILE) exec app alembic upgrade head
+	$(call print_success,"Database migrations complete")
+
+.PHONY: docker-shell
+docker-shell: ## Open shell in running API container
+	$(call print_header,"Opening shell in API container")
+	docker-compose -f $(COMPOSE_FILE) exec app bash
+
+.PHONY: docker-clean
+docker-clean: ## Clean Docker resources
+	$(call print_header,"Cleaning Docker resources")
+	docker-compose -f $(COMPOSE_FILE) down -v
+	docker system prune -f
+	$(call print_success,"Docker resources cleaned")
+
+.PHONY: docker-deploy
+docker-deploy: docker-setup docker-build docker-up docker-migrate docker-setup-production ## Complete Docker deployment
+	$(call print_header,"Complete Docker deployment")
+	$(call print_success,"Deployment complete! Check logs with 'make docker-logs'")
 
 ##@ Maintenance
 

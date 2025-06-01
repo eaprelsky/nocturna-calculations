@@ -1,0 +1,112 @@
+# Git and version control
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+docs/
+examples/
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environment and IDE files
+.env
+.env.*
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Development environments
+.conda/
+.venv/
+venv/
+ENV/
+env/
+
+# Local development files
+logs/
+status/
+.benchmarks/
+
+# Database files
+*.db
+*.sqlite3
+
+# Docker files (except Dockerfile)
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile.*
+
+# Makefile and scripts (keep minimal scripts for container)
+Makefile
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Backup files
+*.backup
+*.bak
+
+# Large files and datasets
+*.zip
+*.tar.gz
+*.tgz
+
+# Node modules (if any)
+node_modules/
+
+# Keep only essential files for runtime 
