@@ -41,6 +41,7 @@ tmp/
 # Documentation
 docs/_build/
 site/
+status/
 
 # Misc
 .DS_Store
