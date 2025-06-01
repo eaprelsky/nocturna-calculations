@@ -72,9 +72,16 @@ nocturna-calculations/
 ├── environments/              # Conda environment definitions
 ├── scripts/                   # Utility scripts
 │   ├── bootstrap.py          # Main setup script
+│   ├── testing/              # Testing utilities
+│   │   ├── run_api_tests.py  # API integration tests
+│   │   └── run_tests.sh      # Comprehensive test runner
 │   └── services/             # Service management
 ├── tests/                     # Test suite
 ├── docs/                      # Documentation
+│   ├── releases/             # Release notes and documentation
+│   ├── architecture/         # Architecture documentation
+│   ├── installation/         # Installation guides
+│   └── ...                   # Other documentation
 ├── Makefile                   # Command interface
 └── setup.py                   # Package configuration
 ```
@@ -96,6 +103,7 @@ nocturna-calculations/
 - [API Documentation](docs/api/specification.md)
 - [Development Guide](docs/development/README.md)
 - [Architecture Documentation](docs/architecture/)
+- [Release Notes](docs/releases/)
 
 ## 🧪 Development
 
@@ -168,6 +176,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔄 Version History
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed release notes and version history.
+
+For comprehensive release documentation, visit [docs/releases/](docs/releases/).
 
 ---
 

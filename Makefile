@@ -10,6 +10,7 @@
 PROJECT_NAME := nocturna-calculations
 PYTHON := python3
 BOOTSTRAP := $(PYTHON) scripts/bootstrap.py
+API_TESTS := $(PYTHON) scripts/testing/run_api_tests.py
 
 # Active environment detection
 ACTIVE_ENV := $(CONDA_DEFAULT_ENV)
@@ -128,32 +129,32 @@ test-integration: check-env ## Run integration tests only
 .PHONY: test-api
 test-api: check-test-env ## Run API tests only (requires nocturna-test environment)
 	$(call print_header,"Running API tests")
-	python run_api_tests.py --verbose --skip-env-check
+	$(API_TESTS) --verbose --skip-env-check
 
 .PHONY: test-api-auth
 test-api-auth: check-test-env ## Run API authentication tests only
 	$(call print_header,"Running API authentication tests")
-	python run_api_tests.py --auth --verbose --skip-env-check
+	$(API_TESTS) --auth --verbose --skip-env-check
 
 .PHONY: test-api-charts
 test-api-charts: check-test-env ## Run API chart tests only
 	$(call print_header,"Running API chart tests")
-	python run_api_tests.py --charts --verbose --skip-env-check
+	$(API_TESTS) --charts --verbose --skip-env-check
 
 .PHONY: test-api-calculations
 test-api-calculations: check-test-env ## Run API calculation tests only
 	$(call print_header,"Running API calculation tests")
-	python run_api_tests.py --calculations --verbose --skip-env-check
+	$(API_TESTS) --calculations --verbose --skip-env-check
 
 .PHONY: test-api-performance
 test-api-performance: check-test-env ## Run API performance tests only
 	$(call print_header,"Running API performance tests")
-	python run_api_tests.py --performance --verbose --skip-env-check
+	$(API_TESTS) --performance --verbose --skip-env-check
 
 .PHONY: test-api-quick
 test-api-quick: check-test-env ## Run API tests (quick, less verbose)
 	$(call print_header,"Running API tests (quick)")
-	python run_api_tests.py --skip-env-check
+	$(API_TESTS) --skip-env-check
 
 .PHONY: test-admin
 test-admin: check-env ## Run admin functionality tests

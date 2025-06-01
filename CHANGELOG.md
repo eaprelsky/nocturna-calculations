@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation reorganized and updated for v1.0.0
 - Improved error handling and validation
 - Enhanced logging and monitoring capabilities
+- Project structure reorganized for better maintainability
 
 ### Security
 - Implemented secure authentication with JWT tokens
@@ -59,5 +60,7 @@ Each release includes:
 - Updated documentation
 - Security and compatibility testing
 - Performance benchmarks
+
+For detailed release notes, see the [releases documentation](docs/releases/).
 
 For more information about our release process, see [CONTRIBUTING.md](CONTRIBUTING.md). 
