@@ -6,7 +6,7 @@ A comprehensive astrological calculations library and REST API service built wit
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/nocturna-calculations.git
+git clone https://github.com/eaprelsky/nocturna-calculations.git
 cd nocturna-calculations
 
 # Run complete setup (recommended)
@@ -162,12 +162,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - 📧 Email: yegor.aprelsky@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/nocturna-calculations/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/nocturna-calculations/discussions)
+- 🐛 Issues: [GitHub Issues](https://github.com/eaprelsky/nocturna-calculations/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/eaprelsky/nocturna-calculations/discussions)
 
-## 🔄 Migration from Old System
+## 🔄 Version History
 
-If you have an existing installation, see [Migration Guide](MIGRATION_GUIDE.md) for upgrading to the new unified installation system.
+See [CHANGELOG.md](CHANGELOG.md) for detailed release notes and version history.
 
 ---
 

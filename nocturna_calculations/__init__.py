@@ -2,7 +2,7 @@
 Nocturna Calculations - A Python library for astrological calculations
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 __author__ = "Yegor Aprelsky"
 __email__ = "yegor.aprelsky@gmail.com"
 

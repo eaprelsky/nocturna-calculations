@@ -75,7 +75,7 @@ PERF_DEPS = [
 
 setup(
     name="nocturna-calculations",
-    version="0.1.0",
+    version="1.0.0",
     packages=find_packages(),
     install_requires=CORE_DEPS,
     extras_require={
@@ -92,7 +92,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/eaprelsky/nocturna-calculations",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",

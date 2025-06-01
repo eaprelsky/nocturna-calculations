@@ -14,7 +14,7 @@ This guide will get you up and running with Nocturna Calculations in 5 minutes.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/nocturna-calculations.git
+git clone https://github.com/eaprelsky/nocturna-calculations.git
 cd nocturna-calculations
 ```
 
