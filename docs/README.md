@@ -26,6 +26,7 @@ Nocturna Calculations is a comprehensive solution for performing various astrolo
 - API key management
 - Usage tracking and analytics
 - **Service component mode** for backend integration
+- **Comprehensive testing infrastructure** (92+ automated tests)
 
 ## Core Features
 
@@ -34,7 +35,8 @@ Nocturna Calculations is a comprehensive solution for performing various astrolo
 - **Multiple deployment options**: library, API service, or containerized service component
 - **Service token authentication** for backend-to-backend integration
 - Extensible architecture for adding new methods
-- Comprehensive test coverage for both library and API
+- **Production-ready testing**: 92+ automated tests with server management
+- **WebSocket support**: Real-time calculations and data streaming
 - Well-documented interfaces
 - Production-ready with monitoring and health checks
 - **Automated token management** for service deployments
@@ -181,6 +183,11 @@ result = client.calculate_positions({
 ## Documentation
 
 For detailed documentation, please refer to the following sections:
+
+### Testing & Quality Assurance
+- **[Complete Testing Guide](testing-guide.md)** - **⭐ 92+ automated tests with server management**
+- [API Testing Guide](development/testing-api.md) - Automated API testing with zero manual steps
+- [WebSocket Testing](websockets.md) - Real-time communication testing
 
 ### Library Documentation
 - [Architecture Overview](architecture/overview.md)

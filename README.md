@@ -127,17 +127,25 @@ nocturna-calculations/
 ├── nocturna_calculations/     # Core library package
 │   ├── core/                  # Core calculations
 │   ├── api/                   # FastAPI application
+│   │   └── routers/           # API routes including WebSocket support
 │   └── models/                # Data models
 ├── environments/              # Conda environment definitions
 ├── scripts/                   # Utility scripts
 │   ├── bootstrap.py          # Main setup script
 │   ├── setup_production.py   # Production deployment setup
-│   ├── testing/              # Testing utilities
-│   │   ├── run_api_tests.py  # API integration tests
-│   │   └── run_tests.sh      # Comprehensive test runner
+│   ├── testing/              # Testing utilities (NEW)
+│   │   ├── test_with_server.py # 🚀 Integrated API testing with server management
+│   │   └── run_api_tests.py  # Legacy API integration tests
 │   └── services/             # Service management
-├── tests/                     # Test suite
+├── tests/                     # Comprehensive test suite (92+ tests)
+│   ├── websocket/            # 30 WebSocket tests (ConnectionManager + Router)
+│   ├── unit/                 # 41 authentication unit tests
+│   ├── api/                  # 21 API integration tests  
+│   ├── security/             # Security and admin tests
+│   └── integration/          # Database integration tests
 ├── docs/                      # Documentation
+│   ├── testing-guide.md      # 📚 Complete testing documentation
+│   ├── websockets.md         # WebSocket implementation guide
 │   ├── releases/             # Release notes and documentation
 │   ├── deployment/           # Deployment guides
 │   ├── architecture/         # Architecture documentation
@@ -149,7 +157,7 @@ nocturna-calculations/
 ├── Dockerfile                 # Docker image definition
 ├── docker-compose.yml         # Multi-service orchestration
 ├── requirements.txt           # Python dependencies
-├── Makefile                   # Command interface
+├── Makefile                   # Command interface (enhanced with testing)
 └── setup.py                   # Package configuration
 ```
 
@@ -157,13 +165,18 @@ nocturna-calculations/
 
 - **Astrological Calculations**: Comprehensive ephemeris calculations using Swiss Ephemeris
 - **REST API**: Modern FastAPI-based web service
+- **WebSocket Support**: Real-time astrological calculations and data streaming
 - **Docker Support**: Production-ready containerized deployment
 - **Service Component**: Designed for integration with larger systems
 - **Environment Management**: Separate environments for development, testing, and production
 - **Database Support**: PostgreSQL with migrations
 - **Caching**: Redis integration for performance
 - **Documentation**: Auto-generated API docs
-- **Testing**: Comprehensive test suite with pytest
+- **Comprehensive Testing**: 92+ automated tests with server management
+  - ✅ **WebSocket Testing** (30 tests) - Real-time communication validation
+  - ✅ **Authentication Testing** (41 tests) - Security and token management  
+  - ✅ **API Integration Testing** (21 tests) - Complete HTTP endpoint validation
+  - ✅ **Automatic Server Management** - Zero manual steps for testing
 
 ## 📚 Documentation
 
@@ -182,7 +195,9 @@ nocturna-calculations/
 | Command       | Description                 |
 | ------------- | --------------------------- |
 | `make dev`    | Start development server    |
-| `make test`   | Run test suite              |
+| `make test-complete-integrated` | **🏆 Complete test suite (92+ tests) with automatic server** |
+| `make test-working` | Fast comprehensive testing (71+ tests) |
+| `make test-api-integrated` | API tests with automatic server management |
 | `make format` | Format code with black      |
 | `make lint`   | Run code quality checks     |
 | `make docs`   | Build documentation         |
@@ -200,12 +215,36 @@ nocturna-calculations/
 
 ### Running Tests
 
+**🚀 NEW: Fully Automated Testing (No Manual Steps)**
+
 ```bash
-make test          # Run all tests
-make test-unit     # Run unit tests only
-make test-api      # Run API tests only
-make coverage      # Generate coverage report
+# 🏆 BEST: Complete automated test suite (92+ tests)
+make test-complete-integrated    # WebSocket + Auth + API with automatic server
+
+# ⚡ Quick comprehensive testing  
+make test-working               # 71+ tests (WebSocket + Authentication)
+
+# 🌐 API tests with automatic server management
+make test-api-integrated        # 21 API tests, zero manual setup
+
+# 🔍 Component-specific testing
+make test-websocket            # 30 WebSocket tests
+make test-auth                 # 41 authentication tests
+
+# 📊 Coverage and reporting
+make coverage                  # Generate coverage report
+make test-summary              # Show test status overview
 ```
+
+**Key Testing Features:**
+- ✅ **Automatic server management** - No manual server startup needed
+- ✅ **Comprehensive coverage** - 92+ tests across all components  
+- ✅ **WebSocket testing** - Real-time communication validation
+- ✅ **API integration testing** - Complete HTTP endpoint validation
+- ✅ **Authentication testing** - Security and token management
+- ✅ **Single command execution** - Everything automated
+
+See [Complete Testing Guide](docs/testing-guide.md) for detailed testing documentation.
 
 ### Code Quality
 

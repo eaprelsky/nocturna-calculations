@@ -5,12 +5,26 @@ from unittest.mock import Mock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 import json
+import sys
+import os
+
+# Add project root to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from nocturna_calculations.api.app import app
 from nocturna_calculations.api.database import get_db
 from nocturna_calculations.api.models import User
 from nocturna_calculations.api.routers.auth import create_access_token
-from tests.conftest import test_config
+
+# Try to import test config, fall back to creating it if not available
+try:
+    from tests.conftest import test_config
+except ImportError:
+    test_config = {
+        "TESTING": True,
+        "DATABASE_URL": "sqlite:///:memory:",
+        "SECRET_KEY": "test-secret-key"
+    }
 
 
 @pytest.fixture(scope="session")
