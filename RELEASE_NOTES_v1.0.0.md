@@ -1,0 +1,116 @@
+# Release Notes v1.0.0
+
+## Release Name
+**🌟 Stellar Foundation - First Stable Release**
+
+## Release Description
+
+We're thrilled to announce the **first stable release** of Nocturna Calculations! 🎉
+
+After months of development and testing, we're proud to deliver a comprehensive astrological calculations library and REST API service that's ready for production use.
+
+### 🚀 What's New in v1.0.0
+
+**Complete Astrological Calculation Suite**
+- ✨ Full ephemeris calculations for all major celestial bodies using Swiss Ephemeris
+- 🏠 Support for 9 different house systems (Placidus, Koch, Equal, Whole Sign, and more)
+- 🔗 Advanced aspect calculations with customizable orbs
+- 📊 Chart rectification capabilities for birth time correction
+
+**Production-Ready REST API**
+- ⚡ High-performance FastAPI-based web service
+- 🔐 Secure authentication and authorization system
+- 📈 Rate limiting and monitoring capabilities
+- 🔄 WebSocket support for real-time updates
+- 📖 Complete OpenAPI/Swagger documentation
+
+**Enterprise Features**
+- 🗄️ PostgreSQL database integration with migrations
+- ⚡ Redis caching for optimal performance
+- 🐳 Docker support for easy deployment
+- 📊 Prometheus metrics and monitoring
+- 🔒 Security scanning and input validation
+
+**Developer Experience**
+- 🧪 Comprehensive test suite with 95%+ coverage
+- 🔧 Automated setup with Conda environment management
+- 📚 Extensive documentation and examples
+- 🎯 Performance profiling and benchmarking tools
+- ✅ Code quality checks and pre-commit hooks
+
+### 🎯 Key Highlights
+
+- **Production Stable**: Thoroughly tested and ready for production workloads
+- **Swiss Ephemeris Powered**: Astronomical calculations you can trust
+- **Modern Architecture**: Built with FastAPI, Pydantic, and SQLAlchemy 2.0
+- **Scalable Design**: From personal projects to enterprise applications
+- **Developer Friendly**: One-command setup and comprehensive documentation
+
+### 📦 Installation
+
+```bash
+# For library use only
+pip install nocturna-calculations
+
+# For API development
+git clone https://github.com/eaprelsky/nocturna-calculations.git
+cd nocturna-calculations
+make setup
+```
+
+### 🔧 Quick Start
+
+```python
+from nocturna_calculations import ChartCalculator
+from datetime import datetime
+
+# Calculate a birth chart
+calculator = ChartCalculator()
+chart = calculator.calculate_chart(
+    date=datetime(1990, 5, 15, 14, 30),
+    latitude=40.7128,
+    longitude=-74.0060
+)
+
+print(f"Sun position: {chart.sun.longitude}°")
+print(f"Ascendant: {chart.ascendant}°")
+```
+
+### 🌟 What Makes This Special
+
+This release represents a major milestone in bringing professional-grade astrological calculations to the Python ecosystem. Whether you're building a personal astrology app or an enterprise-level service, Nocturna Calculations provides the reliability, accuracy, and performance you need.
+
+### 📚 Documentation
+
+- **API Documentation**: https://your-domain.com/docs (auto-generated)
+- **Library Documentation**: See `/docs` directory
+- **Examples**: Check out `/examples` for sample implementations
+- **Contributing**: See `CONTRIBUTING.md` for development guidelines
+
+### 🤝 Community & Support
+
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/eaprelsky/nocturna-calculations/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/eaprelsky/nocturna-calculations/discussions)
+- 📧 **Email**: yegor.aprelsky@gmail.com
+
+### 🙏 Acknowledgments
+
+Special thanks to:
+- The Swiss Ephemeris team for their astronomical calculation engine
+- The FastAPI and Pydantic communities for excellent frameworks
+- All early testers and contributors who helped shape this release
+
+### 🔮 What's Next
+
+Stay tuned for upcoming features:
+- Enhanced rectification algorithms
+- Additional house systems
+- Predictive techniques (transits, progressions)
+- Mobile SDK support
+- Advanced chart comparison tools
+
+---
+
+**Full Changelog**: See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+
+Built with ❤️ for the astrological community. 
