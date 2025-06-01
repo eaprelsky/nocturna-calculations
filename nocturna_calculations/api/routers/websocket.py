@@ -7,6 +7,7 @@ from typing import List, Dict, Any, Optional
 import json
 import asyncio
 from datetime import datetime
+import logging
 
 from nocturna_calculations.api.database import get_db
 from nocturna_calculations.api.models import User, Chart
@@ -31,7 +32,50 @@ class ConnectionManager:
     
     async def send_message(self, user_id: str, message: dict):
         if user_id in self.active_connections:
-            await self.active_connections[user_id].send_json(message)
+            try:
+                await self.active_connections[user_id].send_json(message)
+            except Exception as e:
+                # Log error and remove stale connection
+                logging.error(f"Failed to send message to user {user_id}: {e}")
+                self.disconnect(user_id)
+    
+    def get_connection_count(self) -> int:
+        """Get the count of active connections."""
+        return len(self.active_connections)
+    
+    def get_connected_users(self) -> List[str]:
+        """Get list of connected user IDs."""
+        return list(self.active_connections.keys())
+    
+    async def broadcast(self, message: dict):
+        """Broadcast message to all connected users."""
+        disconnected_users = []
+        for user_id, websocket in self.active_connections.items():
+            try:
+                await websocket.send_json(message)
+            except Exception as e:
+                logging.error(f"Failed to broadcast to user {user_id}: {e}")
+                disconnected_users.append(user_id)
+        
+        # Clean up failed connections
+        for user_id in disconnected_users:
+            self.disconnect(user_id)
+    
+    async def cleanup_stale_connections(self):
+        """Clean up stale/closed connections."""
+        stale_users = []
+        for user_id, websocket in self.active_connections.items():
+            try:
+                # Check if connection is still active
+                if hasattr(websocket, 'client_state') and not websocket.client_state.CONNECTED:
+                    stale_users.append(user_id)
+            except Exception:
+                # If we can't check the state, consider it stale
+                stale_users.append(user_id)
+        
+        # Remove stale connections
+        for user_id in stale_users:
+            self.disconnect(user_id)
 
 manager = ConnectionManager()
 
@@ -60,6 +104,8 @@ async def process_calculation(
     db: Session
 ):
     """Process calculation request and send results"""
+    logger = logging.getLogger(__name__)
+    
     try:
         # Get chart
         chart = db.query(Chart).filter(
@@ -70,7 +116,8 @@ async def process_calculation(
         if not chart:
             await manager.send_message(user_id, {
                 "status": "error",
-                "message": "Chart not found"
+                "message": "Chart not found",
+                "chart_id": chart_id
             })
             return
         
@@ -102,7 +149,8 @@ async def process_calculation(
         else:
             await manager.send_message(user_id, {
                 "status": "error",
-                "message": f"Unknown calculation type: {calculation_type}"
+                "message": f"Unknown calculation type: {calculation_type}",
+                "calculation_type": calculation_type
             })
             return
         
@@ -114,10 +162,15 @@ async def process_calculation(
             "result": result
         })
         
+        logger.info(f"Calculation completed for user {user_id}, type: {calculation_type}")
+        
     except Exception as e:
+        logger.error(f"Calculation failed for user {user_id}: {str(e)}", exc_info=True)
         await manager.send_message(user_id, {
             "status": "error",
-            "message": str(e)
+            "message": f"Calculation failed: {str(e)}",
+            "calculation_type": calculation_type,
+            "chart_id": chart_id
         })
 
 # WebSocket endpoint
@@ -128,34 +181,52 @@ async def websocket_endpoint(
     db: Session = Depends(get_db)
 ):
     """WebSocket endpoint for real-time calculations"""
+    logger = logging.getLogger(__name__)
+    user_id = None
+    
     try:
         # Verify token and get user
         user = await get_current_user(token, db)
         if not user:
+            logger.warning(f"WebSocket connection rejected: invalid token")
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
         
+        user_id = str(user.id)
+        logger.info(f"WebSocket connection established for user {user_id}")
+        
         # Connect
-        await manager.connect(websocket, str(user.id))
+        await manager.connect(websocket, user_id)
         
         try:
             while True:
                 # Receive message
                 data = await websocket.receive_text()
-                message = json.loads(data)
+                
+                try:
+                    message = json.loads(data)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Invalid JSON from user {user_id}: {e}")
+                    await manager.send_message(user_id, {
+                        "status": "error",
+                        "message": "Invalid JSON format"
+                    })
+                    continue
                 
                 # Validate message format
-                if not all(k in message for k in ["chart_id", "calculation_type", "parameters"]):
-                    await manager.send_message(str(user.id), {
+                required_fields = ["chart_id", "calculation_type", "parameters"]
+                if not all(k in message for k in required_fields):
+                    logger.error(f"Invalid message format from user {user_id}: missing fields")
+                    await manager.send_message(user_id, {
                         "status": "error",
-                        "message": "Invalid message format"
+                        "message": "Invalid message format. Required fields: chart_id, calculation_type, parameters"
                     })
                     continue
                 
                 # Process calculation
                 await process_calculation(
                     websocket,
-                    str(user.id),
+                    user_id,
                     message["chart_id"],
                     message["calculation_type"],
                     message["parameters"],
@@ -163,8 +234,14 @@ async def websocket_endpoint(
                 )
                 
         except WebSocketDisconnect:
-            manager.disconnect(str(user.id))
+            logger.info(f"WebSocket disconnected for user {user_id}")
             
     except Exception as e:
+        logger.error(f"WebSocket error for user {user_id}: {str(e)}", exc_info=True)
         if websocket.client_state.CONNECTED:
-            await websocket.close(code=status.WS_1011_INTERNAL_ERROR) 
+            await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
+    finally:
+        # Cleanup connection
+        if user_id:
+            manager.disconnect(user_id)
+            logger.info(f"WebSocket connection cleaned up for user {user_id}") 

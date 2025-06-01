@@ -2,7 +2,7 @@
 Calculations router for the Nocturna Calculations API.
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 import json
@@ -558,82 +558,6 @@ async def calculate_secondary_progressions_endpoint(
     cache.set(cache_key, result)
     
     return result
-
-@router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for real-time calculations."""
-    await websocket.accept()
-    
-    try:
-        while True:
-            # Receive calculation request
-            data = await websocket.receive_json()
-            request = CalculationRequest(**data)
-            
-            # Generate cache key
-            cache_key = get_cache_key(
-                str(request.chart_id),
-                request.calculation_type,
-                request.parameters
-            )
-            
-            # Try to get from cache
-            cached_result = cache.get(cache_key)
-            if cached_result:
-                await websocket.send_json(cached_result.dict())
-                continue
-            
-            # Calculate if not in cache
-            chart = CoreChart(
-                datetime=request.datetime,
-                latitude=request.latitude,
-                longitude=request.longitude,
-                altitude=request.altitude,
-                **request.parameters
-            )
-            
-            # Perform calculation based on type
-            if request.calculation_type == "planetary_positions":
-                result = chart.calculate_planetary_positions(**request.parameters)
-            elif request.calculation_type == "aspects":
-                result = chart.calculate_aspects(**request.parameters)
-            elif request.calculation_type == "houses":
-                result = chart.calculate_houses(**request.parameters)
-            elif request.calculation_type == "fixed_stars":
-                result = chart.calculate_fixed_stars(**request.parameters)
-            elif request.calculation_type == "arabic_parts":
-                result = chart.calculate_arabic_parts(**request.parameters)
-            elif request.calculation_type == "dignities":
-                result = chart.calculate_dignities(**request.parameters)
-            elif request.calculation_type == "antiscia":
-                result = chart.calculate_antiscia(**request.parameters)
-            elif request.calculation_type == "declinations":
-                result = chart.calculate_declinations(**request.parameters)
-            elif request.calculation_type == "harmonics":
-                result = chart.calculate_harmonics(**request.parameters)
-            elif request.calculation_type == "rectification":
-                result = chart.calculate_rectification(**request.parameters)
-            elif request.calculation_type == "primary_directions":
-                result = chart.calculate_primary_directions(**request.parameters)
-            elif request.calculation_type == "secondary_progressions":
-                result = chart.calculate_secondary_progressions(**request.parameters)
-            else:
-                await websocket.send_json({
-                    "error": f"Unknown calculation type: {request.calculation_type}"
-                })
-                continue
-            
-            # Cache the result
-            cache.set(cache_key, result)
-            
-            # Send result
-            await websocket.send_json(result.dict())
-            
-    except WebSocketDisconnect:
-        print("WebSocket disconnected")
-    except Exception as e:
-        print(f"WebSocket error: {e}")
-        await websocket.close()
 
 # Chart-based calculation endpoints
 @router.post("/charts/{chart_id}/positions", response_model=SimplePlanetaryPositionsResponse)
