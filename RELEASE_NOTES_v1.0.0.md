@@ -1,6 +1,7 @@
 # Release Notes v1.0.0
 
 ## Release Name
+
 **🌟 Stellar Foundation - First Stable Release**
 
 ## Release Description
@@ -12,19 +13,22 @@ After months of development and testing, we're proud to deliver a comprehensive 
 ### 🚀 What's New in v1.0.0
 
 **Complete Astrological Calculation Suite**
+
 - ✨ Full ephemeris calculations for all major celestial bodies using Swiss Ephemeris
 - 🏠 Support for 9 different house systems (Placidus, Koch, Equal, Whole Sign, and more)
 - 🔗 Advanced aspect calculations with customizable orbs
 - 📊 Chart rectification capabilities for birth time correction
 
 **Production-Ready REST API**
+
 - ⚡ High-performance FastAPI-based web service
 - 🔐 Secure authentication and authorization system
 - 📈 Rate limiting and monitoring capabilities
-- 🔄 WebSocket support for real-time updates
+- 🔄 WebSocket support for real-time updates (experimental features)
 - 📖 Complete OpenAPI/Swagger documentation
 
 **Enterprise Features**
+
 - 🗄️ PostgreSQL database integration with migrations
 - ⚡ Redis caching for optimal performance
 - 🐳 Docker support for easy deployment
@@ -32,6 +36,7 @@ After months of development and testing, we're proud to deliver a comprehensive 
 - 🔒 Security scanning and input validation
 
 **Developer Experience**
+
 - 🧪 Comprehensive test suite with 95%+ coverage
 - 🔧 Automated setup with Conda environment management
 - 📚 Extensive documentation and examples
@@ -96,6 +101,7 @@ This release represents a major milestone in bringing professional-grade astrolo
 ### 🙏 Acknowledgments
 
 Special thanks to:
+
 - The Swiss Ephemeris team for their astronomical calculation engine
 - The FastAPI and Pydantic communities for excellent frameworks
 - All early testers and contributors who helped shape this release
@@ -103,6 +109,7 @@ Special thanks to:
 ### 🔮 What's Next
 
 Stay tuned for upcoming features:
+
 - Enhanced rectification algorithms
 - Additional house systems
 - Predictive techniques (transits, progressions)
