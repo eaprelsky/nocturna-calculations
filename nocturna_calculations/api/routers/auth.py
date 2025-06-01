@@ -57,13 +57,28 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create JWT access token"""
+    """Create JWT access token
+    
+    Args:
+        data: Token payload data
+        expires_delta: Token expiration time. If None, defaults to 15 minutes.
+                      Pass timedelta(0) or use eternal=True parameter to create eternal tokens.
+    """
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
+    
+    # Check if this is an eternal token request (no expiration)
+    if expires_delta is None:
+        # Default to 15 minutes for regular tokens
         expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
+        to_encode.update({"exp": expire})
+    elif expires_delta.total_seconds() == 0:
+        # Eternal token - no expiration claim
+        pass
+    else:
+        # Custom expiration time
+        expire = datetime.utcnow() + expires_delta
+        to_encode.update({"exp": expire})
+    
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 

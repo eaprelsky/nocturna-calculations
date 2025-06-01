@@ -8,10 +8,172 @@ https://api.nocturna-calculations.com/v1
 
 ## Authentication
 
-All API endpoints require authentication using JWT tokens. Include the token in the Authorization header:
+The Nocturna API supports **two authentication methods** depending on your use case:
 
+### 1. User Authentication (Individual Users)
+
+For individual users accessing the API directly through client applications:
+
+```http
+Authorization: Bearer <user_jwt_token>
 ```
-Authorization: Bearer <your_jwt_token>
+
+**Token Characteristics:**
+- **Expires**: 1 hour (configurable)
+- **Refresh**: Available via refresh tokens
+- **Scope**: User-specific data and calculations
+- **Use Case**: Frontend applications, individual API access
+
+### 2. Service Authentication (Backend Integration)
+
+For backend services integrating Nocturna as a service component:
+
+```http
+Authorization: Bearer <service_jwt_token>
+```
+
+**Token Characteristics:**
+- **Expires**: 30 days (long-lived)
+- **Refresh**: Manual renewal via admin commands
+- **Scope**: All calculation endpoints, no user data access
+- **Use Case**: Backend-to-backend API integration
+
+**Service Token Features:**
+- 🔄 **Automated renewal** via `make docker-token-renew`
+- 🚫 **Limited scope** - calculations only, no user management
+- 🔒 **Secure generation** during deployment setup
+- 📊 **Monitoring support** for expiration tracking
+
+### Authentication Endpoints
+
+The following endpoints are available for **user authentication only**. Service tokens are pre-generated during deployment setup.
+
+#### Register User (User Authentication)
+
+> **Note**: Registration may be disabled in service component deployments
+
+```http
+POST /auth/register
+```
+
+Request:
+
+```json
+{
+    "email": "user@example.com",
+    "username": "username", 
+    "password": "secure_password",
+    "first_name": "John",
+    "last_name": "Doe"
+}
+```
+
+#### Login (User Authentication)
+
+```http
+POST /auth/login
+```
+
+Request:
+
+```json
+{
+    "email": "user@example.com",
+    "password": "secure_password"
+}
+```
+
+Response:
+
+```json
+{
+    "success": true,
+    "data": {
+        "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+        "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+        "expires_in": 3600,
+        "token_type": "Bearer"
+    }
+}
+```
+
+#### Service Token Integration Example
+
+For backend services, use the service token provided during deployment:
+
+```python
+import requests
+
+# Service token from deployment_summary.json
+SERVICE_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+
+headers = {
+    "Authorization": f"Bearer {SERVICE_TOKEN}",
+    "Content-Type": "application/json"
+}
+
+# Make calculation request
+response = requests.post(
+    "https://api.nocturna-calculations.com/v1/calculations/planetary-positions",
+    headers=headers,
+    json={
+        "date": "2024-03-20",
+        "time": "12:00:00",
+        "latitude": 55.7558,
+        "longitude": 37.6173,
+        "timezone": "Europe/Moscow",
+        "planets": ["SUN", "MOON", "MERCURY"]
+    }
+)
+```
+
+### Token Validation
+
+Both token types include standard JWT claims:
+
+```json
+{
+    "sub": "service@nocturna.internal",  // or user email
+    "user_id": 123,
+    "type": "service",  // or "user"
+    "iat": 1640995200,  // issued at
+    "exp": 1643587200   // expires at
+}
+```
+
+### Error Responses
+
+#### Token Expired
+```json
+{
+    "success": false,
+    "error": {
+        "code": "TOKEN_EXPIRED",
+        "message": "Token has expired"
+    }
+}
+```
+
+#### Invalid Token
+```json
+{
+    "success": false,
+    "error": {
+        "code": "INVALID_TOKEN", 
+        "message": "Invalid or malformed token"
+    }
+}
+```
+
+#### Insufficient Permissions
+```json
+{
+    "success": false,
+    "error": {
+        "code": "INSUFFICIENT_PERMISSIONS",
+        "message": "Token does not have required permissions"
+    }
+}
 ```
 
 ## API Architecture Overview

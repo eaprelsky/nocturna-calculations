@@ -365,6 +365,42 @@ docker-setup-production-dry: docker-check ## Dry run production setup
 	$(call print_header,"Production setup dry run")
 	docker-compose -f $(COMPOSE_FILE) exec app python scripts/setup_production.py --dry-run
 
+.PHONY: docker-token-check
+docker-token-check: docker-check ## Check service token expiration status
+	$(call print_header,"Checking service token status")
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/renew_service_token.py --check-only
+
+.PHONY: docker-token-renew
+docker-token-renew: docker-check ## Renew service token if expiring soon
+	$(call print_header,"Renewing service token")
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/renew_service_token.py
+	$(call print_success,"Token renewal complete")
+
+.PHONY: docker-token-force-renew
+docker-token-force-renew: docker-check ## Force renew service token
+	$(call print_header,"Force renewing service token")
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/renew_service_token.py --force
+	$(call print_success,"Token force renewal complete")
+
+.PHONY: docker-token-eternal
+docker-token-eternal: docker-check ## Generate eternal service token (never expires)
+	$(call print_header,"Generating eternal service token")
+	@echo "⚠️  WARNING: Eternal tokens never expire!"
+	@echo "⚠️  Ensure nginx/firewall restricts external access!"
+	@read -p "Continue? [y/N]: " confirm && [ "$$confirm" = "y" ]
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/renew_service_token.py --eternal
+	$(call print_success,"Eternal token generation complete")
+
+.PHONY: docker-token-custom
+docker-token-custom: docker-check ## Generate custom duration service token (usage: make docker-token-custom DAYS=365)
+	$(call print_header,"Generating custom duration service token")
+	@if [ -z "$(DAYS)" ]; then \
+		echo "❌ Please specify DAYS. Example: make docker-token-custom DAYS=365"; \
+		exit 1; \
+	fi
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/renew_service_token.py --days $(DAYS) --force
+	$(call print_success,"Custom token generation complete")
+
 .PHONY: docker-migrate
 docker-migrate: ## Run database migrations in Docker
 	$(call print_header,"Running database migrations")

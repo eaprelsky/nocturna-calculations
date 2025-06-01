@@ -25,4 +25,5 @@ tenacity>=8.2.0
 structlog>=23.1.0
 
 # Additional production dependencies
-requests>=2.31.0 
+requests>=2.31.0
+PyJWT>=2.8.0 

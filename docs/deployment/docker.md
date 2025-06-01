@@ -11,6 +11,7 @@ This guide explains how to deploy Nocturna Calculations as a containerized servi
 - [Service Component Mode](#service-component-mode)
 - [Deployment Steps](#deployment-steps)
 - [Management Commands](#management-commands)
+- [Token Management](#token-management)
 - [Monitoring & Troubleshooting](#monitoring--troubleshooting)
 - [Production Considerations](#production-considerations)
 - [Integration with Main Backend](#integration-with-main-backend)
@@ -387,6 +388,365 @@ make docker-restart
 docker stats
 ```
 
+## Token Management
+
+### Overview
+
+The service token is a **JWT token with 30-day expiration** that allows your main backend to authenticate with the Nocturna API. When it expires, your backend will start receiving `401 Unauthorized` responses.
+
+### 🚨 Token Expiration Symptoms
+
+```python
+# Your backend will receive these responses:
+{
+    "detail": "Token has expired",
+    "status_code": 401
+}
+```
+
+**Signs of token expiration:**
+- 401 Unauthorized errors from Nocturna API
+- Authentication failures in your backend logs
+- Failed astrological calculations
+- Service disruption for users
+
+### 🔍 Checking Token Status
+
+#### Quick Status Check
+```bash
+# Check if token is expiring soon
+make docker-token-check
+```
+
+#### Manual Token Inspection
+```python
+# In your backend code, check token expiration
+import jwt
+from datetime import datetime
+
+def check_token_expiration(token):
+    try:
+        payload = jwt.decode(token, options={"verify_signature": False})
+        exp_timestamp = payload.get('exp')
+        
+        if exp_timestamp:
+            exp_date = datetime.fromtimestamp(exp_timestamp)
+            days_until_expiry = (exp_date - datetime.now()).days
+            
+            print(f"Token expires on: {exp_date}")
+            print(f"Days until expiry: {days_until_expiry}")
+            
+            return days_until_expiry
+    except jwt.DecodeError:
+        print("Invalid token format")
+        return 0
+
+# Usage
+SERVICE_TOKEN = "your_current_token"
+days_left = check_token_expiration(SERVICE_TOKEN)
+
+if days_left < 7:
+    print("⚠️ Token expires soon - renewal needed!")
+```
+
+### 🔄 Token Renewal Options
+
+#### Option 1: Automatic Renewal (Recommended for Production)
+```bash
+# Renew token if expiring within 7 days
+make docker-token-renew
+
+# Force renewal regardless of expiration
+make docker-token-force-renew
+```
+
+#### Option 2: Eternal Tokens (For Lazy Admins! 😄)
+For internal deployments with nginx/firewall protection:
+
+```bash
+# Generate eternal token (never expires)
+make docker-token-eternal
+```
+
+**Perfect for:**
+- 🏠 **Internal deployments** with nginx reverse proxy
+- 🔒 **Firewall-protected** environments
+- 😴 **Lazy admins** who don't want monthly renewals
+- 🛡️ **Corporate networks** with restricted access
+
+**Security Requirements:**
+- ⚠️ **Block external access** via nginx/firewall
+- 🌐 **IP whitelisting** for additional security  
+- 📊 **Monitor logs** for suspicious activity
+- 🔄 **Rotate if compromised**
+
+#### Option 3: Custom Duration Tokens
+```bash
+# Generate 1-year token
+make docker-token-custom DAYS=365
+
+# Generate 5-year token  
+make docker-token-custom DAYS=1825
+
+# Generate 10-year token
+make docker-token-custom DAYS=3650
+```
+
+#### Option 4: Manual Renewal
+```bash
+# Regenerate all production credentials
+make docker-setup-production
+
+# Get the new token
+cat deployment_summary.json
+```
+
+### 🤖 Automated Token Renewal
+
+#### Cron-based Renewal
+```bash
+# Create renewal script
+cat << 'EOF' > /usr/local/bin/renew_nocturna_token.sh
+#!/bin/bash
+cd /path/to/nocturna-calculations
+
+# Check and renew token if needed
+make docker-token-renew > /var/log/nocturna_token_renewal.log 2>&1
+
+# Optionally restart your main backend if token was renewed
+if grep -q "Token renewal complete" /var/log/nocturna_token_renewal.log; then
+    # systemctl restart your-main-backend
+    echo "Token renewed - consider restarting your backend"
+fi
+EOF
+
+# Make executable
+chmod +x /usr/local/bin/renew_nocturna_token.sh
+
+# Schedule weekly renewal check
+echo "0 2 * * 1 /usr/local/bin/renew_nocturna_token.sh" | crontab -
+```
+
+#### Docker Compose Healthcheck-based Renewal
+```yaml
+# Add to docker-compose.yml
+services:
+  token-monitor:
+    build: .
+    command: >
+      sh -c "
+        while true; do
+          sleep 86400; # Check daily
+          python scripts/renew_service_token.py --days-before-expiry 7
+        done
+      "
+    depends_on:
+      - app
+    restart: unless-stopped
+```
+
+### 🔧 Backend Integration for Token Management
+
+#### Error Handling with Automatic Retry
+```python
+import requests
+import time
+from datetime import datetime, timedelta
+
+class NocturnaAPIClient:
+    def __init__(self, api_url, service_token):
+        self.api_url = api_url
+        self.service_token = service_token
+        self.token_expires_at = self._decode_token_expiry(service_token)
+    
+    def _decode_token_expiry(self, token):
+        """Decode token to get expiration time"""
+        try:
+            import jwt
+            payload = jwt.decode(token, options={"verify_signature": False})
+            exp_timestamp = payload.get('exp')
+            if exp_timestamp:
+                return datetime.fromtimestamp(exp_timestamp)
+        except:
+            pass
+        return None
+    
+    def _is_token_expiring_soon(self, days_threshold=7):
+        """Check if token expires within threshold"""
+        if not self.token_expires_at:
+            return True
+        
+        return (self.token_expires_at - datetime.now()).days <= days_threshold
+    
+    def _notify_token_expiry(self):
+        """Notify administrators about token expiry"""
+        # Implement your notification system here
+        print(f"⚠️ Nocturna service token expires on {self.token_expires_at}")
+        # send_email_alert()
+        # post_to_slack()
+        # create_monitoring_alert()
+    
+    def make_api_call(self, endpoint, data=None, max_retries=1):
+        """Make API call with token expiry handling"""
+        
+        # Check if token is expiring soon
+        if self._is_token_expiring_soon():
+            self._notify_token_expiry()
+        
+        headers = {
+            "Authorization": f"Bearer {self.service_token}",
+            "Content-Type": "application/json"
+        }
+        
+        for attempt in range(max_retries + 1):
+            try:
+                response = requests.post(
+                    f"{self.api_url}{endpoint}",
+                    headers=headers,
+                    json=data,
+                    timeout=30
+                )
+                
+                if response.status_code == 401:
+                    error_detail = response.json().get('detail', '')
+                    if 'expired' in error_detail.lower():
+                        if attempt < max_retries:
+                            # Token expired - you could implement auto-renewal here
+                            # or just notify and fail
+                            raise TokenExpiredError(
+                                "Service token has expired. Please renew with: "
+                                "make docker-token-renew"
+                            )
+                        else:
+                            raise TokenExpiredError("Service token expired after retry")
+                    else:
+                        raise AuthenticationError(f"Authentication failed: {error_detail}")
+                
+                response.raise_for_status()
+                return response.json()
+                
+            except requests.exceptions.Timeout:
+                if attempt < max_retries:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                    continue
+                raise TimeoutError("Nocturna API timeout after retries")
+            
+            except requests.exceptions.ConnectionError:
+                if attempt < max_retries:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise ConnectionError("Cannot connect to Nocturna API after retries")
+
+# Custom exceptions
+class TokenExpiredError(Exception):
+    pass
+
+class AuthenticationError(Exception):
+    pass
+
+# Usage
+client = NocturnaAPIClient(
+    api_url="http://nocturna-api:8000/api/v1",
+    service_token=SERVICE_TOKEN
+)
+
+try:
+    result = client.make_api_call("/calculations", calculation_data)
+except TokenExpiredError as e:
+    # Handle token expiry - notify admins, log error, etc.
+    logger.error(f"Nocturna token expired: {e}")
+    # Optionally implement automatic renewal here
+except AuthenticationError as e:
+    logger.error(f"Nocturna authentication error: {e}")
+```
+
+### 📊 Monitoring Token Health
+
+#### Prometheus Metrics
+```python
+# Add to your backend monitoring
+from prometheus_client import Gauge, Counter
+
+nocturna_token_days_until_expiry = Gauge(
+    'nocturna_token_days_until_expiry',
+    'Days until Nocturna service token expires'
+)
+
+nocturna_token_expired_errors = Counter(
+    'nocturna_token_expired_errors_total',
+    'Number of token expiry errors'
+)
+
+# Update metrics periodically
+def update_token_metrics():
+    days_left = check_token_expiration(SERVICE_TOKEN)
+    nocturna_token_days_until_expiry.set(days_left or 0)
+```
+
+#### Health Check Endpoint
+```python
+# Add to your backend health check
+@app.get("/health")
+async def health_check():
+    health_status = {
+        "status": "healthy",
+        "services": {}
+    }
+    
+    # Check Nocturna token
+    try:
+        days_left = check_token_expiration(SERVICE_TOKEN)
+        if days_left is None:
+            health_status["services"]["nocturna_token"] = "unknown"
+        elif days_left <= 0:
+            health_status["services"]["nocturna_token"] = "expired"
+            health_status["status"] = "degraded"
+        elif days_left <= 7:
+            health_status["services"]["nocturna_token"] = "expiring_soon"
+            health_status["status"] = "warning"
+        else:
+            health_status["services"]["nocturna_token"] = "healthy"
+    except Exception:
+        health_status["services"]["nocturna_token"] = "error"
+        health_status["status"] = "degraded"
+    
+    return health_status
+```
+
+### 🔄 Token Renewal Best Practices
+
+1. **Proactive Renewal**: Renew tokens before they expire (7-14 days before)
+2. **Monitoring**: Set up alerts for token expiry
+3. **Automation**: Use cron jobs or monitoring systems for automatic renewal
+4. **Logging**: Log all token renewal activities
+5. **Testing**: Test your renewal process in staging first
+6. **Backup Plan**: Have manual renewal procedures documented
+7. **Security**: Treat new tokens as secrets - rotate them securely
+
+### 🚨 Emergency Token Recovery
+
+If your token expires unexpectedly:
+
+```bash
+# 1. Immediate renewal
+make docker-token-force-renew
+
+# 2. Get the new token immediately
+docker-compose exec app python scripts/renew_service_token.py --force
+
+# 3. Update your backend configuration
+# Update SERVICE_TOKEN environment variable in your backend
+
+# 4. Restart your backend service
+# systemctl restart your-backend-service
+
+# 5. Verify connectivity
+curl -H "Authorization: Bearer NEW_TOKEN" \
+     http://localhost:8000/api/v1/health
+```
+
+The token management system ensures your service integration remains secure while providing multiple options for renewal and monitoring to prevent service disruptions.
+
 ## Monitoring & Troubleshooting
 
 ### Health Checks
@@ -717,6 +1077,104 @@ def make_calculation_request(data):
         raise ConnectionError("Cannot connect to Nocturna API")
 ```
 
+### 😴 Lazy Admin Setup (Eternal Tokens + Nginx)
+
+For admins who want to set it up once and forget about monthly token renewals:
+
+#### Step 1: Generate Eternal Token
+```bash
+# Generate eternal service token
+make docker-token-eternal
+
+# Get the eternal token
+cat deployment_summary.json
+```
+
+#### Step 2: Configure Nginx Protection
+```nginx
+# /etc/nginx/sites-available/nocturna
+server {
+    listen 80;
+    server_name nocturna.internal.company.com;
+    
+    # Restrict to internal networks only
+    allow 10.0.0.0/8;      # Internal corporate network
+    allow 172.16.0.0/12;   # Docker networks
+    allow 192.168.0.0/16;  # Local networks
+    deny all;              # Block everything else
+    
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Optional: Additional security headers
+        proxy_set_header X-Frame-Options DENY;
+        proxy_set_header X-Content-Type-Options nosniff;
+    }
+}
+```
+
+#### Step 3: Update docker-compose.yml (Optional)
+```yaml
+services:
+  app:
+    ports:
+      # Bind only to localhost (nginx will proxy)
+      - "127.0.0.1:8000:8000"
+    # Remove external port exposure:
+    # - "8000:8000"  # Delete this line
+```
+
+#### Step 4: Firewall Rules (Additional Security)
+```bash
+# Allow only nginx to access the API port
+sudo ufw allow from 127.0.0.1 to any port 8000
+sudo ufw deny 8000
+
+# Allow nginx
+sudo ufw allow 'Nginx Full'
+```
+
+#### Step 5: Update Your Backend
+```python
+# Your backend with eternal token
+class NocturnaClient:
+    def __init__(self):
+        # Eternal token - no expiry monitoring needed!
+        self.api_url = "http://nocturna.internal.company.com"
+        self.headers = {
+            "Authorization": f"Bearer {ETERNAL_SERVICE_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        
+    def calculate_chart(self, birth_data):
+        # No token expiry concerns! 🎉
+        response = requests.post(
+            f"{self.api_url}/api/v1/calculations/planetary-positions",
+            headers=self.headers,
+            json=birth_data
+        )
+        return response.json()
+```
+
+#### Benefits of Lazy Admin Setup:
+- 😴 **No monthly renewals** - set it and forget it
+- 🔒 **Secure** - nginx + firewall protection  
+- 🚀 **Simple** - no token monitoring needed
+- 🛡️ **Internal only** - no external exposure
+- 🎯 **Perfect for corporate environments**
+
+#### Monitoring (Optional but Recommended):
+```bash
+# Check eternal token status
+make docker-token-check
+
+# Should show: "♾️ Eternal token - no expiration concerns!"
+```
+
 ---
 
 ## Summary
@@ -726,6 +1184,7 @@ The Docker deployment provides a production-ready Nocturna Calculations service 
 ✅ **One-command deployment**  
 ✅ **Secure service component mode**  
 ✅ **Automated admin and service user setup**  
+✅ **Comprehensive token management**  
 ✅ **Health monitoring and logging**  
 ✅ **Easy integration with your main backend**  
 ✅ **Production security defaults**  
