@@ -388,6 +388,517 @@ class TestAPIEndpoints:
         )
         assert response.status_code == 400
 
+    # Chart-Based Calculation Tests
+    def test_chart_based_planetary_positions(self, test_chart_data):
+        """Test chart-based planetary positions endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based positions calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/positions",
+            json={
+                "planets": ["SUN", "MOON", "MERCURY"]
+            }
+        )
+        assert response.status_code == 200
+        assert "positions" in response.json()
+        # Chart-based should include house information
+        for position in response.json()["positions"]:
+            assert "house" in position
+            assert position["house"] is not None
+
+        # Test with invalid chart ID
+        response = self.make_request(
+            "POST",
+            "/api/charts/invalid_id/positions",
+            json={"planets": ["SUN"]}
+        )
+        assert response.status_code == 404
+
+    def test_chart_based_aspects(self, test_chart_data):
+        """Test chart-based aspects endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based aspects calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/aspects",
+            json={
+                "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE"]
+            }
+        )
+        assert response.status_code == 200
+        assert "aspects" in response.json()
+
+        # Test with chart's default aspects (should use chart config)
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/aspects",
+            json={}
+        )
+        assert response.status_code == 200
+        assert "aspects" in response.json()
+
+    def test_chart_based_houses(self, test_chart_data):
+        """Test chart-based houses endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based houses calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/houses",
+            json={
+                "house_system": "KOCH"
+            }
+        )
+        assert response.status_code == 200
+        assert "houses" in response.json()
+        assert len(response.json()["houses"]) == 12
+
+        # Test with chart's default house system
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/houses",
+            json={}
+        )
+        assert response.status_code == 200
+        assert "houses" in response.json()
+
+    def test_chart_based_fixed_stars(self, test_chart_data):
+        """Test chart-based fixed stars endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based fixed stars calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/fixed-stars",
+            json={
+                "stars": ["ALDEBARAN", "REGULUS"],
+                "include_conjunctions": True
+            }
+        )
+        assert response.status_code == 200
+        assert "stars" in response.json()
+
+    def test_chart_based_arabic_parts(self, test_chart_data):
+        """Test chart-based Arabic parts endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based Arabic parts calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/arabic-parts",
+            json={
+                "parts": ["FORTUNA", "SPIRIT"],
+                "include_aspects": True
+            }
+        )
+        assert response.status_code == 200
+        assert "parts" in response.json()
+
+    def test_chart_based_dignities(self, test_chart_data):
+        """Test chart-based dignities endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based dignities calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/dignities",
+            json={
+                "planets": ["SUN", "MOON", "MERCURY"],
+                "include_scores": True
+            }
+        )
+        assert response.status_code == 200
+        assert "dignities" in response.json()
+
+    def test_chart_based_antiscia(self, test_chart_data):
+        """Test chart-based antiscia endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based antiscia calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/antiscia",
+            json={
+                "planets": ["SUN", "MOON"],
+                "include_aspects": True
+            }
+        )
+        assert response.status_code == 200
+        assert "antiscia" in response.json()
+
+    def test_chart_based_declinations(self, test_chart_data):
+        """Test chart-based declinations endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based declinations calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/declinations",
+            json={
+                "planets": ["SUN", "MOON"],
+                "include_parallels": True
+            }
+        )
+        assert response.status_code == 200
+        assert "declinations" in response.json()
+
+    def test_chart_based_harmonics(self, test_chart_data):
+        """Test chart-based harmonics endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based harmonics calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/harmonics",
+            json={
+                "harmonic": 2,
+                "planets": ["SUN", "MOON"],
+                "include_aspects": True
+            }
+        )
+        assert response.status_code == 200
+        assert "positions" in response.json()
+
+        # Test with invalid harmonic
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/harmonics",
+            json={
+                "harmonic": 0,  # Invalid harmonic
+                "planets": ["SUN"]
+            }
+        )
+        assert response.status_code == 400
+
+    def test_chart_based_rectification(self, test_chart_data):
+        """Test chart-based rectification endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test chart-based rectification calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/rectification",
+            json={
+                "events": [
+                    {
+                        "date": test_chart_data["date"].isoformat(),
+                        "type": "MARRIAGE",
+                        "description": "Wedding day"
+                    }
+                ],
+                "time_window": {
+                    "start": test_chart_data["date"].isoformat(),
+                    "end": (test_chart_data["date"] + timedelta(hours=4)).isoformat()
+                },
+                "method": "EVENT_BASED"
+            }
+        )
+        assert response.status_code == 200
+        assert "rectified_time" in response.json()
+
+    def test_chart_based_synastry(self, test_chart_data):
+        """Test chart-based synastry endpoint"""
+        # Create two charts
+        create_response1 = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id1 = create_response1.json()["chart_id"]
+
+        create_response2 = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": (test_chart_data["date"] + timedelta(days=365)).isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id2 = create_response2.json()["chart_id"]
+
+        # Test synastry calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id1}/synastry",
+            json={
+                "target_chart_id": chart_id2,
+                "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE"],
+                "include_composite": True
+            }
+        )
+        assert response.status_code == 200
+        assert "data" in response.json()
+        assert "aspects" in response.json()["data"]
+
+        # Test with missing target chart ID
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id1}/synastry",
+            json={
+                "aspects": ["CONJUNCTION"]
+            }
+        )
+        assert response.status_code == 400
+
+        # Test with invalid target chart ID
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id1}/synastry",
+            json={
+                "target_chart_id": "invalid_id",
+                "aspects": ["CONJUNCTION"]
+            }
+        )
+        assert response.status_code == 404
+
+    def test_chart_based_progressions(self, test_chart_data):
+        """Test chart-based progressions endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test progressions calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/progressions",
+            json={
+                "target_date": (test_chart_data["date"] + timedelta(days=365)).isoformat(),
+                "type": "SECONDARY",
+                "include_returns": True,
+                "include_angles": True
+            }
+        )
+        assert response.status_code == 200
+        assert "data" in response.json()
+
+    def test_chart_based_directions(self, test_chart_data):
+        """Test chart-based directions endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test directions calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/directions",
+            json={
+                "target_date": (test_chart_data["date"] + timedelta(days=365)).isoformat(),
+                "type": "PRIMARY",
+                "method": "SEMI_ARC",
+                "include_converse": True
+            }
+        )
+        assert response.status_code == 200
+        assert "data" in response.json()
+
+    def test_chart_based_returns(self, test_chart_data):
+        """Test chart-based returns endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test returns calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/returns",
+            json={
+                "start_date": test_chart_data["date"].isoformat(),
+                "end_date": (test_chart_data["date"] + timedelta(days=365)).isoformat(),
+                "types": ["SOLAR", "LUNAR"],
+                "include_aspects": True
+            }
+        )
+        assert response.status_code == 200
+        assert "data" in response.json()
+
+    def test_chart_based_eclipses(self, test_chart_data):
+        """Test chart-based eclipses endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test eclipses calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/eclipses",
+            json={
+                "start_date": test_chart_data["date"].isoformat(),
+                "end_date": (test_chart_data["date"] + timedelta(days=365)).isoformat(),
+                "types": ["SOLAR", "LUNAR"],
+                "include_aspects": True
+            }
+        )
+        assert response.status_code == 200
+        assert "data" in response.json()
+
+    def test_chart_based_ingresses(self, test_chart_data):
+        """Test chart-based ingresses endpoint"""
+        # Create chart first
+        create_response = self.make_request(
+            "POST",
+            "/api/charts/natal",
+            json={
+                "date": test_chart_data["date"].isoformat(),
+                "latitude": test_chart_data["location"].latitude,
+                "longitude": test_chart_data["location"].longitude
+            }
+        )
+        chart_id = create_response.json()["chart_id"]
+
+        # Test ingresses calculation
+        response = self.make_request(
+            "POST",
+            f"/api/charts/{chart_id}/ingresses",
+            json={
+                "start_date": test_chart_data["date"].isoformat(),
+                "end_date": (test_chart_data["date"] + timedelta(days=365)).isoformat(),
+                "types": ["SIGN", "HOUSE"],
+                "include_retrograde": True
+            }
+        )
+        assert response.status_code == 200
+        assert "data" in response.json()
+
     # Helper method for making requests
     def make_request(self, method, endpoint, json=None, headers=None):
         """Helper method to make HTTP requests"""
@@ -458,5 +969,80 @@ class TestAPIEndpoints:
             if json.get("house_system") == "INVALID_SYSTEM":
                 return MockResponse(400, {"error": "Invalid house system"})
             return MockResponse(200, {"houses": {}})
+        
+        # Chart-based calculation endpoints
+        if method == "POST" and "/charts/mock_chart_id/" in endpoint:
+            if "invalid_id" in endpoint:
+                return MockResponse(404, {"error": "Chart not found"})
+            
+            if endpoint.endswith("/positions"):
+                return MockResponse(200, {
+                    "positions": [
+                        {
+                            "planet": "SUN",
+                            "longitude": 0.0,
+                            "latitude": 0.0,
+                            "distance": 1.0,
+                            "speed": 1.0,
+                            "is_retrograde": False,
+                            "house": 1,
+                            "sign": "ARIES",
+                            "degree": 0,
+                            "minute": 0,
+                            "second": 0
+                        }
+                    ]
+                })
+            
+            if endpoint.endswith("/aspects"):
+                return MockResponse(200, {"aspects": []})
+            
+            if endpoint.endswith("/houses"):
+                return MockResponse(200, {"houses": [{"number": 1, "longitude": 0.0}]})
+            
+            if endpoint.endswith("/fixed-stars"):
+                return MockResponse(200, {"stars": {}})
+            
+            if endpoint.endswith("/arabic-parts"):
+                return MockResponse(200, {"parts": {}})
+            
+            if endpoint.endswith("/dignities"):
+                return MockResponse(200, {"dignities": {}})
+            
+            if endpoint.endswith("/antiscia"):
+                return MockResponse(200, {"antiscia": {}})
+            
+            if endpoint.endswith("/declinations"):
+                return MockResponse(200, {"declinations": {}})
+            
+            if endpoint.endswith("/harmonics"):
+                if json.get("harmonic") == 0:
+                    return MockResponse(400, {"error": "Invalid harmonic"})
+                return MockResponse(200, {"positions": {}})
+            
+            if endpoint.endswith("/rectification"):
+                return MockResponse(200, {"rectified_time": "2000-01-01T12:00:00Z"})
+            
+            if endpoint.endswith("/synastry"):
+                if not json.get("target_chart_id"):
+                    return MockResponse(400, {"error": "target_chart_id is required"})
+                if json.get("target_chart_id") == "invalid_id":
+                    return MockResponse(404, {"error": "Target chart not found"})
+                return MockResponse(200, {"success": True, "data": {"aspects": []}})
+            
+            if endpoint.endswith("/progressions"):
+                return MockResponse(200, {"success": True, "data": {}})
+            
+            if endpoint.endswith("/directions"):
+                return MockResponse(200, {"success": True, "data": {}})
+            
+            if endpoint.endswith("/returns"):
+                return MockResponse(200, {"success": True, "data": {}})
+            
+            if endpoint.endswith("/eclipses"):
+                return MockResponse(200, {"success": True, "data": {}})
+            
+            if endpoint.endswith("/ingresses"):
+                return MockResponse(200, {"success": True, "data": {}})
         
         return MockResponse(404, {"error": "Endpoint not found"}) 
