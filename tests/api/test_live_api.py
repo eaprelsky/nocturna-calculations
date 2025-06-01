@@ -233,11 +233,41 @@ class TestLiveAPI:
 
     # Test Chart Endpoints
     @pytest.mark.api
-    def test_get_user_charts_empty(self, auth_headers):
+    def test_get_user_charts_empty(self):
         """Test getting user charts when none exist"""
+        # Create a unique user just for this test to ensure isolation
+        unique_id = str(uuid.uuid4())[:8]
+        user_data = {
+            "email": f"empty_charts_test_{unique_id}@example.com",
+            "username": f"emptychartuser_{unique_id}",
+            "password": "TestPassword123!",
+            "first_name": "EmptyCharts",
+            "last_name": "Test"
+        }
+        
+        # Register user
+        register_response = requests.post(
+            f"{self.BASE_URL}/api/auth/register",
+            json=user_data
+        )
+        assert register_response.status_code == 200
+        
+        # Login to get tokens
+        login_response = requests.post(
+            f"{self.BASE_URL}/api/auth/login",
+            data={
+                "username": user_data["email"],
+                "password": user_data["password"]
+            }
+        )
+        assert login_response.status_code == 200
+        tokens = login_response.json()
+        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+        
+        # Test that this fresh user has no charts
         response = requests.get(
             f"{self.BASE_URL}/api/charts",
-            headers=auth_headers
+            headers=headers
         )
         
         assert response.status_code == 200

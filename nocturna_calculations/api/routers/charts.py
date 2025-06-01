@@ -213,7 +213,7 @@ async def update_chart(
     db.refresh(chart)
     return chart
 
-@router.delete("/{chart_id}")
+@router.delete("/{chart_id}", status_code=204)
 async def delete_chart(
     chart_id: str,
     current_user: User = Depends(get_current_user),
@@ -233,7 +233,7 @@ async def delete_chart(
     
     db.delete(chart)
     db.commit()
-    return {"success": True}
+    # Return nothing for 204 status
 
 @router.get("", response_model=List[ChartResponse])
 async def list_charts(

@@ -25,7 +25,10 @@ from ..schemas import (
     HarmonicsResponse,
     RectificationResponse,
     PrimaryDirectionsResponse,
-    SecondaryProgressionsResponse
+    SecondaryProgressionsResponse,
+    SimplePlanetaryPositionsResponse,
+    SimpleAspectsResponse,
+    SimpleHousesResponse
 )
 from .auth import get_current_user
 from ..cache import cache
@@ -39,7 +42,7 @@ def get_cache_key(chart_id: str, calculation_type: str, params: dict) -> str:
     param_hash = hashlib.md5(sorted_params.encode()).hexdigest()
     return f"calc:{chart_id}:{calculation_type}:{param_hash}"
 
-@router.post("/planetary-positions", response_model=PlanetaryPositionsResponse)
+@router.post("/planetary-positions", response_model=SimplePlanetaryPositionsResponse)
 async def calculate_planetary_positions_endpoint(
     request: DirectCalculationRequest,
     db: Session = Depends(get_db),
@@ -59,22 +62,55 @@ async def calculate_planetary_positions_endpoint(
         # Get planets from request or use default
         planets = request.planets or ["SUN", "MOON", "MERCURY", "VENUS", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"]
         
-        result = core_chart.calculate_planetary_positions(planets=planets)
+        # Calculate planetary positions - this returns a flat dict with planet names as keys
+        positions_data = core_chart.calculate_planetary_positions(planets)
         
-        return {"positions": result}
+        # Convert to the expected format
+        planetary_positions = []
+        for planet_name, position in positions_data.items():
+            # Convert longitude to sign/degree/minute/second
+            longitude = position["longitude"]
+            sign_num = int(longitude // 30)
+            signs = ["ARIES", "TAURUS", "GEMINI", "CANCER", "LEO", "VIRGO", 
+                    "LIBRA", "SCORPIO", "SAGITTARIUS", "CAPRICORN", "AQUARIUS", "PISCES"]
+            sign = signs[sign_num]
+            
+            degree_in_sign = longitude % 30
+            degree = int(degree_in_sign)
+            minute = int((degree_in_sign - degree) * 60)
+            second = int(((degree_in_sign - degree) * 60 - minute) * 60)
+            
+            planetary_positions.append({
+                "planet": planet_name,
+                "longitude": longitude,
+                "latitude": position["latitude"],
+                "distance": position["distance"],
+                "speed": position["speed"],
+                "is_retrograde": position["is_retrograde"],
+                "house": None,  # Will be calculated separately
+                "sign": sign,
+                "degree": degree,
+                "minute": minute,
+                "second": second
+            })
+        
+        return SimplePlanetaryPositionsResponse(
+            positions=planetary_positions
+        )
+        
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating planetary positions: {str(e)}"
         )
 
-@router.post("/aspects", response_model=AspectsResponse)
+@router.post("/aspects", response_model=SimpleAspectsResponse)
 async def calculate_aspects_endpoint(
     request: DirectCalculationRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Calculate aspects between planets."""
+    """Calculate aspects."""
     try:
         # Create core chart instance from direct data
         core_chart = CoreChart(
@@ -88,16 +124,33 @@ async def calculate_aspects_endpoint(
         # Get aspects from request or use default
         aspects = request.aspects or ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"]
         
-        result = core_chart.calculate_aspects(aspects=aspects)
+        # Calculate aspects - this returns {"aspects": aspects_list}
+        aspects_data = core_chart.calculate_aspects(aspects)
         
-        return {"aspects": result}
+        # Convert to the expected format
+        aspect_list = []
+        # aspects_data["aspects"] is the list of aspects
+        for aspect in aspects_data["aspects"]:
+            aspect_list.append({
+                "planet1": aspect["planet1"],
+                "planet2": aspect["planet2"],
+                "aspect_type": aspect["aspect_type"],
+                "orb": aspect["orb"],
+                "applying": aspect["applying"],
+                "exact_time": None  # Would need additional calculation
+            })
+        
+        return SimpleAspectsResponse(
+            aspects=aspect_list
+        )
+        
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating aspects: {str(e)}"
         )
 
-@router.post("/houses", response_model=HousesResponse)
+@router.post("/houses", response_model=SimpleHousesResponse)
 async def calculate_houses_endpoint(
     request: DirectCalculationRequest,
     db: Session = Depends(get_db),
@@ -117,13 +170,42 @@ async def calculate_houses_endpoint(
         # Get house system from request or use default
         house_system = request.house_system or "PLACIDUS"
         
-        result = core_chart.calculate_houses(house_system=house_system)
+        # Calculate houses
+        houses_data = core_chart.calculate_houses(house_system=house_system)
         
-        return {"houses": result}
+        # Convert to the expected format
+        house_list = []
+        for i, cusp_longitude in enumerate(houses_data["cusps"], 1):
+            # Convert longitude to sign/degree/minute/second
+            longitude = cusp_longitude
+            sign_num = int(longitude // 30)
+            signs = ["ARIES", "TAURUS", "GEMINI", "CANCER", "LEO", "VIRGO", 
+                    "LIBRA", "SCORPIO", "SAGITTARIUS", "CAPRICORN", "AQUARIUS", "PISCES"]
+            sign = signs[sign_num]
+            
+            degree_in_sign = longitude % 30
+            degree = int(degree_in_sign)
+            minute = int((degree_in_sign - degree) * 60)
+            second = int(((degree_in_sign - degree) * 60 - minute) * 60)
+            
+            house_list.append({
+                "number": i,
+                "longitude": longitude,
+                "latitude": 0.0,  # House cusps don't have latitude
+                "sign": sign,
+                "degree": degree,
+                "minute": minute,
+                "second": second
+            })
+        
+        return SimpleHousesResponse(
+            houses=house_list
+        )
+        
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating houses: {str(e)}"
         )
 
 @router.post("/fixed-stars", response_model=FixedStarsResponse)

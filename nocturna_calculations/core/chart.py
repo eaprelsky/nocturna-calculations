@@ -173,13 +173,13 @@ class Chart(BaseModel):
         
         return result
     
-    def calculate_houses(self, system: str = None) -> Dict[str, Any]:
+    def calculate_houses(self, house_system: str = None) -> Dict[str, Any]:
         """Calculate house cusps and angles"""
         # Use configured house system if not specified
-        if system is None and self.config:
-            system = getattr(self.config, 'house_system', 'PLACIDUS')
-        elif system is None:
-            system = 'PLACIDUS'
+        if house_system is None and self.config:
+            house_system = getattr(self.config, 'house_system', 'PLACIDUS')
+        elif house_system is None:
+            house_system = 'PLACIDUS'
         
         # Calculate houses
         houses_data = self._adapter.calculate_houses(
@@ -197,7 +197,7 @@ class Chart(BaseModel):
                 "DESC": (houses_data["angles"][0] + 180) % 360,
                 "IC": (houses_data["angles"][1] + 180) % 360
             },
-            "system": system
+            "system": house_system
         }
         
         return result

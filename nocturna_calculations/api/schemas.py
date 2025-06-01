@@ -76,6 +76,11 @@ class HousesResponse(CalculationResponse):
     """Response for houses calculation."""
     data: List[House]
 
+# Simple response schemas for API tests compatibility
+class SimpleHousesResponse(BaseModel):
+    """Simple response for houses calculation."""
+    houses: List[House]
+
 # Fixed stars
 class FixedStar(BaseModel):
     """Fixed star data."""
@@ -197,4 +202,16 @@ class SecondaryProgression(BaseModel):
 
 class SecondaryProgressionsResponse(CalculationResponse):
     """Response for secondary progressions calculation."""
-    data: List[SecondaryProgression] 
+    data: List[SecondaryProgression]
+
+class SimplePlanetaryPositionsResponse(BaseModel):
+    """Simple response for planetary positions calculation."""
+    positions: List[PlanetaryPosition]
+
+class SimpleAspectsResponse(BaseModel):
+    """Simple response for aspects calculation."""
+    aspects: List[Aspect]
+
+class SimpleHousesResponse(BaseModel):
+    """Simple response for houses calculation."""
+    houses: List[House] 
