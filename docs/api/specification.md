@@ -2,8 +2,29 @@
 
 ## Base URL
 
+**Development:**
 ```
-https://api.nocturna-calculations.com/v1
+http://localhost:8000/api
+```
+
+**Production:**
+```
+https://your-domain.com/api
+```
+
+> **Note**: All endpoints are prefixed with `/api`. The API does not use versioning in the URL path.
+
+## Health Check
+
+```http
+GET /health
+```
+
+Response:
+```json
+{
+    "status": "healthy"
+}
 ```
 
 ## Authentication
@@ -19,8 +40,8 @@ Authorization: Bearer <user_jwt_token>
 ```
 
 **Token Characteristics:**
-- **Expires**: 1 hour (configurable)
-- **Refresh**: Available via refresh tokens
+- **Expires**: 15 minutes (configurable)
+- **Refresh**: Available via refresh tokens (7 days)
 - **Scope**: User-specific data and calculations
 - **Use Case**: Frontend applications, individual API access
 
@@ -33,27 +54,25 @@ Authorization: Bearer <service_jwt_token>
 ```
 
 **Token Characteristics:**
-- **Expires**: 30 days (long-lived)
-- **Refresh**: Manual renewal via admin commands
-- **Scope**: All calculation endpoints, no user data access
+- **Expires**: 30 days (configurable, can be eternal)
+- **Refresh**: Automatic via service token refresh endpoint
+- **Scope**: All calculation endpoints, limited admin access
 - **Use Case**: Backend-to-backend API integration
 
 **Service Token Features:**
-- 🔄 **Automated renewal** via `make docker-token-renew`
-- 🚫 **Limited scope** - calculations only, no user management
-- 🔒 **Secure generation** during deployment setup
-- 📊 **Monitoring support** for expiration tracking
+- 🔄 **Automated renewal** via `/api/auth/service-token/refresh`
+- 🔒 **Secure generation** via admin commands
+- 📊 **Usage tracking** and monitoring support
+- ⚙️ **Configurable scope** (calculations, admin, or both)
 
 ### Authentication Endpoints
 
-The following endpoints are available for **user authentication only**. Service tokens are pre-generated during deployment setup.
-
 #### Register User (User Authentication)
 
-> **Note**: Registration may be disabled in service component deployments
+> **Note**: Registration may be disabled in production deployments
 
 ```http
-POST /auth/register
+POST /api/auth/register
 ```
 
 Request:
@@ -68,18 +87,190 @@ Request:
 }
 ```
 
+Response:
+
+```json
+{
+    "id": "3dfe727c-cf04-4061-916c-0745e986324f",
+    "email": "user@example.com",
+    "username": "username",
+    "first_name": "John",
+    "last_name": "Doe",
+    "is_active": true,
+    "is_superuser": false,
+    "created_at": "2024-03-20T12:00:00Z"
+}
+```
+
 #### Login (User Authentication)
 
 ```http
-POST /auth/login
+POST /api/auth/login
+```
+
+Request (form data):
+```
+username=user@example.com
+password=secure_password
+```
+
+Response:
+
+```json
+{
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "expires_in": 900,
+    "token_type": "bearer"
+}
+```
+
+#### Refresh Token
+
+```http
+POST /api/auth/refresh?refresh_token=<refresh_token>
+```
+
+Response:
+
+```json
+{
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "expires_in": 900,
+    "token_type": "bearer"
+}
+```
+
+#### Logout
+
+```http
+POST /api/auth/logout?refresh_token=<refresh_token>
+```
+
+Response:
+
+```json
+{
+    "success": true
+}
+```
+
+#### Get Current User
+
+```http
+GET /api/auth/me
+Authorization: Bearer <access_token>
+```
+
+Response:
+
+```json
+{
+    "id": "3dfe727c-cf04-4061-916c-0745e986324f",
+    "email": "user@example.com",
+    "username": "username",
+    "first_name": "John",
+    "last_name": "Doe",
+    "is_active": true,
+    "is_superuser": false,
+    "created_at": "2024-03-20T12:00:00Z"
+}
+```
+
+### Service Token Endpoints
+
+#### Refresh Service Token
+
+```http
+POST /api/auth/service-token/refresh
+Authorization: Bearer <service_token>
+```
+
+Response:
+
+```json
+{
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "expires_in": 900,
+    "token_type": "bearer"
+}
+```
+
+### Admin Endpoints
+
+> **Note**: Requires admin privileges (`is_superuser: true`)
+
+#### Verify Admin Access
+
+```http
+GET /api/auth/admin/verify
+Authorization: Bearer <admin_token>
+```
+
+Response:
+
+```json
+{
+    "is_admin": true,
+    "user_id": "3dfe727c-cf04-4061-916c-0745e986324f",
+    "email": "admin@example.com",
+    "username": "admin"
+}
+```
+
+#### Get Registration Settings
+
+```http
+GET /api/auth/admin/registration-settings
+Authorization: Bearer <admin_token>
+```
+
+Response:
+
+```json
+{
+    "allow_user_registration": true,
+    "registration_requires_approval": false
+}
+```
+
+#### List Service Tokens
+
+```http
+GET /api/auth/admin/service-tokens
+Authorization: Bearer <admin_token>
+```
+
+Response:
+
+```json
+[
+    {
+        "id": "c9df0ba2-6f8d-403b-91c2-fea6c21a87e1",
+        "scope": "calculations",
+        "expires_at": "2025-07-07T11:09:07Z",
+        "created_at": "2025-06-07T11:09:07Z",
+        "last_used_at": null,
+        "is_active": true
+    }
+]
+```
+
+#### Create Service Token
+
+```http
+POST /api/auth/admin/service-tokens
+Authorization: Bearer <admin_token>
 ```
 
 Request:
 
 ```json
 {
-    "email": "user@example.com",
-    "password": "secure_password"
+    "days": 30,
+    "scope": "calculations",
+    "eternal": false
 }
 ```
 
@@ -87,24 +278,37 @@ Response:
 
 ```json
 {
-    "success": true,
-    "data": {
-        "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-        "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-        "expires_in": 3600,
-        "token_type": "Bearer"
-    }
+    "service_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "token_id": "c9df0ba2-6f8d-403b-91c2-fea6c21a87e1",
+    "expires_at": "2025-07-07T11:09:07Z",
+    "scope": "calculations"
 }
 ```
 
-#### Service Token Integration Example
+#### Revoke Service Token
 
-For backend services, use the service token provided during deployment:
+```http
+DELETE /api/auth/admin/service-tokens/{token_id}
+Authorization: Bearer <admin_token>
+```
+
+Response:
+
+```json
+{
+    "success": true,
+    "message": "Service token revoked successfully"
+}
+```
+
+### Service Token Integration Example
+
+For backend services, use the service token:
 
 ```python
 import requests
 
-# Service token from deployment_summary.json
+# Service token from admin creation
 SERVICE_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
 
 headers = {
@@ -114,7 +318,7 @@ headers = {
 
 # Make calculation request
 response = requests.post(
-    "https://api.nocturna-calculations.com/v1/calculations/planetary-positions",
+    "http://localhost:8000/api/calculations/planetary-positions",
     headers=headers,
     json={
         "date": "2024-03-20",
@@ -133,9 +337,10 @@ Both token types include standard JWT claims:
 
 ```json
 {
-    "sub": "service@nocturna.internal",  // or user email
-    "user_id": 123,
-    "type": "service",  // or "user"
+    "sub": "3dfe727c-cf04-4061-916c-0745e986324f",  // user ID
+    "type": "service",  // or "access"
+    "scope": "calculations",  // for service tokens
+    "token_id": "c9df0ba2-6f8d-403b-91c2-fea6c21a87e1",  // for service tokens
     "iat": 1640995200,  // issued at
     "exp": 1643587200   // expires at
 }
@@ -147,9 +352,14 @@ Both token types include standard JWT claims:
 ```json
 {
     "success": false,
+    "data": null,
     "error": {
-        "code": "TOKEN_EXPIRED",
-        "message": "Token has expired"
+        "code": "INTERNAL_ERROR",
+        "message": "Token has expired",
+        "details": null
+    },
+    "meta": {
+        "request_id": "req_123456"
     }
 }
 ```
@@ -157,22 +367,14 @@ Both token types include standard JWT claims:
 #### Invalid Token
 ```json
 {
-    "success": false,
-    "error": {
-        "code": "INVALID_TOKEN", 
-        "message": "Invalid or malformed token"
-    }
+    "detail": "Could not validate credentials"
 }
 ```
 
 #### Insufficient Permissions
 ```json
 {
-    "success": false,
-    "error": {
-        "code": "INSUFFICIENT_PERMISSIONS",
-        "message": "Token does not have required permissions"
-    }
+    "detail": "Admin privileges required"
 }
 ```
 
@@ -180,7 +382,7 @@ Both token types include standard JWT claims:
 
 The Nocturna Calculations API features a **hybrid architecture** supporting two complementary calculation approaches:
 
-### Direct Calculations (`/calculations/*`)
+### Direct Calculations (`/api/calculations/*`)
 **Stateless operations** for quick calculations without chart persistence.
 
 **Use Cases:**
@@ -196,7 +398,7 @@ The Nocturna Calculations API features a **hybrid architecture** supporting two 
 - Easier integration
 - Perfect for simple calculations
 
-### Chart-Based Calculations (`/charts/{chart_id}/*`)
+### Chart-Based Calculations (`/api/charts/{chart_id}/*`)
 **Stateful operations** using stored chart data for complex workflows.
 
 **Use Cases:**
@@ -213,6 +415,8 @@ The Nocturna Calculations API features a **hybrid architecture** supporting two 
 - Advanced features requiring reference data
 
 ## Common Response Format
+
+Most endpoints return data in this format:
 
 ```json
 {
@@ -249,117 +453,13 @@ The Nocturna Calculations API features a **hybrid architecture** supporting two 
 
 ## Endpoints
 
-### Authentication
-
-#### Register User
-
-```http
-POST /auth/register
-```
-
-Request:
-
-```json
-{
-    "email": "user@example.com",
-    "username": "username",
-    "password": "secure_password",
-    "first_name": "John",
-    "last_name": "Doe"
-}
-```
-
-Response:
-
-```json
-{
-    "success": true,
-    "data": {
-        "user_id": "usr_123456",
-        "email": "user@example.com",
-        "username": "username",
-        "first_name": "John",
-        "last_name": "Doe",
-        "created_at": "2024-03-20T12:00:00Z"
-    }
-}
-```
-
-#### Login
-
-```http
-POST /auth/login
-```
-
-Request:
-
-```json
-{
-    "email": "user@example.com",
-    "password": "secure_password"
-}
-```
-
-Response:
-
-```json
-{
-    "success": true,
-    "data": {
-        "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-        "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-        "expires_in": 3600
-    }
-}
-```
-
-#### Refresh Token
-
-```http
-POST /auth/refresh
-```
-
-Request:
-
-```json
-{
-    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
-}
-```
-
-Response:
-
-```json
-{
-    "success": true,
-    "data": {
-        "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-        "expires_in": 3600
-    }
-}
-```
-
-#### Logout
-
-```http
-POST /auth/logout
-```
-
-Response:
-
-```json
-{
-    "success": true,
-    "data": null
-}
-```
-
 ### Charts
 
 #### Create Chart
 
 ```http
-POST /charts
+POST /api/charts
+Authorization: Bearer <token>
 ```
 
 Request:
@@ -389,66 +489,123 @@ Response:
 
 ```json
 {
-    "success": true,
-    "data": {
-        "chart_id": "chr_123456",
-        "date": "2024-03-20T12:00:00+03:00",
-        "latitude": 55.7558,
-        "longitude": 37.6173,
-        "timezone": "Europe/Moscow",
-        "config": {
-            "house_system": "PLACIDUS",
-            "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
-            "orbs": {
-                "conjunction": 10.0,
-                "opposition": 10.0,
-                "trine": 8.0,
-                "square": 8.0,
-                "sextile": 6.0
-            }
-        },
-        "created_at": "2024-03-20T12:00:00Z"
-    }
+    "id": "chr_123456",
+    "date": "2024-03-20T12:00:00+03:00",
+    "latitude": 55.7558,
+    "longitude": 37.6173,
+    "timezone": "Europe/Moscow",
+    "config": {
+        "house_system": "PLACIDUS",
+        "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
+        "orbs": {
+            "conjunction": 10.0,
+            "opposition": 10.0,
+            "trine": 8.0,
+            "square": 8.0,
+            "sextile": 6.0
+        }
+    },
+    "created_at": "2024-03-20T12:00:00Z"
 }
 ```
 
-#### Get Chart
+#### Create Natal Chart (Shortcut)
 
 ```http
-GET /charts/{chart_id}
+POST /api/charts/natal
+Authorization: Bearer <token>
+```
+
+Request:
+
+```json
+{
+    "date": "2024-03-20",
+    "time": "12:00:00",
+    "latitude": 55.7558,
+    "longitude": 37.6173,
+    "timezone": "Europe/Moscow"
+}
 ```
 
 Response:
 
 ```json
 {
-    "success": true,
-    "data": {
-        "chart_id": "chr_123456",
+    "chart_id": "chr_123456",
+    "planets": {
+        "SUN": {
+            "longitude": 0.0,
+            "latitude": 0.0,
+            "distance": 1.0,
+            "speed": 0.96
+        }
+    },
+    "houses": {
+        "1": 0.0,
+        "2": 30.0
+    }
+}
+```
+
+#### List User Charts
+
+```http
+GET /api/charts
+Authorization: Bearer <token>
+```
+
+Response:
+
+```json
+[
+    {
+        "id": "chr_123456",
         "date": "2024-03-20T12:00:00+03:00",
         "latitude": 55.7558,
         "longitude": 37.6173,
         "timezone": "Europe/Moscow",
-        "config": {
-            "house_system": "PLACIDUS",
-            "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
-            "orbs": {
-                "conjunction": 10.0,
-                "opposition": 10.0,
-                "trine": 8.0,
-                "square": 8.0,
-                "sextile": 6.0
-            }
-        },
         "created_at": "2024-03-20T12:00:00Z"
     }
+]
+```
+
+#### Get Chart
+
+```http
+GET /api/charts/{chart_id}
+Authorization: Bearer <token>
+```
+
+Response:
+
+```json
+{
+    "id": "chr_123456",
+    "date": "2024-03-20T12:00:00+03:00",
+    "latitude": 55.7558,
+    "longitude": 37.6173,
+    "timezone": "Europe/Moscow",
+    "config": {
+        "house_system": "PLACIDUS",
+        "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
+        "orbs": {
+            "conjunction": 10.0,
+            "opposition": 10.0,
+            "trine": 8.0,
+            "square": 8.0,
+            "sextile": 6.0
+        }
+    },
+    "created_at": "2024-03-20T12:00:00Z"
 }
 ```
 
 #### Update Chart
 
 ```http
-PUT /charts/{chart_id}
+PUT /api/charts/{chart_id}
+Authorization: Bearer <token>
 ```
 
 Request:
@@ -466,80 +623,32 @@ Response:
 
 ```json
 {
-    "success": true,
-    "data": {
-        "chart_id": "chr_123456",
-        "date": "2024-03-20T12:00:00+03:00",
-        "latitude": 55.7558,
-        "longitude": 37.6173,
-        "timezone": "Europe/Moscow",
-        "config": {
-            "house_system": "KOCH",
-            "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE"],
-            "orbs": {
-                "conjunction": 10.0,
-                "opposition": 10.0,
-                "trine": 8.0
-            }
-        },
-        "updated_at": "2024-03-20T12:00:00Z"
-    }
+    "id": "chr_123456",
+    "date": "2024-03-20T12:00:00+03:00",
+    "latitude": 55.7558,
+    "longitude": 37.6173,
+    "timezone": "Europe/Moscow",
+    "config": {
+        "house_system": "KOCH",
+        "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE"],
+        "orbs": {
+            "conjunction": 10.0,
+            "opposition": 10.0,
+            "trine": 8.0
+        }
+    },
+    "updated_at": "2024-03-20T12:00:00Z"
 }
 ```
 
 #### Delete Chart
 
 ```http
-DELETE /charts/{chart_id}
+DELETE /api/charts/{chart_id}
+Authorization: Bearer <token>
 ```
 
-Response:
-
-```json
-{
-    "success": true,
-    "data": null
-}
-```
-
-#### List Charts
-
-```http
-GET /charts
-```
-
-Query Parameters:
-
-- `page`: Page number (default: 1)
-- `per_page`: Items per page (default: 20)
-- `sort_by`: Sort field (default: created_at)
-- `sort_order`: Sort order (asc/desc, default: desc)
-
-Response:
-
-```json
-{
-    "success": true,
-    "data": {
-        "charts": [
-            {
-                "chart_id": "chr_123456",
-                "date": "2024-03-20T12:00:00+03:00",
-                "latitude": 55.7558,
-                "longitude": 37.6173,
-                "timezone": "Europe/Moscow",
-                "created_at": "2024-03-20T12:00:00Z"
-            }
-        ],
-        "pagination": {
-            "total": 100,
-            "page": 1,
-            "per_page": 20,
-            "total_pages": 5
-        }
-    }
-}
-```
+Response: `204 No Content`
 
 ## Direct Calculations
 
@@ -548,7 +657,7 @@ The Direct Calculations API provides stateless calculation endpoints that don't 
 ### Planetary Positions
 
 ```http
-POST /calculations/planetary-positions
+POST /api/calculations/planetary-positions
 ```
 
 Request:
@@ -593,7 +702,7 @@ Response:
 ### Aspects
 
 ```http
-POST /calculations/aspects
+POST /api/calculations/aspects
 ```
 
 Request:
@@ -634,7 +743,7 @@ Response:
 ### Houses
 
 ```http
-POST /calculations/houses
+POST /api/calculations/houses
 ```
 
 Request:
@@ -675,7 +784,7 @@ Response:
 ### Fixed Stars
 
 ```http
-POST /calculations/fixed-stars
+POST /api/calculations/fixed-stars
 ```
 
 Request:
@@ -719,7 +828,7 @@ Response:
 ### Arabic Parts
 
 ```http
-POST /calculations/arabic-parts
+POST /api/calculations/arabic-parts
 ```
 
 Request:
@@ -762,7 +871,7 @@ Response:
 ### Dignities
 
 ```http
-POST /calculations/dignities
+POST /api/calculations/dignities
 ```
 
 Request:
@@ -804,7 +913,7 @@ Response:
 ### Antiscia
 
 ```http
-POST /calculations/antiscia
+POST /api/calculations/antiscia
 ```
 
 Request:
@@ -848,7 +957,7 @@ Response:
 ### Declinations
 
 ```http
-POST /calculations/declinations
+POST /api/calculations/declinations
 ```
 
 Request:
@@ -889,7 +998,7 @@ Response:
 ### Harmonics
 
 ```http
-POST /calculations/harmonics
+POST /api/calculations/harmonics
 ```
 
 Request:
@@ -935,7 +1044,7 @@ Response:
 ### Rectification
 
 ```http
-POST /calculations/rectification
+POST /api/calculations/rectification
 ```
 
 Request:
@@ -992,7 +1101,7 @@ Response:
 ### Primary Directions
 
 ```http
-POST /calculations/primary-directions
+POST /api/calculations/primary-directions
 ```
 
 Request:
@@ -1039,7 +1148,7 @@ Response:
 ### Secondary Progressions
 
 ```http
-POST /calculations/secondary-progressions
+POST /api/calculations/secondary-progressions
 ```
 
 Request:
@@ -1096,7 +1205,7 @@ Chart-Based Calculations use stored chart data to provide enhanced functionality
 ### Planetary Positions
 
 ```http
-POST /charts/{chart_id}/positions
+POST /api/charts/{chart_id}/positions
 ```
 
 Request:
@@ -1137,7 +1246,7 @@ Response:
 ### Aspects
 
 ```http
-POST /charts/{chart_id}/aspects
+POST /api/charts/{chart_id}/aspects
 ```
 
 Request:
@@ -1173,7 +1282,7 @@ Response:
 ### Houses
 
 ```http
-POST /charts/{chart_id}/houses
+POST /api/charts/{chart_id}/houses
 ```
 
 Request:
@@ -1215,7 +1324,7 @@ Response:
 ### Fixed Stars
 
 ```http
-POST /charts/{chart_id}/fixed-stars
+POST /api/charts/{chart_id}/fixed-stars
 ```
 
 Request:
@@ -1254,7 +1363,7 @@ Response:
 ### Arabic Parts
 
 ```http
-POST /charts/{chart_id}/arabic-parts
+POST /api/charts/{chart_id}/arabic-parts
 ```
 
 Request:
@@ -1293,7 +1402,7 @@ Response:
 ### Dignities
 
 ```http
-POST /charts/{chart_id}/dignities
+POST /api/charts/{chart_id}/dignities
 ```
 
 Request:
@@ -1330,7 +1439,7 @@ Response:
 ### Antiscia
 
 ```http
-POST /charts/{chart_id}/antiscia
+POST /api/charts/{chart_id}/antiscia
 ```
 
 Request:
@@ -1370,7 +1479,7 @@ Response:
 ### Declinations
 
 ```http
-POST /charts/{chart_id}/declinations
+POST /api/charts/{chart_id}/declinations
 ```
 
 Request:
@@ -1406,7 +1515,7 @@ Response:
 ### Harmonics
 
 ```http
-POST /charts/{chart_id}/harmonics
+POST /api/charts/{chart_id}/harmonics
 ```
 
 Request:
@@ -1447,7 +1556,7 @@ Response:
 ### Rectification
 
 ```http
-POST /charts/{chart_id}/rectification
+POST /api/charts/{chart_id}/rectification
 ```
 
 Request:
@@ -1501,7 +1610,7 @@ Response:
 ### Synastry
 
 ```http
-POST /charts/{chart_id}/synastry
+POST /api/charts/{chart_id}/synastry
 ```
 
 Request:
@@ -1557,7 +1666,7 @@ Response:
 ### Progressions
 
 ```http
-POST /charts/{chart_id}/progressions
+POST /api/charts/{chart_id}/progressions
 ```
 
 Request:
@@ -1605,7 +1714,7 @@ Response:
 ### Directions
 
 ```http
-POST /charts/{chart_id}/directions
+POST /api/charts/{chart_id}/directions
 ```
 
 Request:
@@ -1648,7 +1757,7 @@ Response:
 ### Returns
 
 ```http
-POST /charts/{chart_id}/returns
+POST /api/charts/{chart_id}/returns
 ```
 
 Request:
@@ -1697,7 +1806,7 @@ Response:
 ### Eclipses
 
 ```http
-POST /charts/{chart_id}/eclipses
+POST /api/charts/{chart_id}/eclipses
 ```
 
 Request:
@@ -1752,7 +1861,7 @@ Response:
 ### Ingresses
 
 ```http
-POST /charts/{chart_id}/ingresses
+POST /api/charts/{chart_id}/ingresses
 ```
 
 Request:
@@ -1833,14 +1942,14 @@ curl -X POST "https://api.nocturna-calculations.com/v1/charts/chr_123456/positio
 
 ## Use Case Guide
 
-### When to Use Direct Calculations (`/calculations/*`)
+### When to Use Direct Calculations (`/api/calculations/*`)
 
 Direct calculations are ideal for **stateless, one-time calculations** where you don't need to store chart data.
 
 #### 📱 **Mobile App Real-Time Updates**
 ```bash
 # Get current planetary positions for a location
-curl -X POST "/calculations/planetary-positions" \
+curl -X POST "/api/calculations/planetary-positions" \
   -d '{
     "date": "2024-03-20",
     "time": "14:30:00", 
@@ -1859,7 +1968,7 @@ curl -X POST "/calculations/planetary-positions" \
 #### ⚡ **API Integration for Other Services**
 ```bash
 # Microservice calculating aspects for external system
-curl -X POST "/calculations/aspects" \
+curl -X POST "/api/calculations/aspects" \
   -d '{
     "date": "2024-03-20",
     "time": "12:00:00",
@@ -1878,7 +1987,7 @@ curl -X POST "/calculations/aspects" \
 #### 🔍 **Quick Lookups and Validations**
 ```bash
 # Check if Mars is retrograde on a specific date
-curl -X POST "/calculations/planetary-positions" \
+curl -X POST "/api/calculations/planetary-positions" \
   -d '{
     "date": "2024-03-20",
     "time": "12:00:00",
@@ -1888,14 +1997,14 @@ curl -X POST "/calculations/planetary-positions" \
   }'
 ```
 
-### When to Use Chart-Based Calculations (`/charts/{chart_id}/*`)
+### When to Use Chart-Based Calculations (`/api/charts/{chart_id}/*`)
 
 Chart-based calculations are ideal for **personal analysis, tracking over time, and complex workflows**.
 
 #### 👤 **Personal Natal Chart Analysis**
 ```bash
 # Step 1: Create and store personal chart
-curl -X POST "/charts" \
+curl -X POST "/api/charts" \
   -d '{
     "date": "1990-05-15T14:30:00Z",
     "latitude": 40.7128,
@@ -1909,15 +2018,15 @@ curl -X POST "/charts" \
   }'
 
 # Step 2: Get planetary positions with house information
-curl -X POST "/charts/chr_123456/positions" \
+curl -X POST "/api/charts/chr_123456/positions" \
   -d '{"planets": ["SUN", "MOON", "MERCURY", "VENUS", "MARS", "JUPITER", "SATURN"]}'
 
 # Step 3: Calculate aspects using stored preferences
-curl -X POST "/charts/chr_123456/aspects" \
+curl -X POST "/api/charts/chr_123456/aspects" \
   -d '{}'  # Uses chart's configured aspects and orbs
 
 # Step 4: Analyze progressions for current year
-curl -X POST "/charts/chr_123456/progressions" \
+curl -X POST "/api/charts/chr_123456/progressions" \
   -d '{
     "target_date": "2024-03-20T12:00:00Z",
     "type": "SECONDARY", 
@@ -1934,16 +2043,16 @@ curl -X POST "/charts/chr_123456/progressions" \
 #### 💕 **Relationship Compatibility Analysis**
 ```bash
 # Step 1: Create charts for both partners
-curl -X POST "/charts" \
+curl -X POST "/api/charts" \
   -d '{"date": "1990-05-15T14:30:00Z", "latitude": 40.7128, "longitude": -74.0060}'
 # Returns: {"chart_id": "chr_person1"}
 
-curl -X POST "/charts" \
+curl -X POST "/api/charts" \
   -d '{"date": "1988-08-22T09:15:00Z", "latitude": 34.0522, "longitude": -118.2437}'
 # Returns: {"chart_id": "chr_person2"}
 
 # Step 2: Calculate synastry between the charts
-curl -X POST "/charts/chr_person1/synastry" \
+curl -X POST "/api/charts/chr_person1/synastry" \
   -d '{
     "target_chart_id": "chr_person2",
     "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
@@ -1960,7 +2069,7 @@ curl -X POST "/charts/chr_person1/synastry" \
 #### 📈 **Professional Astrologer Workflow**
 ```bash
 # Step 1: Create client chart with detailed configuration
-curl -X POST "/charts" \
+curl -X POST "/api/charts" \
   -d '{
     "date": "1985-12-03T16:45:00Z",
     "latitude": 55.7558,
@@ -1977,14 +2086,14 @@ curl -X POST "/charts" \
   }'
 
 # Step 2: Generate comprehensive natal analysis
-curl -X POST "/charts/chr_client/positions" -d '{"include_speed": true}'
-curl -X POST "/charts/chr_client/aspects" -d '{}'
-curl -X POST "/charts/chr_client/houses" -d '{}'
-curl -X POST "/charts/chr_client/dignities" -d '{"include_scores": true}'
-curl -X POST "/charts/chr_client/arabic-parts" -d '{"parts": ["FORTUNA", "SPIRIT", "LOVE"]}'
+curl -X POST "/api/charts/chr_client/positions" -d '{"include_speed": true}'
+curl -X POST "/api/charts/chr_client/aspects" -d '{}'
+curl -X POST "/api/charts/chr_client/houses" -d '{}'
+curl -X POST "/api/charts/chr_client/dignities" -d '{"include_scores": true}'
+curl -X POST "/api/charts/chr_client/arabic-parts" -d '{"parts": ["FORTUNA", "SPIRIT", "LOVE"]}'
 
 # Step 3: Annual analysis for the coming year
-curl -X POST "/charts/chr_client/progressions" \
+curl -X POST "/api/charts/chr_client/progressions" \
   -d '{
     "target_date": "2024-12-03T16:45:00Z",
     "type": "SECONDARY",
@@ -1992,7 +2101,7 @@ curl -X POST "/charts/chr_client/progressions" \
     "include_angles": true
   }'
 
-curl -X POST "/charts/chr_client/returns" \
+curl -X POST "/api/charts/chr_client/returns" \
   -d '{
     "start_date": "2024-01-01T00:00:00Z",
     "end_date": "2024-12-31T23:59:59Z",
@@ -2001,7 +2110,7 @@ curl -X POST "/charts/chr_client/returns" \
   }'
 
 # Step 4: Check upcoming eclipses impact
-curl -X POST "/charts/chr_client/eclipses" \
+curl -X POST "/api/charts/chr_client/eclipses" \
   -d '{
     "start_date": "2024-01-01T00:00:00Z",
     "end_date": "2024-12-31T23:59:59Z",
@@ -2055,12 +2164,12 @@ Many applications benefit from using **both approaches**:
 # Example: Astrology app with both features
 
 # 1. Homepage widget - Direct calculation for current sky
-curl -X POST "/calculations/planetary-positions" \
+curl -X POST "/api/calculations/planetary-positions" \
   -d '{"date": "2024-03-20", "time": "now", "latitude": user_lat, "longitude": user_lng}'
 
 # 2. User's personal chart analysis - Chart-based
-curl -X POST "/charts/user_chart_id/positions" -d '{}'
-curl -X POST "/charts/user_chart_id/progressions" -d '{"target_date": "2024-03-20"}'
+curl -X POST "/api/charts/user_chart_id/positions" -d '{}'
+curl -X POST "/api/charts/user_chart_id/progressions" -d '{"target_date": "2024-03-20"}'
 ```
 
 This hybrid approach gives you the **best of both worlds**: fast public features and powerful personal analysis tools.
