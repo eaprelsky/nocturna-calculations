@@ -42,6 +42,18 @@ class TokenResponse(BaseModel):
     refresh_token: str
     expires_in: int
 
+class ServiceTokenResponse(BaseModel):
+    service_token: str
+    expires_at: datetime
+    expires_in_days: int
+    scope: Optional[str]
+    token_id: str
+
+class ServiceTokenCreateRequest(BaseModel):
+    days: Optional[int] = 30
+    scope: Optional[str] = "calculations"
+    eternal: bool = False
+
 class RegistrationSettingsResponse(BaseModel):
     allow_user_registration: bool
     registration_requires_approval: bool
@@ -90,12 +102,53 @@ def create_refresh_token(user_id: str, db: Session) -> str:
     db_token = Token(
         user_id=user_id,
         token=token,
+        token_type="refresh",
         expires_at=expires_at
     )
     db.add(db_token)
     db.commit()
     
     return token
+
+def create_service_token(user_id: str, db: Session, days: int = 30, scope: str = "calculations", eternal: bool = False) -> tuple[str, str]:
+    """Create and store service token
+    
+    Returns:
+        tuple: (jwt_token, token_id)
+    """
+    token_id = str(uuid.uuid4())
+    
+    if eternal:
+        expires_at = datetime.utcnow() + timedelta(days=36500)  # 100 years
+        expires_delta = timedelta(0)  # No expiration in JWT
+    else:
+        expires_at = datetime.utcnow() + timedelta(days=days)
+        expires_delta = timedelta(days=days)
+    
+    # Create JWT token
+    jwt_token = create_access_token(
+        data={
+            "sub": user_id,
+            "type": "service",
+            "scope": scope,
+            "token_id": token_id
+        },
+        expires_delta=expires_delta
+    )
+    
+    # Store in database
+    db_token = Token(
+        id=token_id,
+        user_id=user_id,
+        token=jwt_token,
+        token_type="service",
+        scope=scope,
+        expires_at=expires_at
+    )
+    db.add(db_token)
+    db.commit()
+    
+    return jwt_token, token_id
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -119,6 +172,44 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+async def get_current_service_token(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> Token:
+    """Get current service token and verify it's valid"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate service token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        token_type = payload.get("type")
+        token_id = payload.get("token_id")
+        
+        if token_type != "service" or not token_id:
+            raise credentials_exception
+            
+    except JWTError:
+        raise credentials_exception
+    
+    # Verify token exists in database and is not expired
+    db_token = db.query(Token).filter(
+        Token.id == token_id,
+        Token.token_type == "service",
+        Token.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not db_token:
+        raise credentials_exception
+    
+    # Update last used timestamp
+    db_token.last_used_at = datetime.utcnow()
+    db.commit()
+    
+    return db_token
 
 async def get_current_admin_user(
     current_user: User = Depends(get_current_user)
@@ -258,4 +349,105 @@ async def get_registration_settings(admin_user: User = Depends(get_current_admin
         allow_user_registration=settings.ALLOW_USER_REGISTRATION,
         registration_requires_approval=settings.REGISTRATION_REQUIRES_APPROVAL,
         max_users_limit=settings.MAX_USERS_LIMIT
-    ) 
+    )
+
+# Service Token Endpoints
+@router.post("/admin/service-tokens", response_model=ServiceTokenResponse)
+async def create_service_token_endpoint(
+    request: ServiceTokenCreateRequest,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new service token (admin only)"""
+    jwt_token, token_id = create_service_token(
+        user_id=admin_user.id,
+        db=db,
+        days=request.days,
+        scope=request.scope,
+        eternal=request.eternal
+    )
+    
+    # Calculate expiration info
+    if request.eternal:
+        expires_at = datetime.utcnow() + timedelta(days=36500)
+        expires_in_days = 36500
+    else:
+        expires_at = datetime.utcnow() + timedelta(days=request.days)
+        expires_in_days = request.days
+    
+    return ServiceTokenResponse(
+        service_token=jwt_token,
+        expires_at=expires_at,
+        expires_in_days=expires_in_days,
+        scope=request.scope,
+        token_id=token_id
+    )
+
+@router.get("/admin/service-tokens")
+async def list_service_tokens(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """List all service tokens (admin only)"""
+    tokens = db.query(Token).filter(
+        Token.token_type == "service"
+    ).order_by(Token.created_at.desc()).all()
+    
+    return [
+        {
+            "id": token.id,
+            "user_id": token.user_id,
+            "scope": token.scope,
+            "created_at": token.created_at,
+            "expires_at": token.expires_at,
+            "last_used_at": token.last_used_at,
+            "is_expired": token.expires_at < datetime.utcnow(),
+            "days_until_expiry": (token.expires_at - datetime.utcnow()).days if token.expires_at > datetime.utcnow() else 0
+        }
+        for token in tokens
+    ]
+
+@router.delete("/admin/service-tokens/{token_id}")
+async def revoke_service_token(
+    token_id: str,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Revoke a service token (admin only)"""
+    token = db.query(Token).filter(
+        Token.id == token_id,
+        Token.token_type == "service"
+    ).first()
+    
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Service token not found"
+        )
+    
+    db.delete(token)
+    db.commit()
+    
+    return {"success": True, "message": f"Service token {token_id} revoked"}
+
+@router.post("/service-token/refresh", response_model=TokenResponse)
+async def refresh_service_token(
+    service_token: Token = Depends(get_current_service_token),
+    db: Session = Depends(get_db)
+):
+    """Exchange service token for fresh access token"""
+    # Create new short-lived access token
+    access_token = create_access_token(
+        data={
+            "sub": service_token.user_id,
+            "type": "access",
+            "scope": service_token.scope
+        },
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": service_token.token,  # Service token acts as refresh token
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    } 

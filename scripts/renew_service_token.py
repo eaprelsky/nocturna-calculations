@@ -57,7 +57,7 @@ class ServiceTokenManager:
     def check_token_expiration(self, token):
         """Check token expiration status"""
         try:
-            payload = jwt.decode(token, options={"verify_signature": False})
+            payload = jwt.decode(token, key="", options={"verify_signature": False})
             exp_timestamp = payload.get('exp')
             
             if not exp_timestamp:

@@ -66,14 +66,17 @@ class Calculation(Base):
     chart = relationship("Chart", back_populates="calculations")
 
 class Token(Base):
-    """Token model for refresh tokens"""
+    """Token model for refresh tokens and service tokens"""
     __tablename__ = "tokens"
     
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
     token = Column(String, unique=True, nullable=False)
+    token_type = Column(String, nullable=False, default="refresh")  # "refresh" or "service"
+    scope = Column(String, nullable=True)  # e.g., "calculations,admin" for service tokens
     expires_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    last_used_at = Column(DateTime, nullable=True)  # Track usage for service tokens
     
     # Relationships
     user = relationship("User", back_populates="tokens") 

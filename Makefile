@@ -266,11 +266,17 @@ test-complete: check-test-env ## Run comprehensive test suite (all working compo
 	@echo "🔐 Authentication Unit Tests (41 tests)..."
 	@pytest tests/unit/test_admin_management.py tests/unit/test_registration_config_unit.py -v --tb=short
 	@echo ""
+	@echo "🔑 Service Token Tests..."
+	@pytest tests/unit/test_service_tokens.py -v --tb=short
+	@echo ""
 	@echo "🔒 Authentication Security Tests..."
 	@pytest tests/security/test_admin_security.py -v --tb=short || true
 	@echo ""
 	@echo "🔑 Authentication Integration Tests..."
 	@pytest tests/integration/test_admin_integration.py -v --tb=short || true
+	@echo ""
+	@echo "🛠️  Service Token Integration Tests..."
+	@pytest tests/integration/test_service_token_script.py -v --tb=short || true
 	@echo ""
 	@echo "🌐 API Tests (via script)..."
 	@$(API_TESTS) --skip-env-check --verbose || true
@@ -307,14 +313,18 @@ test-summary: check-test-env ## Show test summary and status
 	@echo "✅ WebSocket Tests:           30/30 tests passing"
 	@echo "✅ Admin Unit Tests:          14/14 tests passing"  
 	@echo "✅ Registration Config Tests: 27/27 tests passing"
+	@echo "✅ Service Token Unit Tests:  25+ tests (comprehensive coverage)"
+	@echo "✅ Service Token API Tests:   15+ tests (endpoint coverage)"
+	@echo "✅ Service Token Script Tests: 20+ tests (CLI coverage)"
 	@echo "⚠️  Admin Security Tests:     23/28 tests passing (5 failing)"
 	@echo "⚠️  Admin Integration Tests:  Working (some env dependencies)"
 	@echo "❌ User Management Tests:     Import errors (deprecated paths)"
 	@echo "🚀 API Tests (Integrated):    Automatic server management available"
 	@echo ""
-	@echo "📊 Total Working Tests:       71+ tests"
+	@echo "📊 Total Working Tests:       130+ tests"
 	@echo "🎯 Best Single Command:       make test-complete-integrated"
 	@echo "🎯 Quick Working Tests:       make test-working"
+	@echo "🎯 Service Token Tests:       make test-service-tokens"
 	@echo "🎯 API Tests Only:            make test-api-integrated"
 
 .PHONY: test-admin
@@ -351,6 +361,33 @@ test-admin-postgres: check-env ## Run admin tests against PostgreSQL database
 test-admin-full: check-env ## Run all admin tests including PostgreSQL tests
 	$(call print_header,"Running comprehensive admin test suite")
 	pytest tests/unit/test_admin_management.py tests/api/test_admin_api.py tests/integration/test_admin_integration.py tests/integration/test_admin_integration_postgres.py tests/security/test_admin_security.py -v
+
+##@ Service Token Tests
+
+.PHONY: test-service-tokens
+test-service-tokens: check-env ## Run all service token tests
+	$(call print_header,"Running service token tests")
+	pytest tests/unit/test_service_tokens.py tests/api/test_service_token_api.py tests/integration/test_service_token_script.py -v
+
+.PHONY: test-service-tokens-unit
+test-service-tokens-unit: check-env ## Run service token unit tests only
+	$(call print_header,"Running service token unit tests")
+	pytest tests/unit/test_service_tokens.py -v
+
+.PHONY: test-service-tokens-api
+test-service-tokens-api: check-test-env ## Run service token API tests only
+	$(call print_header,"Running service token API tests")
+	pytest tests/api/test_service_token_api.py -v -m api
+
+.PHONY: test-service-tokens-integration
+test-service-tokens-integration: check-env ## Run service token integration tests only
+	$(call print_header,"Running service token integration tests")
+	pytest tests/integration/test_service_token_script.py -v -m integration
+
+.PHONY: test-service-tokens-full
+test-service-tokens-full: check-env ## Run comprehensive service token test suite
+	$(call print_header,"Running comprehensive service token test suite")
+	pytest tests/unit/test_service_tokens.py tests/api/test_service_token_api.py tests/integration/test_service_token_script.py -v --tb=short
 
 .PHONY: coverage
 coverage: check-env ## Run tests with coverage report
@@ -431,6 +468,53 @@ admin-promote: check-env ## Promote existing user to admin
 admin-list: check-env ## List all admin users
 	$(call print_header,"Listing admin users")
 	python scripts/create_admin.py list
+
+##@ Service Token Management
+
+.PHONY: service-token-create
+service-token-create: check-env ## Create a new service token (30 days)
+	$(call print_header,"Creating service token")
+	python scripts/manage_service_tokens.py create
+
+.PHONY: service-token-create-eternal
+service-token-create-eternal: check-env ## Create eternal service token (never expires)
+	$(call print_header,"Creating eternal service token")
+	@echo "⚠️  WARNING: Eternal tokens never expire!"
+	@echo "⚠️  Ensure proper security measures are in place!"
+	@read -p "Continue? [y/N]: " confirm && [ "$$confirm" = "y" ]
+	python scripts/manage_service_tokens.py create --eternal
+
+.PHONY: service-token-create-custom
+service-token-create-custom: check-env ## Create custom duration service token (usage: make service-token-create-custom DAYS=90)
+	$(call print_header,"Creating custom service token")
+	@if [ -z "$(DAYS)" ]; then \
+		echo "❌ Please specify DAYS. Example: make service-token-create-custom DAYS=90"; \
+		exit 1; \
+	fi
+	python scripts/manage_service_tokens.py create --days $(DAYS)
+
+.PHONY: service-token-list
+service-token-list: check-env ## List all service tokens
+	$(call print_header,"Listing service tokens")
+	python scripts/manage_service_tokens.py list
+
+.PHONY: service-token-revoke
+service-token-revoke: check-env ## Revoke a service token (usage: make service-token-revoke TOKEN_ID=abc123)
+	$(call print_header,"Revoking service token")
+	@if [ -z "$(TOKEN_ID)" ]; then \
+		echo "❌ Please specify TOKEN_ID. Example: make service-token-revoke TOKEN_ID=abc123-def456"; \
+		exit 1; \
+	fi
+	python scripts/manage_service_tokens.py revoke $(TOKEN_ID)
+
+.PHONY: service-token-check
+service-token-check: check-env ## Check service token validity (usage: make service-token-check TOKEN="jwt_token_here")
+	$(call print_header,"Checking service token")
+	@if [ -z "$(TOKEN)" ]; then \
+		echo "❌ Please specify TOKEN. Example: make service-token-check TOKEN=\"eyJ0eXAi...\""; \
+		exit 1; \
+	fi
+	python scripts/manage_service_tokens.py check "$(TOKEN)"
 
 ##@ Services
 

@@ -110,7 +110,9 @@ def run_tests(test_filter=None, verbose=False, skip_env_check=False):
     
     # Run the tests
     try:
-        result = subprocess.run(cmd, cwd=Path(__file__).parent)
+        # Change to project root directory (two levels up from scripts/testing/)
+        project_root = Path(__file__).parent.parent.parent
+        result = subprocess.run(cmd, cwd=project_root)
         return result.returncode == 0
     except KeyboardInterrupt:
         print("\n❌ Tests interrupted by user")

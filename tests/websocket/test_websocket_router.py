@@ -41,13 +41,13 @@ class TestWebSocketRouter:
         assert websocket_endpoint_found, "WebSocket endpoint /api/websockets/ws/{token} not found"
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
-    async def test_websocket_connection_requires_valid_token(self, mock_get_current_user, valid_token, test_user):
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
+    async def test_websocket_connection_requires_valid_token(self, mock_authenticate_websocket_user, valid_token, test_user):
         """Test that WebSocket connection requires valid authentication."""
         client = TestClient(app)
         
         # Mock user authentication to return a valid user
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         # Test with valid token
         with client.websocket_connect(f"/api/websockets/ws/{valid_token}") as websocket:
@@ -55,13 +55,13 @@ class TestWebSocketRouter:
             assert websocket is not None
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
-    async def test_websocket_connection_rejects_invalid_token(self, mock_get_current_user, invalid_token):
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
+    async def test_websocket_connection_rejects_invalid_token(self, mock_authenticate_websocket_user, invalid_token):
         """Test that WebSocket connection rejects invalid tokens."""
         client = TestClient(app)
         
         # Mock authentication to return None for invalid token
-        mock_get_current_user.return_value = None
+        mock_authenticate_websocket_user.return_value = None
         
         # Test with invalid token should fail
         with pytest.raises(Exception):  # Should raise WebSocketDisconnect or similar
@@ -69,13 +69,13 @@ class TestWebSocketRouter:
                 pass
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
-    async def test_websocket_connection_rejects_missing_token(self, mock_get_current_user):
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
+    async def test_websocket_connection_rejects_missing_token(self, mock_authenticate_websocket_user):
         """Test that WebSocket connection rejects when token is missing."""
         client = TestClient(app)
         
         # Mock authentication to return None
-        mock_get_current_user.return_value = None
+        mock_authenticate_websocket_user.return_value = None
         
         # Test without token should fail
         with pytest.raises(Exception):
@@ -83,35 +83,41 @@ class TestWebSocketRouter:
                 pass
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
     @patch('nocturna_calculations.api.routers.websocket.process_calculation')
     async def test_websocket_calculation_request_valid_message(
         self, 
         mock_process_calculation, 
-        mock_get_current_user,
+        mock_authenticate_websocket_user,
         valid_token,
         test_user,
         websocket_calculation_request
     ):
         """Test processing valid calculation request via WebSocket."""
+        import asyncio
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         mock_process_calculation.return_value = None
         
         with client.websocket_connect(f"/api/websockets/ws/{valid_token}") as websocket:
             # Send calculation request
             websocket.send_text(json.dumps(websocket_calculation_request))
             
+            # Give the WebSocket time to process the message
+            # Since TestClient runs synchronously, we need to allow the async processing to complete
+            import time
+            time.sleep(0.1)  # Small delay to allow message processing
+            
             # Verify process_calculation was called
             mock_process_calculation.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
     async def test_websocket_invalid_message_format(
         self, 
-        mock_get_current_user,
+        mock_authenticate_websocket_user,
         valid_token,
         test_user
     ):
@@ -119,7 +125,7 @@ class TestWebSocketRouter:
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         with client.websocket_connect(f"/api/websockets/ws/{valid_token}") as websocket:
             # Send invalid message format
@@ -132,10 +138,10 @@ class TestWebSocketRouter:
             assert "Invalid message format" in response["message"]
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
     async def test_websocket_calculation_types_support(
         self, 
-        mock_get_current_user,
+        mock_authenticate_websocket_user,
         valid_token,
         test_user
     ):
@@ -143,7 +149,7 @@ class TestWebSocketRouter:
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         calculation_types = [
             "positions",
@@ -171,10 +177,10 @@ class TestWebSocketRouter:
                 # for this test to pass without errors
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
     async def test_websocket_connection_cleanup_on_disconnect(
         self, 
-        mock_get_current_user, 
+        mock_authenticate_websocket_user, 
         valid_token, 
         test_user
     ):
@@ -182,7 +188,7 @@ class TestWebSocketRouter:
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         # Test that connection is established and then cleaned up
         with client.websocket_connect(f"/api/websockets/ws/{valid_token}") as websocket:
@@ -195,10 +201,10 @@ class TestWebSocketRouter:
         # but the fact that the connection closed gracefully indicates proper cleanup
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
     async def test_websocket_concurrent_connections_same_user(
         self, 
-        mock_get_current_user,
+        mock_authenticate_websocket_user,
         valid_token,
         test_user
     ):
@@ -206,7 +212,7 @@ class TestWebSocketRouter:
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         # This test requires the ConnectionManager to handle multiple connections
         # from the same user appropriately
@@ -233,10 +239,10 @@ class TestWebSocketRouter:
         assert duplicate_path not in paths, f"Duplicate WebSocket endpoint {duplicate_path} still exists"
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
     async def test_websocket_error_handling_calculation_failure(
         self, 
-        mock_get_current_user,
+        mock_authenticate_websocket_user,
         valid_token,
         test_user
     ):
@@ -244,7 +250,7 @@ class TestWebSocketRouter:
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         with client.websocket_connect(f"/api/websockets/ws/{valid_token}") as websocket:
             # Send request that will cause calculation error
@@ -262,13 +268,13 @@ class TestWebSocketRouter:
 
     @pytest.mark.asyncio
     @patch('nocturna_calculations.api.app.REQUEST_COUNT')
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
-    async def test_websocket_metrics_collection(self, mock_get_current_user, mock_counter, valid_token, test_user):
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
+    async def test_websocket_metrics_collection(self, mock_authenticate_websocket_user, mock_counter, valid_token, test_user):
         """Test that WebSocket connections are tracked in metrics."""
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         # This test ensures that WebSocket connections are properly monitored
         # and included in application metrics
@@ -279,10 +285,10 @@ class TestWebSocketRouter:
         # (This might need adjustment based on actual metrics implementation)
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
     async def test_websocket_rate_limiting(
         self, 
-        mock_get_current_user,
+        mock_authenticate_websocket_user,
         valid_token,
         test_user
     ):
@@ -290,7 +296,7 @@ class TestWebSocketRouter:
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         with client.websocket_connect(f"/api/websockets/ws/{valid_token}") as websocket:
             # Send many requests rapidly
@@ -314,13 +320,13 @@ class TestWebSocketRouter:
         pass  # Implementation depends on timeout mechanism
 
     @pytest.mark.asyncio
-    @patch('nocturna_calculations.api.routers.websocket.get_current_user')
-    async def test_websocket_message_size_limit(self, mock_get_current_user, valid_token, test_user):
+    @patch('nocturna_calculations.api.routers.websocket.authenticate_websocket_user')
+    async def test_websocket_message_size_limit(self, mock_authenticate_websocket_user, valid_token, test_user):
         """Test that oversized messages are handled gracefully."""
         client = TestClient(app)
         
         # Mock user authentication
-        mock_get_current_user.return_value = test_user
+        mock_authenticate_websocket_user.return_value = test_user
         
         with client.websocket_connect(f"/api/websockets/ws/{valid_token}") as websocket:
             # Send oversized message

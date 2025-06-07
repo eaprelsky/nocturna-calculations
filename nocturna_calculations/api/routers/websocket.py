@@ -8,10 +8,12 @@ import json
 import asyncio
 from datetime import datetime
 import logging
+from jose import JWTError, jwt
 
 from nocturna_calculations.api.database import get_db
 from nocturna_calculations.api.models import User, Chart
 from nocturna_calculations.api.routers.auth import get_current_user
+from nocturna_calculations.api.config import settings
 from nocturna_calculations.core.chart import Chart as CoreChart
 from nocturna_calculations.core.config import Config as CoreConfig
 
@@ -94,6 +96,19 @@ def create_core_chart(db_chart: Chart) -> CoreChart:
         timezone=db_chart.timezone,
         config=config
     )
+
+async def authenticate_websocket_user(token: str, db: Session) -> Optional[User]:
+    """Authenticate user for WebSocket connection"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+    except JWTError:
+        return None
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    return user
 
 async def process_calculation(
     websocket: WebSocket,
@@ -186,7 +201,7 @@ async def websocket_endpoint(
     
     try:
         # Verify token and get user
-        user = await get_current_user(token, db)
+        user = await authenticate_websocket_user(token, db)
         if not user:
             logger.warning(f"WebSocket connection rejected: invalid token")
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
