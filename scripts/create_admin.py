@@ -207,6 +207,72 @@ def list_admin_users():
     finally:
         db.close()
 
+def delete_user():
+    """Delete a user by email or username"""
+    print("=== Delete User ===\n")
+    
+    # Connect to database
+    try:
+        engine = create_engine(settings.DATABASE_URL)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        db = SessionLocal()
+        print("✅ Connected to database")
+    except Exception as e:
+        print(f"❌ Failed to connect to database: {e}")
+        return False
+    
+    try:
+        email_or_username = input("Enter email or username to delete: ").strip()
+        
+        if not email_or_username:
+            print("❌ Email or username is required")
+            return False
+        
+        # Find user
+        user = db.query(User).filter(
+            (User.email == email_or_username) | (User.username == email_or_username)
+        ).first()
+        
+        if not user:
+            print(f"❌ User not found: {email_or_username}")
+            return False
+        
+        # Show user details
+        print(f"\nFound user:")
+        print(f"  ID: {user.id}")
+        print(f"  Email: {user.email}")
+        print(f"  Username: {user.username}")
+        print(f"  Name: {user.first_name} {user.last_name}".strip())
+        print(f"  Admin: {user.is_superuser}")
+        print(f"  Active: {user.is_active}")
+        
+        # Confirm deletion
+        confirm = input(f"\n⚠️  Are you sure you want to delete this user? This action cannot be undone! (y/N): ").strip().lower()
+        if confirm != 'y':
+            print("❌ Operation cancelled")
+            return False
+        
+        # Double confirmation for safety
+        confirm2 = input(f"Type 'DELETE' to confirm deletion of user '{user.username}': ").strip()
+        if confirm2 != 'DELETE':
+            print("❌ Operation cancelled - confirmation text didn't match")
+            return False
+        
+        # Delete user
+        db.delete(user)
+        db.commit()
+        
+        print(f"✅ User '{user.email}' deleted successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Failed to delete user: {e}")
+        db.rollback()
+        return False
+    
+    finally:
+        db.close()
+
 def main():
     """Main function"""
     if len(sys.argv) > 1:
@@ -216,9 +282,10 @@ def main():
         print("  1. Create new admin user")
         print("  2. Promote existing user to admin")
         print("  3. List current admin users")
+        print("  4. Delete user")
         
-        choice = input("\nSelect action (1-3): ").strip()
-        action = {'1': 'create', '2': 'promote', '3': 'list'}.get(choice)
+        choice = input("\nSelect action (1-4): ").strip()
+        action = {'1': 'create', '2': 'promote', '3': 'list', '4': 'delete'}.get(choice)
     
     if action == 'create':
         success = create_admin_user()
@@ -226,8 +293,10 @@ def main():
         success = promote_existing_user()
     elif action == 'list':
         success = list_admin_users()
+    elif action == 'delete':
+        success = delete_user()
     else:
-        print("Usage: python scripts/create_admin.py [create|promote|list]")
+        print("Usage: python scripts/create_admin.py [create|promote|list|delete]")
         return 1
     
     return 0 if success else 1

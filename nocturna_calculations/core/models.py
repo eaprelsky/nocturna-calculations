@@ -35,8 +35,8 @@ class LunarNode(CelestialBody):
     draconic_month: Optional[float] = None
     eclipse_related: bool = False
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "name": "North Node",
                 "node_type": "NORTH",
@@ -45,4 +45,5 @@ class LunarNode(CelestialBody):
                 "draconic_month": 27.2122,
                 "eclipse_related": True
             }
-        } 
+        }
+    } 

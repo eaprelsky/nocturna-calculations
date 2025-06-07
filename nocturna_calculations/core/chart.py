@@ -4,7 +4,7 @@ Core chart class for astrological calculations
 from datetime import datetime, time as datetime_time
 from typing import Dict, Any, Optional, Union, List, Tuple
 import pytz
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, PrivateAttr
 
 from .config import Config as ChartConfig
 from ..adapters.swisseph import SwissEphAdapter
@@ -32,17 +32,8 @@ class Chart(BaseModel):
     config: Optional[ChartConfig] = Field(default=None, description="Calculation configuration")
     
     # Internal fields
-    _adapter: Optional[SwissEphAdapter] = None
-    _julian_day: Optional[float] = None
-    
-    class Config:
-        # Allow private attributes
-        underscore_attrs_are_private = True
-        # Don't try to serialize private attributes
-        fields = {
-            "_adapter": {"exclude": True},
-            "_julian_day": {"exclude": True}
-        }
+    _adapter: Optional[SwissEphAdapter] = PrivateAttr(default=None)
+    _julian_day: Optional[float] = PrivateAttr(default=None)
     
     @field_validator('latitude')
     @classmethod
