@@ -197,6 +197,7 @@ For detailed documentation, please refer to the following sections:
 
 ### API Documentation
 - [API Specification](api/specification.md)
+- **[Service Token Management Guide](guides/service-token-management.md)** - Complete service token setup and usage
 - **[Service Integration Guide](guides/service-integration.md)** - Backend integration with service tokens
 
 ### Deployment & Operations
