@@ -1087,6 +1087,194 @@ class SwissEphAdapter:
             "houses": composite_houses,
             "aspects": aspects
         }
+    
+    def calculate_synastry_chart(
+        self,
+        chart1_data: Dict[str, Any],
+        chart2_data: Dict[str, Any],
+        orb: float = 1.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate synastry between two charts
+        
+        Args:
+            chart1_data: First chart data containing planets and houses
+            chart2_data: Second chart data containing planets and houses
+            orb: Orb multiplier for aspects (default: 1.0)
+            
+        Returns:
+            Dictionary containing:
+            - aspects: List of aspects between charts
+            - total_strength: Overall synastry strength (0-1)
+            - planet_aspects: Dictionary of aspects per planet
+            - house_aspects: Dictionary of aspects per house (if applicable)
+        """
+        # Default orbs for aspects
+        default_orbs = {
+            "conjunction": 10.0,
+            "opposition": 10.0,
+            "trine": 8.0,
+            "square": 8.0,
+            "sextile": 6.0,
+            "semisextile": 3.0,
+            "semisquare": 3.0,
+            "sesquisquare": 3.0,
+            "quincunx": 3.0
+        }
+        
+        # Apply orb multiplier
+        orbs = {k: v * orb for k, v in default_orbs.items()}
+        
+        aspects = []
+        planet_aspects = {}
+        total_strength = 0.0
+        aspect_count = 0
+        
+        # Calculate aspects between planets from chart1 and chart2
+        for planet1_name, planet1_data in chart1_data['planets'].items():
+            if planet1_name not in planet_aspects:
+                planet_aspects[planet1_name] = []
+            
+            for planet2_name, planet2_data in chart2_data['planets'].items():
+                lon1 = planet1_data['longitude']
+                lon2 = planet2_data['longitude']
+                
+                # Calculate angular distance
+                distance = abs(lon1 - lon2)
+                if distance > 180:
+                    distance = 360 - distance
+                
+                # Check each aspect type
+                aspect_angles = {
+                    "conjunction": 0,
+                    "opposition": 180,
+                    "trine": 120,
+                    "square": 90,
+                    "sextile": 60,
+                    "semisextile": 30,
+                    "semisquare": 45,
+                    "sesquisquare": 135,
+                    "quincunx": 150
+                }
+                
+                for aspect_type, aspect_angle in aspect_angles.items():
+                    orb_for_aspect = orbs.get(aspect_type, 8.0)
+                    actual_orb = abs(distance - aspect_angle)
+                    
+                    if actual_orb <= orb_for_aspect:
+                        # Determine if applying or separating
+                        speed1 = planet1_data.get('speed_long', 0)
+                        speed2 = planet2_data.get('speed_long', 0)
+                        applying = self._is_applying(lon1, lon2, speed1, speed2)
+                        
+                        # Calculate aspect strength (1.0 for exact, 0.0 at orb limit)
+                        strength = 1.0 - (actual_orb / orb_for_aspect) if orb_for_aspect > 0 else 1.0
+                        
+                        aspect_info = {
+                            "planet1": planet1_name,
+                            "planet2": planet2_name,
+                            "aspect_type": aspect_type,
+                            "orb": actual_orb,
+                            "applying": applying,
+                            "strength": strength
+                        }
+                        
+                        aspects.append(aspect_info)
+                        planet_aspects[planet1_name].append(f"{aspect_type}_{planet2_name}")
+                        
+                        total_strength += strength
+                        aspect_count += 1
+                        
+                        # Only one aspect per planet pair
+                        break
+        
+        # Calculate average strength
+        if aspect_count > 0:
+            total_strength = total_strength / aspect_count
+        
+        # Calculate house aspects (planets from chart2 in houses of chart1)
+        house_aspects = {}
+        if 'houses' in chart1_data and 'cusps' in chart1_data['houses']:
+            cusps = chart1_data['houses']['cusps']
+            
+            for planet_name, planet_data in chart2_data['planets'].items():
+                lon = planet_data['longitude']
+                
+                # Find which house the planet is in
+                house_num = self._find_house(lon, cusps)
+                
+                if house_num not in house_aspects:
+                    house_aspects[house_num] = []
+                
+                house_aspects[house_num].append(f"{planet_name}")
+        
+        return {
+            "aspects": aspects,
+            "total_strength": total_strength,
+            "planet_aspects": planet_aspects,
+            "house_aspects": house_aspects
+        }
+    
+    def _is_applying(
+        self,
+        lon1: float,
+        lon2: float,
+        speed1: float,
+        speed2: float
+    ) -> bool:
+        """
+        Determine if an aspect is applying (getting closer) or separating
+        
+        Args:
+            lon1: Longitude of first planet
+            lon2: Longitude of second planet
+            speed1: Speed of first planet
+            speed2: Speed of second planet
+            
+        Returns:
+            True if applying, False if separating
+        """
+        # Calculate if planets are moving towards each other
+        distance = (lon2 - lon1) % 360
+        relative_speed = speed2 - speed1
+        
+        # If relative speed is reducing the distance, it's applying
+        if distance < 180:
+            return relative_speed < 0
+        else:
+            return relative_speed > 0
+    
+    def _find_house(self, longitude: float, cusps: List[float]) -> int:
+        """
+        Find which house a longitude falls into
+        
+        Args:
+            longitude: Longitude in degrees
+            cusps: List of house cusps
+            
+        Returns:
+            House number (1-12)
+        """
+        if not cusps or len(cusps) < 12:
+            return 1
+        
+        # Normalize longitude
+        lon = longitude % 360
+        
+        # Check each house
+        for i in range(12):
+            cusp1 = cusps[i] % 360
+            cusp2 = cusps[(i + 1) % 12] % 360
+            
+            # Handle house crossing 0 degrees
+            if cusp1 > cusp2:
+                if lon >= cusp1 or lon < cusp2:
+                    return i + 1
+            else:
+                if cusp1 <= lon < cusp2:
+                    return i + 1
+        
+        return 1  # Default to first house
 
     def calculate_solar_arc_directions(
         self,

@@ -55,6 +55,8 @@
 - ✅ `GET /api/charts/{chart_id}`
 - ✅ `PUT /api/charts/{chart_id}`
 - ✅ `DELETE /api/charts/{chart_id}`
+- ✅ `POST /api/charts/{chart_id}/synastry` - Calculate synastry between two charts
+- ✅ `POST /api/charts/{chart_id}/transits` - Calculate transits to natal chart
 
 ### Calculations (Direct)
 - ✅ `POST /api/calculations/planetary-positions`

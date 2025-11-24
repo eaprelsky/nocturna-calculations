@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from nocturna_calculations.api.database import get_db
 from nocturna_calculations.api.models import User, Chart
 from nocturna_calculations.api.routers.auth import get_current_user
+from nocturna_calculations.api.schemas import SynastryRequest, SynastryResponse, TransitRequest, TransitResponse
 from nocturna_calculations.core.chart import Chart as CoreChart
 
 router = APIRouter()
@@ -247,4 +248,184 @@ async def list_charts(
         Chart.user_id == current_user.id
     ).offset(skip).limit(limit).all()
     
-    return charts 
+    return charts
+
+@router.post("/{chart_id}/synastry", response_model=SynastryResponse)
+async def calculate_synastry(
+    chart_id: str,
+    request: SynastryRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Calculate synastry between two charts.
+    
+    This endpoint compares two natal charts and returns aspects between
+    planets from the first chart (natal) and planets from the second chart
+    (comparison/partner chart).
+    
+    Args:
+        chart_id: ID of the first chart (natal)
+        request: Synastry request containing target_chart_id and options
+        current_user: Current authenticated user
+        db: Database session
+        
+    Returns:
+        Synastry analysis including aspects, strengths, and compatibility metrics
+    """
+    try:
+        # Get first chart
+        chart1 = db.query(Chart).filter(
+            Chart.id == chart_id,
+            Chart.user_id == current_user.id
+        ).first()
+        
+        if not chart1:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Chart not found"
+            )
+        
+        # Get second chart
+        chart2 = db.query(Chart).filter(
+            Chart.id == request.target_chart_id,
+            Chart.user_id == current_user.id
+        ).first()
+        
+        if not chart2:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Target chart not found"
+            )
+        
+        # Create core chart instances
+        core_chart1 = CoreChart(
+            date=chart1.date.strftime("%Y-%m-%d"),
+            time=chart1.date.strftime("%H:%M:%S"),
+            latitude=chart1.latitude,
+            longitude=chart1.longitude,
+            timezone=chart1.timezone
+        )
+        
+        core_chart2 = CoreChart(
+            date=chart2.date.strftime("%Y-%m-%d"),
+            time=chart2.date.strftime("%H:%M:%S"),
+            latitude=chart2.latitude,
+            longitude=chart2.longitude,
+            timezone=chart2.timezone
+        )
+        
+        # Calculate synastry
+        synastry_data = core_chart1.calculate_synastry_chart(
+            core_chart2,
+            orb=request.orb_multiplier
+        )
+        
+        return {
+            "success": True,
+            "data": synastry_data,
+            "error": None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {
+            "success": False,
+            "data": None,
+            "error": str(e)
+        }
+
+@router.post("/{chart_id}/transits", response_model=TransitResponse)
+async def calculate_transits(
+    chart_id: str,
+    request: TransitRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Calculate transits to a natal chart.
+    
+    This endpoint calculates current planetary positions for a given date/time
+    and compares them with the natal chart positions, returning aspects between
+    transiting planets and natal planets.
+    
+    Args:
+        chart_id: ID of the natal chart
+        request: Transit request containing date, time, and options
+        current_user: Current authenticated user
+        db: Database session
+        
+    Returns:
+        Transit analysis including transiting positions and aspects to natal
+    """
+    try:
+        # Get natal chart
+        natal_chart = db.query(Chart).filter(
+            Chart.id == chart_id,
+            Chart.user_id == current_user.id
+        ).first()
+        
+        if not natal_chart:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Chart not found"
+            )
+        
+        # Validate transit date/time format
+        try:
+            datetime.strptime(request.transit_date, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid transit date format. Expected YYYY-MM-DD"
+            )
+        
+        try:
+            datetime.strptime(request.transit_time, "%H:%M:%S")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid transit time format. Expected HH:MM:SS"
+            )
+        
+        # Create natal chart instance
+        natal_core_chart = CoreChart(
+            date=natal_chart.date.strftime("%Y-%m-%d"),
+            time=natal_chart.date.strftime("%H:%M:%S"),
+            latitude=natal_chart.latitude,
+            longitude=natal_chart.longitude,
+            timezone=natal_chart.timezone
+        )
+        
+        # Create transit chart instance (using same location as natal)
+        transit_chart = CoreChart(
+            date=request.transit_date,
+            time=request.transit_time,
+            latitude=natal_chart.latitude,
+            longitude=natal_chart.longitude,
+            timezone=natal_chart.timezone
+        )
+        
+        # Calculate transits (synastry between natal and transit)
+        transit_data = natal_core_chart.calculate_synastry_chart(
+            transit_chart,
+            orb=request.orb_multiplier
+        )
+        
+        # Add transit positions
+        transit_positions = transit_chart.calculate_planetary_positions()
+        transit_data['transit_positions'] = transit_positions
+        
+        return {
+            "success": True,
+            "data": transit_data,
+            "error": None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {
+            "success": False,
+            "data": None,
+            "error": str(e)
+        } 

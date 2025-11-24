@@ -74,10 +74,50 @@ app.include_router(charts.router, prefix="/api/charts", tags=["Charts"])
 app.include_router(calculations.router, prefix="/api/calculations", tags=["Calculations"])
 app.include_router(websocket.router, prefix="/api/websockets", tags=["WebSockets"])
 
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint with API information"""
+    return {
+        "name": "Nocturna Calculations API",
+        "version": "1.0.0",
+        "description": "Astrological calculations REST API",
+        "status": "running",
+        "endpoints": {
+            "documentation": "/docs",
+            "redoc": "/redoc",
+            "health": "/health",
+            "api": "/api"
+        },
+        "links": {
+            "docs": "/docs",
+            "health": "/health"
+        }
+    }
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# API info endpoint
+@app.get("/api")
+async def api_info():
+    """API information endpoint"""
+    return {
+        "name": "Nocturna Calculations API",
+        "version": "1.0.0",
+        "endpoints": {
+            "authentication": "/api/auth",
+            "charts": "/api/charts",
+            "calculations": "/api/calculations",
+            "websockets": "/api/websockets"
+        },
+        "documentation": {
+            "swagger": "/docs",
+            "redoc": "/redoc"
+        }
+    }
 
 # Error handler
 @app.exception_handler(Exception)

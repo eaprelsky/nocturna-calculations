@@ -214,4 +214,39 @@ class SimpleAspectsResponse(BaseModel):
 
 class SimpleHousesResponse(BaseModel):
     """Simple response for houses calculation."""
-    houses: List[House] 
+    houses: List[House]
+
+# Synastry and Transit schemas
+class SynastryRequest(BaseModel):
+    """Request schema for synastry calculation."""
+    target_chart_id: str
+    aspects: Optional[List[str]] = None
+    orb_multiplier: float = 1.0
+
+class SynastryAspect(BaseModel):
+    """Aspect data for synastry."""
+    planet1: str
+    planet2: str
+    aspect_type: str
+    orb: float
+    applying: Optional[bool] = None
+    strength: float
+
+class SynastryResponse(BaseModel):
+    """Response schema for synastry calculation."""
+    success: bool = True
+    data: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+
+class TransitRequest(BaseModel):
+    """Request schema for transit calculation."""
+    transit_date: str
+    transit_time: str
+    aspects: Optional[List[str]] = None
+    orb_multiplier: float = 1.0
+
+class TransitResponse(BaseModel):
+    """Response schema for transit calculation."""
+    success: bool = True
+    data: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None 

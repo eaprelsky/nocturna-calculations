@@ -199,6 +199,7 @@ For detailed documentation, please refer to the following sections:
 - [API Specification](api/specification.md)
 - **[Service Token Management Guide](guides/service-token-management.md)** - Complete service token setup and usage
 - **[Service Integration Guide](guides/service-integration.md)** - Backend integration with service tokens
+- **[Synastry & Transit Guide](guides/synastry-transit-guide.md)** - Relationship compatibility and transit calculations
 
 ### Deployment & Operations
 - **[Docker Deployment Guide](deployment/docker.md)** - **⭐ Recommended for Production**

@@ -650,6 +650,168 @@ Authorization: Bearer <token>
 
 Response: `204 No Content`
 
+#### Calculate Synastry
+
+Compare two natal charts and calculate aspects between them.
+
+```http
+POST /api/charts/{chart_id}/synastry
+Authorization: Bearer <token>
+```
+
+**Parameters:**
+- `chart_id` (path): ID of the first chart (natal/base chart)
+
+Request:
+
+```json
+{
+    "target_chart_id": "chr_789012",
+    "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
+    "orb_multiplier": 1.0
+}
+```
+
+**Request Fields:**
+- `target_chart_id` (required): ID of the second chart to compare with
+- `aspects` (optional): List of aspects to calculate. If not provided, uses chart's default configuration
+- `orb_multiplier` (optional): Multiplier for aspect orbs (default: 1.0)
+
+Response:
+
+```json
+{
+    "success": true,
+    "data": {
+        "aspects": [
+            {
+                "planet1": "SUN",
+                "planet2": "MOON",
+                "aspect_type": "trine",
+                "orb": 2.5,
+                "applying": true,
+                "strength": 0.85
+            }
+        ],
+        "total_strength": 0.72,
+        "planet_aspects": {
+            "SUN": ["trine_MOON", "square_MARS"],
+            "MOON": ["trine_SUN"]
+        },
+        "house_aspects": {
+            "1": ["conjunction_VENUS"],
+            "7": ["opposition_MARS"]
+        }
+    },
+    "error": null
+}
+```
+
+**Response Fields:**
+- `aspects`: List of aspects between charts with strengths and details
+- `total_strength`: Overall synastry compatibility score (0-1)
+- `planet_aspects`: Dictionary mapping each planet to its aspects
+- `house_aspects`: Dictionary showing aspects by house placement
+
+**Use Cases:**
+- Relationship compatibility analysis
+- Partnership synastry
+- Parent-child chart comparison
+- Business partner compatibility
+
+#### Calculate Transits
+
+Calculate current planetary transits to a natal chart.
+
+```http
+POST /api/charts/{chart_id}/transits
+Authorization: Bearer <token>
+```
+
+**Parameters:**
+- `chart_id` (path): ID of the natal chart
+
+Request:
+
+```json
+{
+    "transit_date": "2024-03-20",
+    "transit_time": "12:00:00",
+    "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
+    "orb_multiplier": 1.0
+}
+```
+
+**Request Fields:**
+- `transit_date` (required): Date for transit calculation (format: YYYY-MM-DD)
+- `transit_time` (required): Time for transit calculation (format: HH:MM:SS)
+- `aspects` (optional): List of aspects to calculate. If not provided, uses chart's default configuration
+- `orb_multiplier` (optional): Multiplier for aspect orbs (default: 1.0)
+
+Response:
+
+```json
+{
+    "success": true,
+    "data": {
+        "transit_positions": {
+            "SUN": {
+                "longitude": 359.5,
+                "latitude": 0.0,
+                "distance": 0.983,
+                "speed": 0.985,
+                "is_retrograde": false
+            },
+            "MOON": {
+                "longitude": 123.4,
+                "latitude": 2.1,
+                "distance": 0.002569,
+                "speed": 13.2,
+                "is_retrograde": false
+            }
+        },
+        "aspects": [
+            {
+                "planet1": "SUN",
+                "planet2": "natal_MOON",
+                "aspect_type": "conjunction",
+                "orb": 1.2,
+                "applying": true,
+                "strength": 0.92
+            },
+            {
+                "planet1": "MARS",
+                "planet2": "natal_SUN",
+                "aspect_type": "square",
+                "orb": 3.5,
+                "applying": false,
+                "strength": 0.65
+            }
+        ],
+        "total_strength": 0.68,
+        "planet_aspects": {
+            "SUN": ["conjunction_natal_MOON"],
+            "MARS": ["square_natal_SUN"]
+        }
+    },
+    "error": null
+}
+```
+
+**Response Fields:**
+- `transit_positions`: Current positions of all transiting planets
+- `aspects`: List of aspects between transiting and natal planets
+- `total_strength`: Overall transit influence score (0-1)
+- `planet_aspects`: Dictionary mapping each transiting planet to its aspects with natal chart
+
+**Use Cases:**
+- Daily personal transit analysis
+- Event timing and forecasting
+- Current planetary influences
+- Transit tracking over time
+
+**Note:** Transit calculations use the same location as the natal chart. For relocated transit calculations, create a new chart at the desired location.
+
 ## Direct Calculations
 
 The Direct Calculations API provides stateless calculation endpoints that don't require chart persistence. These endpoints are perfect for quick calculations, real-time applications, and scenarios where you don't need to store chart data.
