@@ -1,0 +1,60 @@
+# Green instance configuration
+# Deploy with: ./scripts/deploy.sh green
+
+services:
+  nocturna-api-green:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: nocturna-production:${IMAGE_TAG:-latest}
+    container_name: nocturna-api-green
+    restart: unless-stopped
+    ports:
+      - "8201:8000"
+    environment:
+      # Environment identification
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DEPLOYMENT_SLOT=green
+      # Database configuration (shared)
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@nocturna-postgres:5432/${POSTGRES_DB:-nocturna_prod}
+      # Redis configuration (shared)
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@nocturna-redis:6379/0
+      # Security
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - REFRESH_TOKEN_EXPIRE_DAYS=${REFRESH_TOKEN_EXPIRE_DAYS:-30}
+      # User management
+      - ALLOW_USER_REGISTRATION=${ALLOW_USER_REGISTRATION:-false}
+      - REGISTRATION_REQUIRES_APPROVAL=${REGISTRATION_REQUIRES_APPROVAL:-true}
+      - MAX_USERS_LIMIT=${MAX_USERS_LIMIT:-1000}
+      # API configuration
+      - PROJECT_NAME=${PROJECT_NAME:-Nocturna Calculations Service}
+      - API_VERSION_PREFIX=/v1
+      # CORS origins
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      # Rate limiting
+      - RATE_LIMIT_DEFAULT=${RATE_LIMIT_DEFAULT:-1000}
+      - RATE_LIMIT_PREMIUM=${RATE_LIMIT_PREMIUM:-10000}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-3600}
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      - ./logs/green:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - nocturna-network
+    external_links:
+      - nocturna-postgres:postgres
+      - nocturna-redis:redis
+
+networks:
+  nocturna-network:
+    external: true

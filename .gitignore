@@ -92,6 +92,15 @@ deployment_summary.json
 *.tmp
 *.bak
 temp/
+tmp/
+!tmp/
+
+# Blue-Green deployment metadata
+.current-env
+.previous-env
+
+# Backups
+backups/
 
 # Benchmarks
 .benchmarks/
