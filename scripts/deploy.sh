@@ -78,11 +78,11 @@ wait_for_health() {
     local instance=$1
     local port
     if [ "$instance" = "blue" ]; then
-        port=8200
+        port=${BLUE_API_PORT:-18200}
     elif [ "$instance" = "green" ]; then
-        port=8201
+        port=${GREEN_API_PORT:-18201}
     else
-        port=8100  # staging
+        port=${STAGING_API_PORT:-18100}  # staging
     fi
     
     log_info "Waiting for $instance instance to become healthy (port $port)..."
@@ -254,8 +254,8 @@ deploy_staging() {
     if deploy_instance "staging" "$build_flag"; then
         log_success "Staging deployment completed!"
         log_info ""
-        log_info "Staging API: http://localhost:8100"
-        log_info "Staging Docs: http://localhost:8100/docs"
+        log_info "Staging API: http://localhost:${STAGING_API_PORT:-18100}"
+        log_info "Staging Docs: http://localhost:${STAGING_API_PORT:-18100}/docs"
         log_info ""
         return 0
     else
@@ -304,7 +304,7 @@ main() {
         log_info ""
         log_info "Next steps:"
         log_info "  1. Test the $target_instance instance:"
-        log_info "     curl http://localhost:$([ "$target_instance" = "blue" ] && echo "8200" || echo "8201")/health"
+        log_info "     curl http://localhost:$([ "$target_instance" = "blue" ] && echo "${BLUE_API_PORT:-18200}" || echo "${GREEN_API_PORT:-18201}")/health"
         log_info ""
         log_info "  2. Switch traffic to $target_instance:"
         log_info "     ./scripts/switch.sh $target_instance"

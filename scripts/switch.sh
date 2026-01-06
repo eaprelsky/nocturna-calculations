@@ -49,9 +49,9 @@ check_health() {
     local instance=$1
     local port
     if [ "$instance" = "blue" ]; then
-        port=8200
+        port=${BLUE_API_PORT:-18200}
     else
-        port=8201
+        port=${GREEN_API_PORT:-18201}
     fi
     
     if curl -sf "http://localhost:$port/health" > /dev/null 2>&1; then
@@ -189,9 +189,9 @@ main() {
         log_success "Traffic successfully switched to $target_instance!"
         log_info ""
         log_info "Status:"
-        log_info "  Active: $target_instance (port $([ "$target_instance" = "blue" ] && echo "8200" || echo "8201"))"
+        log_info "  Active: $target_instance (port $([ "$target_instance" = "blue" ] && echo "${BLUE_API_PORT:-18200}" || echo "${GREEN_API_PORT:-18201}"))"
         if [ "$current_instance" != "none" ]; then
-            log_info "  Inactive: $current_instance (port $([ "$current_instance" = "blue" ] && echo "8200" || echo "8201"))"
+            log_info "  Inactive: $current_instance (port $([ "$current_instance" = "blue" ] && echo "${BLUE_API_PORT:-18200}" || echo "${GREEN_API_PORT:-18201}"))"
         fi
         log_info ""
         log_info "You can now stop the inactive instance if needed:"
@@ -212,8 +212,8 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ -z "$1" ]; then
     echo "Switch traffic between blue and green instances"
     echo ""
     echo "Arguments:"
-    echo "  blue   - Switch to blue instance (port 8200)"
-    echo "  green  - Switch to green instance (port 8201)"
+    echo "  blue   - Switch to blue instance (port 18200)"
+    echo "  green  - Switch to green instance (port 18201)"
     echo ""
     echo "Examples:"
     echo "  $0 blue          # Switch to blue instance"

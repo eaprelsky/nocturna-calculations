@@ -62,11 +62,11 @@ check_health() {
     local instance=$1
     local port
     if [ "$instance" = "blue" ]; then
-        port=8200
+        port=${BLUE_API_PORT:-18200}
     elif [ "$instance" = "green" ]; then
-        port=8201
+        port=${GREEN_API_PORT:-18201}
     else
-        port=8100  # staging
+        port=${STAGING_API_PORT:-18100}  # staging
     fi
     
     if curl -sf "http://localhost:$port/health" > /dev/null 2>&1; then
@@ -155,11 +155,11 @@ show_instance_status() {
     # Port
     local port
     if [ "$instance" = "blue" ]; then
-        port=8200
+        port=${BLUE_API_PORT:-18200}
     elif [ "$instance" = "green" ]; then
-        port=8201
+        port=${GREEN_API_PORT:-18201}
     else
-        port=8100
+        port=${STAGING_API_PORT:-18100}
     fi
     log_item "Port" "$port"
     

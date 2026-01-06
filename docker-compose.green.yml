@@ -11,7 +11,7 @@ services:
     container_name: nocturna-api-green
     restart: unless-stopped
     ports:
-      - "8201:8000"
+      - "${GREEN_API_PORT:-18201}:8000"
     environment:
       # Environment identification
       - ENVIRONMENT=${ENVIRONMENT:-production}

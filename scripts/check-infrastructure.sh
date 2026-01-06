@@ -124,8 +124,8 @@ if docker ps --format '{{.Names}}' | grep -q "^nocturna-api-blue$"; then
     echo -e "   ${GREEN}✓${NC} Container is running"
     
     # Check health
-    if curl -sf http://localhost:8200/health >/dev/null 2>&1; then
-        echo -e "   ${GREEN}✓${NC} Health check: OK"
+    if curl -sf http://localhost:18200/health >/dev/null 2>&1; then
+        echo -e "   ${GREEN}✓${NC} Health check: OK (port 18200)"
     else
         echo -e "   ${YELLOW}⚠${NC} Health check: Failed"
     fi
@@ -141,8 +141,8 @@ if docker ps --format '{{.Names}}' | grep -q "^nocturna-api-green$"; then
     echo -e "   ${GREEN}✓${NC} Container is running"
     
     # Check health
-    if curl -sf http://localhost:8201/health >/dev/null 2>&1; then
-        echo -e "   ${GREEN}✓${NC} Health check: OK"
+    if curl -sf http://localhost:18201/health >/dev/null 2>&1; then
+        echo -e "   ${GREEN}✓${NC} Health check: OK (port 18201)"
     else
         echo -e "   ${YELLOW}⚠${NC} Health check: Failed"
     fi
@@ -158,8 +158,8 @@ if docker ps --format '{{.Names}}' | grep -q "^nocturna-staging-api$"; then
     echo -e "   ${GREEN}✓${NC} Container is running"
     
     # Check health
-    if curl -sf http://localhost:8100/health >/dev/null 2>&1; then
-        echo -e "   ${GREEN}✓${NC} Health check: OK"
+    if curl -sf http://localhost:18100/health >/dev/null 2>&1; then
+        echo -e "   ${GREEN}✓${NC} Health check: OK (port 18100)"
     else
         echo -e "   ${YELLOW}⚠${NC} Health check: Failed"
     fi

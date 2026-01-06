@@ -68,9 +68,9 @@ check_health() {
     local instance=$1
     local port
     if [ "$instance" = "blue" ]; then
-        port=8200
+        port=${BLUE_API_PORT:-18200}
     else
-        port=8201
+        port=${GREEN_API_PORT:-18201}
     fi
     
     if curl -sf "http://localhost:$port/health" > /dev/null 2>&1; then
