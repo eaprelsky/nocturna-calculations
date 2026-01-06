@@ -38,30 +38,27 @@ main() {
     log_info "===================================="
     echo ""
     
-    # Check if running as root or with sudo
-    if [ "$EUID" -ne 0 ]; then
-        log_error "This script must be run with sudo"
-        exit 1
-    fi
-    
     # Create upstream directory if doesn't exist
     if [ ! -d "/etc/nginx/upstreams" ]; then
         log_info "Creating /etc/nginx/upstreams directory..."
-        mkdir -p /etc/nginx/upstreams
+        sudo mkdir -p /etc/nginx/upstreams
         log_success "Directory created"
     fi
     
     # Create staging upstream config
     log_info "Creating staging upstream config..."
-    cat > /etc/nginx/upstreams/nocturna-calc-staging.conf << 'EOF'
+    sudo tee /etc/nginx/upstreams/nocturna-calc-staging.conf > /dev/null << 'EOF'
 # Staging instance
 server 127.0.0.1:18100;
 EOF
     log_success "Created: /etc/nginx/upstreams/nocturna-calc-staging.conf"
     
+    # Change owner to current user
+    sudo chown $USER:$USER /etc/nginx/upstreams/nocturna-calc-staging.conf
+    
     # Create production upstream config (default to blue)
     log_info "Creating production upstream config..."
-    cat > /etc/nginx/upstreams/nocturna-calc-production.conf << 'EOF'
+    sudo tee /etc/nginx/upstreams/nocturna-calc-production.conf > /dev/null << 'EOF'
 # Active instance for production
 # Managed by scripts/switch.sh
 # Switch between blue and green by commenting/uncommenting lines
@@ -74,9 +71,12 @@ server 127.0.0.1:18200;
 EOF
     log_success "Created: /etc/nginx/upstreams/nocturna-calc-production.conf"
     
+    # Change owner to current user
+    sudo chown $USER:$USER /etc/nginx/upstreams/nocturna-calc-production.conf
+    
     # Create staging site config
     log_info "Creating staging site config..."
-    cat > /etc/nginx/sites-available/stage.calc.nocturna.ru << 'EOF'
+    sudo tee /etc/nginx/sites-available/stage.calc.nocturna.ru > /dev/null << 'EOF'
 # Nginx configuration for Staging environment
 # Domain: stage.calc.nocturna.ru
 
@@ -142,7 +142,7 @@ EOF
     
     # Create production site config
     log_info "Creating production site config..."
-    cat > /etc/nginx/sites-available/www.calc.nocturna.ru << 'EOF'
+    sudo tee /etc/nginx/sites-available/www.calc.nocturna.ru > /dev/null << 'EOF'
 # Nginx configuration for Production environment (Blue-Green)
 # Domain: www.calc.nocturna.ru
 
@@ -210,14 +210,14 @@ EOF
     log_info "Enabling sites..."
     
     if [ ! -L "/etc/nginx/sites-enabled/stage.calc.nocturna.ru" ]; then
-        ln -s /etc/nginx/sites-available/stage.calc.nocturna.ru /etc/nginx/sites-enabled/
+        sudo ln -s /etc/nginx/sites-available/stage.calc.nocturna.ru /etc/nginx/sites-enabled/
         log_success "Enabled: stage.calc.nocturna.ru"
     else
         log_info "Already enabled: stage.calc.nocturna.ru"
     fi
     
     if [ ! -L "/etc/nginx/sites-enabled/www.calc.nocturna.ru" ]; then
-        ln -s /etc/nginx/sites-available/www.calc.nocturna.ru /etc/nginx/sites-enabled/
+        sudo ln -s /etc/nginx/sites-available/www.calc.nocturna.ru /etc/nginx/sites-enabled/
         log_success "Enabled: www.calc.nocturna.ru"
     else
         log_info "Already enabled: www.calc.nocturna.ru"
@@ -225,7 +225,7 @@ EOF
     
     # Test nginx configuration
     log_info "Testing nginx configuration..."
-    if nginx -t; then
+    if sudo nginx -t; then
         log_success "Nginx configuration is valid"
     else
         log_error "Nginx configuration test failed!"
@@ -234,7 +234,7 @@ EOF
     
     # Reload nginx
     log_info "Reloading nginx..."
-    if systemctl reload nginx; then
+    if sudo systemctl reload nginx; then
         log_success "Nginx reloaded successfully"
     else
         log_error "Failed to reload nginx"
@@ -261,15 +261,17 @@ EOF
 
 # Parse arguments
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: sudo $0"
+    echo "Usage: $0"
     echo ""
     echo "Setup nginx configuration for Nocturna Calculations"
     echo ""
     echo "This script will:"
-    echo "  - Create upstream configs in /etc/nginx/upstreams/"
+    echo "  - Create upstream configs in /etc/nginx/upstreams/ (owned by current user)"
     echo "  - Create site configs in /etc/nginx/sites-available/"
     echo "  - Enable sites in /etc/nginx/sites-enabled/"
     echo "  - Test and reload nginx"
+    echo ""
+    echo "Note: This script uses sudo for nginx operations"
     exit 0
 fi
 

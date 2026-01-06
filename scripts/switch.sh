@@ -84,7 +84,7 @@ switch_upstream() {
         
         if [ "$target_instance" = "blue" ]; then
             # Switch to blue
-            sudo tee "$NGINX_SYSTEM_UPSTREAM" > /dev/null << 'EOF'
+            cat > "$NGINX_SYSTEM_UPSTREAM" << 'EOF'
 # Active instance for production
 # Managed by scripts/switch.sh
 # Switch between blue and green by commenting/uncommenting lines
@@ -97,7 +97,7 @@ server 127.0.0.1:18200;
 EOF
         else
             # Switch to green
-            sudo tee "$NGINX_SYSTEM_UPSTREAM" > /dev/null << 'EOF'
+            cat > "$NGINX_SYSTEM_UPSTREAM" << 'EOF'
 # Active instance for production
 # Managed by scripts/switch.sh
 # Switch between blue and green by commenting/uncommenting lines
