@@ -22,7 +22,11 @@ echo -e "${GREEN}Switching to Blue deployment${NC}"
 echo -e "${GREEN}========================================${NC}"
 
 # Load environment variables
-if [ -f "config/production.env" ]; then
+if [ -f ".env" ]; then
+    set -a
+    source .env
+    set +a
+elif [ -f "config/production.env" ]; then
     set -a
     source config/production.env
     set +a

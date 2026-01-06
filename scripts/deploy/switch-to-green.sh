@@ -31,7 +31,11 @@ else
 fi
 
 # Load environment variables
-if [ -f "config/production.env" ]; then
+if [ -f ".env" ]; then
+    set -a
+    source .env
+    set +a
+elif [ -f "config/production.env" ]; then
     set -a
     source config/production.env
     set +a

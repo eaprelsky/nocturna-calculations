@@ -22,14 +22,19 @@ echo -e "${GREEN}========================================${NC}"
 # Change to project root
 cd "$PROJECT_ROOT"
 
-# Load environment variables
-if [ -f "config/staging.env" ]; then
-    echo -e "${YELLOW}Loading staging environment variables...${NC}"
+# Load environment variables (check multiple locations)
+if [ -f ".env" ]; then
+    echo -e "${YELLOW}Loading environment variables from .env...${NC}"
+    set -a
+    source .env
+    set +a
+elif [ -f "config/staging.env" ]; then
+    echo -e "${YELLOW}Loading environment variables from config/staging.env...${NC}"
     set -a
     source config/staging.env
     set +a
 else
-    echo -e "${RED}Error: config/staging.env not found${NC}"
+    echo -e "${RED}Error: .env or config/staging.env not found${NC}"
     exit 1
 fi
 

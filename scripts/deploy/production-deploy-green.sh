@@ -23,14 +23,19 @@ echo -e "${GREEN}========================================${NC}"
 # Change to project root
 cd "$PROJECT_ROOT"
 
-# Load environment variables
-if [ -f "config/production.env" ]; then
-    echo -e "${YELLOW}Loading production environment variables...${NC}"
+# Load environment variables (check multiple locations)
+if [ -f ".env" ]; then
+    echo -e "${YELLOW}Loading environment variables from .env...${NC}"
+    set -a
+    source .env
+    set +a
+elif [ -f "config/production.env" ]; then
+    echo -e "${YELLOW}Loading environment variables from config/production.env...${NC}"
     set -a
     source config/production.env
     set +a
 else
-    echo -e "${RED}Error: config/production.env not found${NC}"
+    echo -e "${RED}Error: .env or config/production.env not found${NC}"
     exit 1
 fi
 
