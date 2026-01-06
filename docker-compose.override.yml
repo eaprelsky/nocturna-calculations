@@ -2,8 +2,6 @@
 # This file extends docker-compose.yml for development use
 # Use: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
 
-version: '3.8'
-
 services:
   # Development configuration for API service
   app:

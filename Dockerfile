@@ -4,7 +4,7 @@
 # ==============================================================================
 # Stage 1: Base OS layer (rarely changes - maximum cache reuse)
 # ==============================================================================
-FROM python:3.11-slim as base-os
+FROM python:3.11-slim AS base-os
 
 # Set labels for image identification
 LABEL maintainer="nocturna-team"
@@ -27,7 +27,7 @@ RUN groupadd -r nocturna && useradd -r -g nocturna nocturna
 # ==============================================================================
 # Stage 2: Python dependencies layer (changes only when requirements.txt changes)
 # ==============================================================================
-FROM base-os as python-deps
+FROM base-os AS python-deps
 
 WORKDIR /app
 
@@ -42,7 +42,7 @@ RUN pip install --upgrade pip setuptools wheel && \
 # ==============================================================================
 # Stage 3: Application layer (changes frequently with code updates)
 # ==============================================================================
-FROM base-os as application
+FROM base-os AS application
 
 WORKDIR /app
 
@@ -73,7 +73,7 @@ EXPOSE 8000
 # ==============================================================================
 # Stage 4: Production target (default)
 # ==============================================================================
-FROM application as production
+FROM application AS production
 
 # Production-specific settings
 ENV LOG_LEVEL=INFO
@@ -85,7 +85,7 @@ CMD ["uvicorn", "nocturna_calculations.api.app:app", "--host", "0.0.0.0", "--por
 # ==============================================================================
 # Stage 5: Staging target
 # ==============================================================================
-FROM application as staging
+FROM application AS staging
 
 # Staging-specific settings
 ENV LOG_LEVEL=DEBUG

@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Nginx reverse proxy for production blue-green deployment
 # Deploy with: docker-compose -f docker-compose.nginx.yml up -d
 
