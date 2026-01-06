@@ -17,6 +17,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 METADATA_FILE="$PROJECT_ROOT/.current-env"
 METADATA_BACKUP="$PROJECT_ROOT/.previous-env"
 NGINX_UPSTREAM_FILE="$PROJECT_ROOT/nginx/conf.d/upstream.conf"
+NGINX_SYSTEM_UPSTREAM="/etc/nginx/upstreams/nocturna-calc-production.conf"
 
 # Functions
 log_info() {
@@ -67,49 +68,99 @@ switch_upstream() {
     
     log_info "Updating nginx upstream configuration..."
     
-    # Copy the appropriate upstream config
-    if [ "$target_instance" = "blue" ]; then
-        cp "$PROJECT_ROOT/nginx/conf.d/upstream-blue.conf" "$NGINX_UPSTREAM_FILE"
-    else
-        cp "$PROJECT_ROOT/nginx/conf.d/upstream-green.conf" "$NGINX_UPSTREAM_FILE"
+    # Update local upstream config (for docker nginx if used)
+    if [ -f "$NGINX_UPSTREAM_FILE" ]; then
+        if [ "$target_instance" = "blue" ]; then
+            cp "$PROJECT_ROOT/nginx/conf.d/upstream-blue.conf" "$NGINX_UPSTREAM_FILE"
+        else
+            cp "$PROJECT_ROOT/nginx/conf.d/upstream-green.conf" "$NGINX_UPSTREAM_FILE"
+        fi
+        log_success "Local nginx upstream config updated"
     fi
     
-    log_success "Nginx upstream configuration updated"
+    # Update system nginx upstream config (if exists)
+    if [ -f "$NGINX_SYSTEM_UPSTREAM" ]; then
+        log_info "Updating system nginx upstream..."
+        
+        if [ "$target_instance" = "blue" ]; then
+            # Switch to blue
+            sudo tee "$NGINX_SYSTEM_UPSTREAM" > /dev/null << 'EOF'
+# Active instance for production
+# Managed by scripts/switch.sh
+# Switch between blue and green by commenting/uncommenting lines
+
+# Blue instance (currently active)
+server 127.0.0.1:18200;
+
+# Green instance (inactive)
+# server 127.0.0.1:18201;
+EOF
+        else
+            # Switch to green
+            sudo tee "$NGINX_SYSTEM_UPSTREAM" > /dev/null << 'EOF'
+# Active instance for production
+# Managed by scripts/switch.sh
+# Switch between blue and green by commenting/uncommenting lines
+
+# Blue instance (inactive)
+# server 127.0.0.1:18200;
+
+# Green instance (currently active)
+server 127.0.0.1:18201;
+EOF
+        fi
+        log_success "System nginx upstream config updated"
+    else
+        log_warning "System nginx upstream not found at $NGINX_SYSTEM_UPSTREAM"
+        log_warning "Skipping system nginx update"
+    fi
 }
 
 # Reload nginx
 reload_nginx() {
     log_info "Reloading nginx..."
     
-    # Try different methods to reload nginx
+    local nginx_reloaded=false
+    
+    # Try systemctl first (most common for system nginx)
+    if command -v systemctl > /dev/null 2>&1; then
+        if sudo nginx -t 2>/dev/null; then
+            if sudo systemctl reload nginx 2>/dev/null; then
+                log_success "System nginx reloaded via systemctl"
+                nginx_reloaded=true
+            fi
+        else
+            log_error "Nginx configuration test failed!"
+            sudo nginx -t
+            return 1
+        fi
+    fi
+    
+    # Try docker nginx if exists
     if docker ps --format '{{.Names}}' | grep -q "^nocturna-nginx$"; then
         if docker exec nocturna-nginx nginx -t 2>/dev/null; then
             docker exec nocturna-nginx nginx -s reload
-            log_success "Nginx reloaded successfully"
-            return 0
+            log_success "Docker nginx reloaded"
+            nginx_reloaded=true
         fi
     fi
     
-    # Try systemctl
-    if command -v systemctl > /dev/null 2>&1; then
-        if sudo systemctl reload nginx 2>/dev/null; then
-            log_success "Nginx reloaded via systemctl"
-            return 0
-        fi
-    fi
-    
-    # Try direct nginx
-    if command -v nginx > /dev/null 2>&1; then
+    # Try direct nginx command
+    if [ "$nginx_reloaded" = false ] && command -v nginx > /dev/null 2>&1; then
         if sudo nginx -t 2>/dev/null; then
             sudo nginx -s reload
             log_success "Nginx reloaded"
-            return 0
+            nginx_reloaded=true
         fi
     fi
     
-    log_warning "Could not reload nginx automatically"
-    log_warning "Please reload nginx manually: sudo nginx -s reload"
-    return 1
+    if [ "$nginx_reloaded" = false ]; then
+        log_warning "Could not reload nginx automatically"
+        log_warning "Please reload nginx manually: sudo systemctl reload nginx"
+        return 1
+    fi
+    
+    return 0
 }
 
 # Update metadata
