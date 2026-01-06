@@ -9,9 +9,18 @@ This directory contains comprehensive deployment guides for Nocturna Calculation
 **Best for:** Production environments, service integration, easy setup
 
 - **[Docker Deployment Guide](docker.md)** - Complete containerized deployment
-- **Quick Setup:** `make docker-deploy`
-- **Features:** Automated setup, health monitoring, service component mode
+- **[Blue-Green Deployment](blue-green-deployment.md)** - Zero-downtime production updates
+- **Quick Setup:** `./scripts/deploy/staging-deploy.sh` (staging) or `./scripts/deploy/production-deploy-blue.sh` (production)
+- **Features:** Automated setup, health monitoring, blue-green deployment, multi-layer caching
 - **Prerequisites:** Docker 20.10+, Docker Compose 2.0+
+
+### 📦 Deployment Environments
+
+We support three deployment environments:
+
+1. **Staging** - Single instance for testing (`docker-compose.staging.yml`)
+2. **Production Blue** - Active production slot (`docker-compose.production.blue.yml`)
+3. **Production Green** - Standby production slot for zero-downtime updates (`docker-compose.production.green.yml`)
 
 ### 🐍 Traditional Python Deployment
 
@@ -24,48 +33,66 @@ This directory contains comprehensive deployment guides for Nocturna Calculation
 
 ## Deployment Comparison
 
-| Feature | Docker | Traditional |
-|---------|--------|-------------|
-| **Setup Complexity** | ⭐⭐⭐⭐⭐ One command | ⭐⭐⭐ Multiple steps |
-| **Isolation** | ⭐⭐⭐⭐⭐ Complete | ⭐⭐ Process level |
-| **Portability** | ⭐⭐⭐⭐⭐ Any Docker host | ⭐⭐⭐ Python environments |
-| **Resource Usage** | ⭐⭐⭐ Container overhead | ⭐⭐⭐⭐⭐ Native |
-| **Monitoring** | ⭐⭐⭐⭐⭐ Built-in | ⭐⭐⭐ Manual setup |
-| **Scaling** | ⭐⭐⭐⭐⭐ Container orchestration | ⭐⭐⭐ Manual |
-| **Updates** | ⭐⭐⭐⭐⭐ Image updates | ⭐⭐⭐ Dependency management |
+| Feature | Docker (Blue-Green) | Docker (Basic) | Traditional |
+|---------|---------------------|----------------|-------------|
+| **Setup Complexity** | ⭐⭐⭐⭐ Automated scripts | ⭐⭐⭐⭐⭐ One command | ⭐⭐⭐ Multiple steps |
+| **Zero Downtime** | ⭐⭐⭐⭐⭐ Blue-green switch | ⭐ Manual restart | ⭐ Manual restart |
+| **Rollback Speed** | ⭐⭐⭐⭐⭐ Instant (~5s) | ⭐⭐ Rebuild required | ⭐⭐ Rebuild required |
+| **Isolation** | ⭐⭐⭐⭐⭐ Complete | ⭐⭐⭐⭐⭐ Complete | ⭐⭐ Process level |
+| **Portability** | ⭐⭐⭐⭐⭐ Any Docker host | ⭐⭐⭐⭐⭐ Any Docker host | ⭐⭐⭐ Python environments |
+| **Resource Usage** | ⭐⭐ Dual slots | ⭐⭐⭐ Container overhead | ⭐⭐⭐⭐⭐ Native |
+| **Build Speed** | ⭐⭐⭐⭐⭐ Multi-layer cache | ⭐⭐⭐⭐ Basic cache | ⭐⭐⭐ Dependency management |
+| **Production Ready** | ⭐⭐⭐⭐⭐ Enterprise-grade | ⭐⭐⭐⭐ Good | ⭐⭐⭐ Manual setup |
 
 ## Quick Start Matrix
 
+### Staging Environment
+```bash
+# Prepare configuration
+cp config/staging.env.example config/staging.env
+vim config/staging.env  # Edit with your values
+
+# Deploy staging
+./scripts/deploy/staging-deploy.sh
+
+# Access: http://localhost:8100
+```
+
+### Production Environment (Blue-Green)
+```bash
+# Prepare configuration
+cp config/production.env.example config/production.env
+vim config/production.env  # Edit with your values
+
+# Initial deployment (blue slot)
+./scripts/deploy/production-deploy-blue.sh --tag v1.0.0
+
+# Start nginx
+docker-compose -f docker-compose.nginx.yml up -d
+
+# Zero-downtime update workflow:
+# 1. Deploy to green
+./scripts/deploy/production-deploy-green.sh --tag v1.1.0
+
+# 2. Test green
+curl http://localhost:8201/health
+
+# 3. Switch traffic
+./scripts/deploy/switch-to-green.sh
+
+# 4. Rollback if needed
+./scripts/deploy/switch-to-green.sh --rollback
+```
+
 ### Development Environment
 ```bash
-# Docker (if you want containerized dev)
-make docker-deploy
+# Docker (development mode)
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up
 
 # Traditional (recommended for development)
 make setup-dev
 conda activate nocturna-dev
 make dev
-```
-
-### Production Environment
-```bash
-# Docker (recommended)
-make docker-deploy
-
-# Traditional
-make setup-prod
-conda activate nocturna-prod
-```
-
-### Testing Environment
-```bash
-# Docker
-make docker-up && make docker-setup-production-dry
-
-# Traditional
-make setup-test
-conda activate nocturna-test
-make test-api
 ```
 
 ## Service Integration Architecture
@@ -222,6 +249,31 @@ docker-compose exec app python -c "from nocturna_calculations.api.config import 
 python -c "from nocturna_calculations.api.config import settings; print(settings)"
 ```
 
+## Multi-Layer Docker Build Strategy
+
+Our Dockerfile uses an optimized multi-stage build with three distinct layers for maximum caching efficiency:
+
+### Layer 1: Base OS (Cached Long-Term)
+- Operating system packages
+- System dependencies
+- Rarely changes (~once per month)
+- **Rebuild time:** 5 minutes
+
+### Layer 2: Python Dependencies (Cached Medium-Term)
+- Python packages from `requirements.txt`
+- Changes when dependencies update (~weekly)
+- **Rebuild time:** 2 minutes
+
+### Layer 3: Application Code (Changes Frequently)
+- Your application code
+- Changes with every deployment (~daily)
+- **Rebuild time:** 5 seconds
+
+### Benefits
+- **Fast rebuilds:** Only application layer rebuilds on code changes (5 seconds)
+- **Efficient CI/CD:** Cache reuse across builds
+- **Bandwidth savings:** Download base layers once
+
 ---
 
 ## Next Steps
@@ -235,4 +287,6 @@ python -c "from nocturna_calculations.api.config import settings; print(settings
 For detailed instructions, see the specific deployment guides:
 
 - 🐳 **[Docker Deployment Guide](docker.md)** - Recommended for most use cases
+- 🔄 **[Blue-Green Deployment](blue-green-deployment.md)** - Zero-downtime production updates
+- 📜 **[Deployment Scripts](../../scripts/deploy/README.md)** - Script reference and usage
 - 🐍 **[Traditional Deployment Guide](production.md)** - For custom environments 

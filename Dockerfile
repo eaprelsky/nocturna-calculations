@@ -1,57 +1,67 @@
-# Nocturna Calculations - Production Docker Image
-# Multi-stage build for optimal size and security
+# Nocturna Calculations - Optimized Multi-Layer Production Docker Image
+# Multi-stage build with aggressive caching for fast rebuilds
 
-# Build stage
-FROM python:3.11-slim as builder
+# ==============================================================================
+# Stage 1: Base OS layer (rarely changes - maximum cache reuse)
+# ==============================================================================
+FROM python:3.11-slim as base-os
 
-# Install system dependencies for building
-RUN apt-get update && apt-get install -y \
+# Set labels for image identification
+LABEL maintainer="nocturna-team"
+LABEL version="2.0"
+LABEL description="Nocturna Calculations Service - Base OS Layer"
+
+# Install system dependencies (this layer is cached unless system packages change)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /app
-
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# Production stage
-FROM python:3.11-slim as production
+    libpq5 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Create non-root user for security
 RUN groupadd -r nocturna && useradd -r -g nocturna nocturna
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
+# ==============================================================================
+# Stage 2: Python dependencies layer (changes only when requirements.txt changes)
+# ==============================================================================
+FROM base-os as python-deps
 
-# Set working directory
 WORKDIR /app
 
-# Copy Python packages from builder stage
-COPY --from=builder /root/.local /home/nocturna/.local
+# Copy only requirements file first (Docker cache optimization)
+COPY requirements.txt .
 
-# Copy application code
-COPY . .
+# Install Python dependencies with caching
+# This layer rebuilds only when requirements.txt changes
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --user -r requirements.txt
 
-# Change ownership to nocturna user
-RUN chown -R nocturna:nocturna /app
+# ==============================================================================
+# Stage 3: Application layer (changes frequently with code updates)
+# ==============================================================================
+FROM base-os as application
 
-# Switch to non-root user
-USER nocturna
+WORKDIR /app
 
-# Make sure scripts are executable
-USER root
+# Copy Python packages from dependencies layer
+COPY --from=python-deps /root/.local /home/nocturna/.local
+
+# Copy application code (this layer rebuilds on every code change)
+COPY --chown=nocturna:nocturna . .
+
+# Make scripts executable
 RUN chmod +x scripts/*.py scripts/*.sh 2>/dev/null || true
-USER nocturna
 
 # Set environment variables
 ENV PATH=/home/nocturna/.local/bin:$PATH
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
+
+# Switch to non-root user
+USER nocturna
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
@@ -60,5 +70,26 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["uvicorn", "nocturna_calculations.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"] 
+# ==============================================================================
+# Stage 4: Production target (default)
+# ==============================================================================
+FROM application as production
+
+# Production-specific settings
+ENV LOG_LEVEL=INFO
+ENV DEBUG=false
+
+# Run with production settings
+CMD ["uvicorn", "nocturna_calculations.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+
+# ==============================================================================
+# Stage 5: Staging target
+# ==============================================================================
+FROM application as staging
+
+# Staging-specific settings
+ENV LOG_LEVEL=DEBUG
+ENV DEBUG=true
+
+# Run with fewer workers for staging
+CMD ["uvicorn", "nocturna_calculations.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"] 

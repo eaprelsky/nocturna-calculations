@@ -1,0 +1,136 @@
+version: '3.8'
+
+# Staging environment configuration
+# Deploy command: docker-compose -f docker-compose.staging.yml up -d
+
+services:
+  # Main application service (Staging)
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: staging
+      cache_from:
+        - nocturna-base-os:latest
+        - nocturna-python-deps:latest
+        - nocturna-staging:latest
+    image: nocturna-staging:latest
+    container_name: nocturna-staging-api
+    restart: unless-stopped
+    ports:
+      - "${STAGING_API_PORT:-8100}:8000"
+    environment:
+      # Environment identification
+      - ENVIRONMENT=staging
+      # Database configuration
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db-staging:5432/${POSTGRES_DB:-nocturna_staging}
+      # Redis configuration
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis-staging:6379/0
+      # Security
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - REFRESH_TOKEN_EXPIRE_DAYS=${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      # User management
+      - ALLOW_USER_REGISTRATION=${ALLOW_USER_REGISTRATION:-true}
+      - REGISTRATION_REQUIRES_APPROVAL=${REGISTRATION_REQUIRES_APPROVAL:-false}
+      - MAX_USERS_LIMIT=${MAX_USERS_LIMIT:-50}
+      # API configuration
+      - PROJECT_NAME=Nocturna Calculations Service (Staging)
+      - API_VERSION_PREFIX=/v1
+      # CORS origins
+      - CORS_ORIGINS=${CORS_ORIGINS:-["*"]}
+      # Rate limiting (more permissive for testing)
+      - RATE_LIMIT_DEFAULT=${RATE_LIMIT_DEFAULT:-2000}
+      - RATE_LIMIT_PREMIUM=${RATE_LIMIT_PREMIUM:-20000}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-3600}
+      # Logging
+      - LOG_LEVEL=DEBUG
+      - DEBUG=true
+    depends_on:
+      db-staging:
+        condition: service_healthy
+      redis-staging:
+        condition: service_healthy
+    volumes:
+      # Mount logs directory for debugging
+      - ./logs/staging:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - nocturna-staging-network
+
+  # PostgreSQL database (Staging)
+  db-staging:
+    image: postgres:15-alpine
+    container_name: nocturna-staging-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-nocturna_staging}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+      - ./scripts/db_init:/docker-entrypoint-initdb.d
+    ports:
+      - "${STAGING_POSTGRES_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-nocturna_staging}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - nocturna-staging-network
+
+  # Redis cache (Staging)
+  redis-staging:
+    image: redis:7-alpine
+    container_name: nocturna-staging-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_staging_data:/data
+    ports:
+      - "${STAGING_REDIS_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - nocturna-staging-network
+
+  # Database migrations (init container)
+  migrations-staging:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: staging
+    image: nocturna-staging:latest
+    container_name: nocturna-staging-migrations
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db-staging:5432/${POSTGRES_DB:-nocturna_staging}
+    depends_on:
+      db-staging:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+    networks:
+      - nocturna-staging-network
+    restart: "no"
+
+volumes:
+  postgres_staging_data:
+    driver: local
+  redis_staging_data:
+    driver: local
+
+networks:
+  nocturna-staging-network:
+    driver: bridge

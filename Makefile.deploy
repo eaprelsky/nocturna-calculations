@@ -1,0 +1,224 @@
+# Nocturna Calculations - Deployment Makefile
+# Convenience commands for deployment operations
+
+.PHONY: help staging-deploy staging-logs staging-stop
+.PHONY: prod-blue prod-green switch-to-blue switch-to-green
+.PHONY: nginx-start nginx-stop nginx-reload nginx-logs
+.PHONY: setup-configs build-base build-deps
+
+# Colors for output
+RED=\033[0;31m
+GREEN=\033[0;32m
+YELLOW=\033[1;33m
+NC=\033[0m # No Color
+
+help:
+	@echo "$(GREEN)Nocturna Deployment Commands$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Setup:$(NC)"
+	@echo "  make setup-configs          - Copy environment templates"
+	@echo "  make build-base             - Build base OS layer (cache)"
+	@echo "  make build-deps             - Build dependencies layer (cache)"
+	@echo ""
+	@echo "$(YELLOW)Staging:$(NC)"
+	@echo "  make staging-deploy         - Deploy staging environment"
+	@echo "  make staging-rebuild        - Rebuild and deploy staging"
+	@echo "  make staging-logs           - View staging logs"
+	@echo "  make staging-stop           - Stop staging"
+	@echo ""
+	@echo "$(YELLOW)Production (Blue-Green):$(NC)"
+	@echo "  make prod-blue TAG=v1.0.0   - Deploy to blue slot"
+	@echo "  make prod-green TAG=v1.1.0  - Deploy to green slot"
+	@echo "  make switch-to-blue         - Route traffic to blue"
+	@echo "  make switch-to-green        - Route traffic to green"
+	@echo "  make rollback               - Rollback to previous slot"
+	@echo ""
+	@echo "$(YELLOW)Nginx:$(NC)"
+	@echo "  make nginx-start            - Start nginx reverse proxy"
+	@echo "  make nginx-stop             - Stop nginx"
+	@echo "  make nginx-reload           - Reload nginx config"
+	@echo "  make nginx-logs             - View nginx logs"
+	@echo ""
+	@echo "$(YELLOW)Monitoring:$(NC)"
+	@echo "  make status                 - Show all container status"
+	@echo "  make logs-all               - View all logs"
+	@echo "  make health                 - Check all health endpoints"
+	@echo ""
+	@echo "$(YELLOW)Maintenance:$(NC)"
+	@echo "  make backup-db              - Backup production database"
+	@echo "  make clean-old-images       - Remove old Docker images"
+
+# ===== Setup =====
+
+setup-configs:
+	@echo "$(YELLOW)Copying environment templates...$(NC)"
+	@test -f config/staging.env || cp config/staging.env.example config/staging.env
+	@test -f config/production.env || cp config/production.env.example config/production.env
+	@echo "$(GREEN)✓ Config templates copied$(NC)"
+	@echo "$(YELLOW)⚠ Edit config/staging.env and config/production.env with your values$(NC)"
+
+build-base:
+	@echo "$(YELLOW)Building base OS layer...$(NC)"
+	docker build --target base-os -t nocturna-base-os:latest .
+	@echo "$(GREEN)✓ Base OS layer cached$(NC)"
+
+build-deps:
+	@echo "$(YELLOW)Building Python dependencies layer...$(NC)"
+	docker build --target python-deps -t nocturna-python-deps:latest .
+	@echo "$(GREEN)✓ Dependencies layer cached$(NC)"
+
+# ===== Staging =====
+
+staging-deploy:
+	@echo "$(GREEN)Deploying staging environment...$(NC)"
+	@bash scripts/deploy/staging-deploy.sh
+
+staging-rebuild:
+	@echo "$(GREEN)Rebuilding staging environment...$(NC)"
+	@bash scripts/deploy/staging-deploy.sh --rebuild
+
+staging-logs:
+	docker-compose -f docker-compose.staging.yml logs -f
+
+staging-stop:
+	@echo "$(YELLOW)Stopping staging environment...$(NC)"
+	docker-compose -f docker-compose.staging.yml down
+	@echo "$(GREEN)✓ Staging stopped$(NC)"
+
+# ===== Production Blue-Green =====
+
+TAG ?= latest
+
+prod-blue:
+	@echo "$(GREEN)Deploying production blue (tag: $(TAG))...$(NC)"
+	@bash scripts/deploy/production-deploy-blue.sh --tag $(TAG)
+
+prod-blue-rebuild:
+	@echo "$(GREEN)Rebuilding production blue (tag: $(TAG))...$(NC)"
+	@bash scripts/deploy/production-deploy-blue.sh --rebuild --tag $(TAG)
+
+prod-green:
+	@echo "$(GREEN)Deploying production green (tag: $(TAG))...$(NC)"
+	@bash scripts/deploy/production-deploy-green.sh --tag $(TAG)
+
+prod-green-rebuild:
+	@echo "$(GREEN)Rebuilding production green (tag: $(TAG))...$(NC)"
+	@bash scripts/deploy/production-deploy-green.sh --rebuild --tag $(TAG)
+
+switch-to-blue:
+	@echo "$(GREEN)Switching traffic to blue...$(NC)"
+	@bash scripts/deploy/switch-to-blue.sh
+
+switch-to-green:
+	@echo "$(GREEN)Switching traffic to green...$(NC)"
+	@bash scripts/deploy/switch-to-green.sh
+
+rollback:
+	@echo "$(YELLOW)Rolling back to previous slot...$(NC)"
+	@bash scripts/deploy/switch-to-green.sh --rollback
+
+# ===== Nginx =====
+
+nginx-start:
+	@echo "$(GREEN)Starting nginx...$(NC)"
+	docker-compose -f docker-compose.nginx.yml up -d
+	@echo "$(GREEN)✓ Nginx started$(NC)"
+
+nginx-stop:
+	@echo "$(YELLOW)Stopping nginx...$(NC)"
+	docker-compose -f docker-compose.nginx.yml down
+	@echo "$(GREEN)✓ Nginx stopped$(NC)"
+
+nginx-reload:
+	@echo "$(YELLOW)Reloading nginx configuration...$(NC)"
+	docker exec nocturna-nginx nginx -t
+	docker exec nocturna-nginx nginx -s reload
+	@echo "$(GREEN)✓ Nginx reloaded$(NC)"
+
+nginx-logs:
+	docker logs -f nocturna-nginx
+
+# ===== Monitoring =====
+
+status:
+	@echo "$(GREEN)=== Staging ===$(NC)"
+	@docker-compose -f docker-compose.staging.yml ps || true
+	@echo ""
+	@echo "$(GREEN)=== Production Blue ===$(NC)"
+	@docker-compose -f docker-compose.production.blue.yml ps || true
+	@echo ""
+	@echo "$(GREEN)=== Production Green ===$(NC)"
+	@docker-compose -f docker-compose.production.green.yml ps || true
+	@echo ""
+	@echo "$(GREEN)=== Nginx ===$(NC)"
+	@docker ps | grep nocturna-nginx || echo "Nginx not running"
+
+logs-all:
+	@echo "$(YELLOW)Use Ctrl+C to stop$(NC)"
+	docker-compose -f docker-compose.staging.yml logs -f & \
+	docker-compose -f docker-compose.production.blue.yml logs -f & \
+	docker-compose -f docker-compose.production.green.yml logs -f & \
+	wait
+
+health:
+	@echo "$(GREEN)Checking health endpoints...$(NC)"
+	@echo "Staging:"; curl -f http://localhost:8100/health 2>/dev/null && echo " ✓" || echo " ✗"
+	@echo "Blue:"; curl -f http://localhost:8200/health 2>/dev/null && echo " ✓" || echo " ✗"
+	@echo "Green:"; curl -f http://localhost:8201/health 2>/dev/null && echo " ✓" || echo " ✗"
+	@echo "Nginx:"; curl -f http://localhost/health 2>/dev/null && echo " ✓" || echo " ✗"
+
+# ===== Maintenance =====
+
+backup-db:
+	@echo "$(YELLOW)Creating database backup...$(NC)"
+	@mkdir -p backups/postgres
+	@BACKUP_FILE="backups/postgres/backup_$$(date +%Y%m%d_%H%M%S).sql"; \
+	docker exec nocturna-prod-db pg_dump -U nocturna_prod_user nocturna_prod > $$BACKUP_FILE && \
+	echo "$(GREEN)✓ Backup created: $$BACKUP_FILE$(NC)"
+
+clean-old-images:
+	@echo "$(YELLOW)Removing old Docker images...$(NC)"
+	docker image prune -f
+	@echo "$(GREEN)✓ Old images removed$(NC)"
+
+# ===== Complete Workflows =====
+
+first-time-staging: setup-configs
+	@echo "$(GREEN)Setting up staging for the first time...$(NC)"
+	@echo "$(YELLOW)⚠ Make sure to edit config/staging.env first!$(NC)"
+	@read -p "Press enter to continue..."
+	$(MAKE) build-base build-deps staging-deploy
+	@echo "$(GREEN)✓ Staging setup complete!$(NC)"
+	@echo "Access: http://localhost:8100"
+
+first-time-production: setup-configs
+	@echo "$(GREEN)Setting up production for the first time...$(NC)"
+	@echo "$(YELLOW)⚠ Make sure to edit config/production.env first!$(NC)"
+	@read -p "Press enter to continue..."
+	$(MAKE) build-base build-deps
+	$(MAKE) prod-blue TAG=v1.0.0
+	$(MAKE) nginx-start
+	@echo "$(GREEN)✓ Production setup complete!$(NC)"
+	@echo "Access: http://localhost"
+
+zero-downtime-update:
+	@echo "$(GREEN)Performing zero-downtime update...$(NC)"
+	@echo "Current active slot? (blue/green):"
+	@read ACTIVE_SLOT; \
+	if [ "$$ACTIVE_SLOT" = "blue" ]; then \
+		echo "Deploying to green..."; \
+		$(MAKE) prod-green TAG=$(TAG); \
+		echo "Test green: http://localhost:8201/health"; \
+		read -p "Switch traffic to green? (y/n): " CONFIRM; \
+		if [ "$$CONFIRM" = "y" ]; then \
+			$(MAKE) switch-to-green; \
+		fi; \
+	else \
+		echo "Deploying to blue..."; \
+		$(MAKE) prod-blue TAG=$(TAG); \
+		echo "Test blue: http://localhost:8200/health"; \
+		read -p "Switch traffic to blue? (y/n): " CONFIRM; \
+		if [ "$$CONFIRM" = "y" ]; then \
+			$(MAKE) switch-to-blue; \
+		fi; \
+	fi
