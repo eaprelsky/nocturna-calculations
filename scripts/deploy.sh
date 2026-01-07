@@ -111,7 +111,7 @@ ensure_shared_infrastructure() {
     log_info "Ensuring shared infrastructure is running..."
     
     # Check if postgres container is running
-    if docker ps --format '{{.Names}}' | grep -q "^nocturna-postgres$"; then
+    if docker ps --format '{{.Names}}' | grep -q "^nocturna-calc-postgres$"; then
         log_info "Postgres is already running"
         
         # Verify network exists
@@ -124,9 +124,9 @@ ensure_shared_infrastructure() {
         log_info "Starting shared infrastructure (postgres + redis + network)..."
         
         # Check if old stopped container exists and remove it
-        if docker ps -a --format '{{.Names}}' | grep -q "^nocturna-postgres$"; then
+        if docker ps -a --format '{{.Names}}' | grep -q "^nocturna-calc-postgres$"; then
             log_warning "Found stopped postgres container, removing..."
-            docker rm -f nocturna-postgres || true
+            docker rm -f nocturna-calc-postgres || true
         fi
         
         if docker ps -a --format '{{.Names}}' | grep -q "^nocturna-redis$"; then
