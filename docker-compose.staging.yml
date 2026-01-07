@@ -91,7 +91,7 @@ services:
     volumes:
       - redis_staging_data:/data
     ports:
-      - "${STAGING_REDIS_PORT:-16380}:6379"
+      - "${STAGING_REDIS_PORT:-16381}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 10s

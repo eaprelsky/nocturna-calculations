@@ -17,9 +17,9 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - DEPLOYMENT_SLOT=green
       # Database configuration (shared)
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@nocturna-postgres:5432/${POSTGRES_DB:-nocturna_prod}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@nocturna-calc-postgres:5432/${POSTGRES_DB:-nocturna_calc}
       # Redis configuration (shared)
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@nocturna-redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@nocturna-calc-redis:6379/0
       # Security
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=HS256
@@ -52,8 +52,8 @@ services:
     networks:
       - nocturna-network
     external_links:
-      - nocturna-postgres:postgres
-      - nocturna-redis:redis
+      - nocturna-calc-postgres:postgres
+      - nocturna-calc-redis:redis
 
 networks:
   nocturna-network:
