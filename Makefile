@@ -3,6 +3,9 @@
 # This Makefile provides the single entry point for all project operations.
 # Use 'make help' to see all available commands.
 
+# Use bash for all shell commands
+SHELL := /bin/bash
+
 # Default target
 .DEFAULT_GOAL := help
 
