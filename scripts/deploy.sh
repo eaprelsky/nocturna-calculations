@@ -220,6 +220,17 @@ deploy_instance() {
     log_info "Starting $instance instance..."
     docker-compose -f "docker-compose.$instance.yml" up -d
     
+    # Wait for container to be ready
+    sleep 5
+    
+    # Run database migrations
+    if [ "$instance" != "staging" ]; then
+        if ! run_migrations "$instance"; then
+            log_error "Failed to run migrations"
+            return 1
+        fi
+    fi
+    
     # Wait for health check
     if wait_for_health "$instance"; then
         log_success "Deployment to $instance completed successfully!"
