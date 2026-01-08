@@ -545,32 +545,32 @@ services-check: ## Check service status
 
 .PHONY: deploy-staging
 deploy-staging: ## Deploy to staging environment
-	$(call print_header,"Deploying to staging")
+	@echo "$(CYAN)$(BOLD)==== Deploying to staging ====$(RESET)"
 	@bash scripts/deploy.sh staging
 
 .PHONY: deploy-staging-rebuild
 deploy-staging-rebuild: ## Deploy to staging with full rebuild
-	$(call print_header,"Deploying to staging (rebuild)")
+	@echo "$(CYAN)$(BOLD)==== Deploying to staging (rebuild) ====$(RESET)"
 	@bash scripts/deploy.sh staging --rebuild
 
 .PHONY: deploy-prod-auto
 deploy-prod-auto: ## Auto-deploy to inactive production instance
-	$(call print_header,"Auto-deploying to inactive instance")
+	@echo "$(CYAN)$(BOLD)==== Auto-deploying to inactive instance ====$(RESET)"
 	@bash scripts/deploy.sh auto
 
 .PHONY: deploy-prod-blue
 deploy-prod-blue: ## Deploy to blue production instance
-	$(call print_header,"Deploying to blue instance")
+	@echo "$(CYAN)$(BOLD)==== Deploying to blue instance ====$(RESET)"
 	@bash scripts/deploy.sh blue
 
 .PHONY: deploy-prod-green
 deploy-prod-green: ## Deploy to green production instance
-	$(call print_header,"Deploying to green instance")
+	@echo "$(CYAN)$(BOLD)==== Deploying to green instance ====$(RESET)"
 	@bash scripts/deploy.sh green
 
 .PHONY: deploy-prod-full
 deploy-prod-full: ## Full production update (both blue & green instances)
-	$(call print_header,"Full production update (rolling deployment)")
+	@echo "$(CYAN)$(BOLD)==== Full production update (rolling deployment) ====$(RESET)"
 	@echo "Step 1: Deploying to inactive instance..."
 	@bash scripts/deploy.sh auto
 	@echo ""
@@ -597,22 +597,22 @@ deploy-prod-full: ## Full production update (both blue & green instances)
 
 .PHONY: deploy-status
 deploy-status: ## Show deployment status
-	$(call print_header,"Deployment Status")
+	@echo "$(CYAN)$(BOLD)==== Deployment Status ====$(RESET)"
 	@bash scripts/status.sh
 
 .PHONY: deploy-switch-blue
 deploy-switch-blue: ## Switch traffic to blue instance
-	$(call print_header,"Switching to blue instance")
+	@echo "$(CYAN)$(BOLD)==== Switching to blue instance ====$(RESET)"
 	@bash scripts/switch.sh blue
 
 .PHONY: deploy-switch-green
 deploy-switch-green: ## Switch traffic to green instance
-	$(call print_header,"Switching to green instance")
+	@echo "$(CYAN)$(BOLD)==== Switching to green instance ====$(RESET)"
 	@bash scripts/switch.sh green
 
 .PHONY: deploy-rollback
 deploy-rollback: ## Rollback to previous instance
-	$(call print_header,"Rolling back to previous instance")
+	@echo "$(CYAN)$(BOLD)==== Rolling back to previous instance ====$(RESET)"
 	@bash scripts/rollback.sh
 
 ##@ Docker Deployment
