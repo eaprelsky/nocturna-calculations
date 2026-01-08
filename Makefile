@@ -538,6 +538,68 @@ services-check: ## Check service status
 	@echo "Redis:"
 	@./scripts/services/setup_redis.sh check || true
 
+##@ Production Deployment (Blue-Green)
+
+.PHONY: deploy-staging
+deploy-staging: ## Deploy to staging environment
+	$(call print_header,"Deploying to staging")
+	@bash scripts/deploy.sh staging
+
+.PHONY: deploy-staging-rebuild
+deploy-staging-rebuild: ## Deploy to staging with full rebuild
+	$(call print_header,"Deploying to staging (rebuild)")
+	@bash scripts/deploy.sh staging --rebuild
+
+.PHONY: deploy-prod-auto
+deploy-prod-auto: ## Auto-deploy to inactive production instance
+	$(call print_header,"Auto-deploying to inactive instance")
+	@bash scripts/deploy.sh auto
+
+.PHONY: deploy-prod-blue
+deploy-prod-blue: ## Deploy to blue production instance
+	$(call print_header,"Deploying to blue instance")
+	@bash scripts/deploy.sh blue
+
+.PHONY: deploy-prod-green
+deploy-prod-green: ## Deploy to green production instance
+	$(call print_header,"Deploying to green instance")
+	@bash scripts/deploy.sh green
+
+.PHONY: deploy-prod-full
+deploy-prod-full: ## Full production update (both blue & green instances)
+	$(call print_header,"Full production update (rolling deployment)")
+	@bash -c 'set -e; \
+		./scripts/deploy.sh auto || exit 1; \
+		sleep 5; \
+		CURRENT=$$(cat .current-env 2>/dev/null || echo "none"); \
+		if [ "$$CURRENT" = "blue" ]; then TARGET="green"; \
+		elif [ "$$CURRENT" = "green" ]; then TARGET="blue"; \
+		else TARGET="blue"; fi; \
+		./scripts/switch.sh $$TARGET || exit 1; \
+		sleep 10; \
+		./scripts/deploy.sh auto || exit 1; \
+		./scripts/status.sh'
+
+.PHONY: deploy-status
+deploy-status: ## Show deployment status
+	$(call print_header,"Deployment Status")
+	@bash scripts/status.sh
+
+.PHONY: deploy-switch-blue
+deploy-switch-blue: ## Switch traffic to blue instance
+	$(call print_header,"Switching to blue instance")
+	@bash scripts/switch.sh blue
+
+.PHONY: deploy-switch-green
+deploy-switch-green: ## Switch traffic to green instance
+	$(call print_header,"Switching to green instance")
+	@bash scripts/switch.sh green
+
+.PHONY: deploy-rollback
+deploy-rollback: ## Rollback to previous instance
+	$(call print_header,"Rolling back to previous instance")
+	@bash scripts/rollback.sh
+
 ##@ Docker Deployment
 
 .PHONY: docker-check
