@@ -29,6 +29,7 @@ help:
 	@echo "$(YELLOW)Production (Blue-Green):$(NC)"
 	@echo "  make prod-blue TAG=v1.0.0   - Deploy to blue slot"
 	@echo "  make prod-green TAG=v1.1.0  - Deploy to green slot"
+	@echo "  make prod-full-update       - Full auto update (both instances)"
 	@echo "  make switch-to-blue         - Route traffic to blue"
 	@echo "  make switch-to-green        - Route traffic to green"
 	@echo "  make rollback               - Rollback to previous slot"
@@ -71,11 +72,11 @@ build-deps:
 
 staging-deploy:
 	@echo "$(GREEN)Deploying staging environment...$(NC)"
-	@bash scripts/deploy/staging-deploy.sh
+	@bash scripts/deploy.sh staging
 
 staging-rebuild:
 	@echo "$(GREEN)Rebuilding staging environment...$(NC)"
-	@bash scripts/deploy/staging-deploy.sh --rebuild
+	@bash scripts/deploy.sh staging --rebuild
 
 staging-logs:
 	docker-compose -f docker-compose.staging.yml logs -f
@@ -91,31 +92,31 @@ TAG ?= latest
 
 prod-blue:
 	@echo "$(GREEN)Deploying production blue (tag: $(TAG))...$(NC)"
-	@bash scripts/deploy/production-deploy-blue.sh --tag $(TAG)
+	@bash scripts/deploy.sh blue
 
 prod-blue-rebuild:
 	@echo "$(GREEN)Rebuilding production blue (tag: $(TAG))...$(NC)"
-	@bash scripts/deploy/production-deploy-blue.sh --rebuild --tag $(TAG)
+	@bash scripts/deploy.sh blue --rebuild
 
 prod-green:
 	@echo "$(GREEN)Deploying production green (tag: $(TAG))...$(NC)"
-	@bash scripts/deploy/production-deploy-green.sh --tag $(TAG)
+	@bash scripts/deploy.sh green
 
 prod-green-rebuild:
 	@echo "$(GREEN)Rebuilding production green (tag: $(TAG))...$(NC)"
-	@bash scripts/deploy/production-deploy-green.sh --rebuild --tag $(TAG)
+	@bash scripts/deploy.sh green --rebuild
 
 switch-to-blue:
 	@echo "$(GREEN)Switching traffic to blue...$(NC)"
-	@bash scripts/deploy/switch-to-blue.sh
+	@bash scripts/switch.sh blue
 
 switch-to-green:
 	@echo "$(GREEN)Switching traffic to green...$(NC)"
-	@bash scripts/deploy/switch-to-green.sh
+	@bash scripts/switch.sh green
 
 rollback:
 	@echo "$(YELLOW)Rolling back to previous slot...$(NC)"
-	@bash scripts/deploy/switch-to-green.sh --rollback
+	@bash scripts/rollback.sh
 
 # ===== Nginx =====
 
@@ -222,3 +223,44 @@ zero-downtime-update:
 			$(MAKE) switch-to-blue; \
 		fi; \
 	fi
+
+prod-full-update:
+	@echo "$(GREEN)================================================$(NC)"
+	@echo "$(GREEN)Full Production Update (Rolling Deployment)$(NC)"
+	@echo "$(GREEN)================================================$(NC)"
+	@echo ""
+	@echo "$(YELLOW)This will:$(NC)"
+	@echo "  1. Deploy to inactive instance (with health check)"
+	@echo "  2. Switch traffic to new instance"
+	@echo "  3. Deploy to second instance (with health check)"
+	@echo "  4. Both instances updated, latest is active"
+	@echo ""
+	@bash -c ' \
+		set -e; \
+		echo "$(YELLOW)[1/4] Deploying to inactive instance...$(NC)"; \
+		./scripts/deploy.sh auto || exit 1; \
+		echo ""; \
+		echo "$(YELLOW)[2/4] Checking deployment status...$(NC)"; \
+		./scripts/status.sh; \
+		echo ""; \
+		CURRENT=$$(cat .current-env 2>/dev/null || echo "none"); \
+		if [ "$$CURRENT" = "blue" ]; then \
+			TARGET="green"; \
+		elif [ "$$CURRENT" = "green" ]; then \
+			TARGET="blue"; \
+		else \
+			TARGET="blue"; \
+		fi; \
+		echo "$(YELLOW)[3/4] Switching traffic to $$TARGET...$(NC)"; \
+		./scripts/switch.sh $$TARGET || exit 1; \
+		echo ""; \
+		echo "$(YELLOW)[4/4] Waiting 10s then deploying to second instance...$(NC)"; \
+		sleep 10; \
+		./scripts/deploy.sh auto || exit 1; \
+		echo ""; \
+		echo "$(GREEN)================================================$(NC)"; \
+		echo "$(GREEN)✓ Full update complete!$(NC)"; \
+		echo "$(GREEN)================================================$(NC)"; \
+		echo ""; \
+		./scripts/status.sh; \
+	'

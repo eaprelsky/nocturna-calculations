@@ -10,7 +10,7 @@ This directory contains comprehensive deployment guides for Nocturna Calculation
 
 - **[Docker Deployment Guide](docker.md)** - Complete containerized deployment
 - **[Blue-Green Deployment](blue-green-deployment.md)** - Zero-downtime production updates
-- **Quick Setup:** `./scripts/deploy/staging-deploy.sh` (staging) or `./scripts/deploy/production-deploy-blue.sh` (production)
+- **Quick Setup:** `./scripts/deploy.sh staging` (staging) or `./scripts/deploy.sh blue` (production)
 - **Features:** Automated setup, health monitoring, blue-green deployment, multi-layer caching
 - **Prerequisites:** Docker 20.10+, Docker Compose 2.0+
 
@@ -53,7 +53,7 @@ cp config/staging.env.example config/staging.env
 vim config/staging.env  # Edit with your values
 
 # Deploy staging
-./scripts/deploy/staging-deploy.sh
+./scripts/deploy.sh staging
 
 # Access: http://localhost:8100
 ```
@@ -65,23 +65,23 @@ cp config/production.env.example config/production.env
 vim config/production.env  # Edit with your values
 
 # Initial deployment (blue slot)
-./scripts/deploy/production-deploy-blue.sh --tag v1.0.0
+./scripts/deploy.sh blue
 
-# Start nginx
-docker-compose -f docker-compose.nginx.yml up -d
+# Check status
+./scripts/status.sh
 
 # Zero-downtime update workflow:
 # 1. Deploy to green
-./scripts/deploy/production-deploy-green.sh --tag v1.1.0
+./scripts/deploy.sh green
 
 # 2. Test green
-curl http://localhost:8201/health
+curl http://localhost:18201/health
 
 # 3. Switch traffic
-./scripts/deploy/switch-to-green.sh
+./scripts/switch.sh green
 
 # 4. Rollback if needed
-./scripts/deploy/switch-to-green.sh --rollback
+./scripts/rollback.sh
 ```
 
 ### Development Environment
@@ -288,5 +288,4 @@ For detailed instructions, see the specific deployment guides:
 
 - 🐳 **[Docker Deployment Guide](docker.md)** - Recommended for most use cases
 - 🔄 **[Blue-Green Deployment](blue-green-deployment.md)** - Zero-downtime production updates
-- 📜 **[Deployment Scripts](../../scripts/deploy/README.md)** - Script reference and usage
 - 🐍 **[Traditional Deployment Guide](production.md)** - For custom environments 

@@ -55,23 +55,23 @@ openssl rand -hex 32  # For SECRET_KEY
 
 ```bash
 # Deploy blue slot with initial version
-./scripts/deploy/production-deploy-blue.sh --tag v1.0.0
+./scripts/deploy.sh blue
 ```
 
 This will:
-- Create database and Redis containers
+- Ensure shared infrastructure (database, Redis, network)
 - Run database migrations
-- Start blue application on port 8200
-- Create automatic database backup
+- Start blue application on port 18200
+- Wait for health check
 
-#### 3. Start Nginx
+#### 3. Check Deployment Status
 
 ```bash
-# Start nginx (routes to blue by default)
-docker-compose -f docker-compose.nginx.yml up -d
+# Check status of all instances
+./scripts/status.sh
 ```
 
-Now traffic flows: `Internet → Nginx:80 → Blue:8200`
+Now blue is running: `Blue:18200`
 
 ### Updating Production (Zero Downtime)
 
@@ -81,12 +81,12 @@ Now traffic flows: `Internet → Nginx:80 → Blue:8200`
 
 ```bash
 # Deploy new version to green slot
-./scripts/deploy/production-deploy-green.sh --tag v1.1.0
+./scripts/deploy.sh green
 ```
 
 This will:
-- Build new Docker image with tag v1.1.0
-- Start green container on port 8201
+- Build new Docker image
+- Start green container on port 18201
 - Use existing database and Redis (shared with blue)
 - Wait for health check to pass
 
@@ -94,10 +94,10 @@ This will:
 
 ```bash
 # Test health endpoint
-curl http://localhost:8201/health
+curl http://localhost:18201/health
 
 # Test API endpoints
-curl http://localhost:8201/v1/calculate/natal \
+curl http://localhost:18201/v1/calculate/natal \
   -H "Content-Type: application/json" \
   -d '{
     "datetime": "1990-01-01T12:00:00",
@@ -106,35 +106,35 @@ curl http://localhost:8201/v1/calculate/natal \
   }'
 
 # Check logs
-docker-compose -f docker-compose.production.green.yml logs -f app-green
+docker-compose -f docker-compose.green.yml logs -f
 ```
 
 **Step 3: Switch Traffic to Green**
 
 ```bash
-# Switch nginx to route traffic to green
-./scripts/deploy/switch-to-green.sh
+# Switch to route traffic to green
+./scripts/switch.sh green
 ```
 
 This will:
 - Verify green is healthy
-- Update nginx configuration
+- Update metadata file (.current-env)
+- Update nginx configuration if available
 - Reload nginx (no downtime)
-- Route all traffic to green
 
-Now traffic flows: `Internet → Nginx:80 → Green:8201`
+Now green is active: `Green:18201`
 
 **Step 4: Monitor Green**
 
 ```bash
+# Check status
+./scripts/status.sh
+
 # Monitor logs
-docker-compose -f docker-compose.production.green.yml logs -f app-green
+docker-compose -f docker-compose.green.yml logs -f
 
 # Check metrics
-watch -n 5 'curl -s http://localhost:8201/health | jq'
-
-# Monitor nginx
-docker logs -f nocturna-nginx
+watch -n 5 'curl -s http://localhost:18201/health | jq'
 ```
 
 **Step 5a: Success - Stop Blue**
@@ -143,7 +143,7 @@ If everything works:
 
 ```bash
 # Stop blue (but don't remove, keep for potential rollback)
-docker-compose -f docker-compose.production.blue.yml stop app-blue
+docker-compose -f docker-compose.blue.yml down
 ```
 
 **Step 5b: Issues - Rollback to Blue**
@@ -152,7 +152,7 @@ If issues detected:
 
 ```bash
 # Instant rollback to blue
-./scripts/deploy/switch-to-green.sh --rollback
+./scripts/rollback.sh
 ```
 
 Traffic immediately returns to blue (no service interruption).
@@ -165,20 +165,20 @@ Traffic immediately returns to blue (no service interruption).
 
 ```bash
 # Deploy new version to blue slot
-./scripts/deploy/production-deploy-blue.sh --tag v1.2.0
+./scripts/deploy.sh blue
 ```
 
 **Test and Switch**
 
 ```bash
 # Test blue
-curl http://localhost:8200/health
+curl http://localhost:18200/health
 
 # Switch traffic to blue
-./scripts/deploy/switch-to-blue.sh
+./scripts/switch.sh blue
 
 # Stop green if successful
-docker-compose -f docker-compose.production.green.yml stop app-green
+docker-compose -f docker-compose.green.yml down
 ```
 
 ## Commands Reference
@@ -187,37 +187,40 @@ docker-compose -f docker-compose.production.green.yml stop app-green
 
 ```bash
 # Deploy to blue
-./scripts/deploy/production-deploy-blue.sh [--rebuild] [--tag v1.0.0]
+./scripts/deploy.sh blue [--rebuild]
 
 # Deploy to green
-./scripts/deploy/production-deploy-green.sh [--rebuild] [--tag v1.0.0]
+./scripts/deploy.sh green [--rebuild]
 
-# Switch traffic to green
-./scripts/deploy/switch-to-green.sh
+# Deploy to staging
+./scripts/deploy.sh staging [--rebuild]
 
-# Rollback to blue
-./scripts/deploy/switch-to-green.sh --rollback
+# Auto-deploy to inactive instance
+./scripts/deploy.sh auto
 
-# Switch traffic to blue
-./scripts/deploy/switch-to-blue.sh
+# Switch traffic to specific instance
+./scripts/switch.sh [blue|green]
+
+# Rollback to previous instance
+./scripts/rollback.sh
+
+# Check deployment status
+./scripts/status.sh
 ```
 
 ### Monitoring Commands
 
 ```bash
 # Check status
-docker-compose -f docker-compose.production.blue.yml ps
-docker-compose -f docker-compose.production.green.yml ps
+./scripts/status.sh
 
 # View logs
-docker-compose -f docker-compose.production.blue.yml logs -f app-blue
-docker-compose -f docker-compose.production.green.yml logs -f app-green
-docker logs -f nocturna-nginx
+docker-compose -f docker-compose.blue.yml logs -f
+docker-compose -f docker-compose.green.yml logs -f
 
 # Test endpoints
-curl http://localhost:8200/health  # Blue
-curl http://localhost:8201/health  # Green
-curl http://localhost/health       # Through nginx
+curl http://localhost:18200/health  # Blue
+curl http://localhost:18201/health  # Green
 ```
 
 ## Database Migrations
@@ -284,19 +287,19 @@ Error: Application did not become healthy in time
 **Solution:**
 ```bash
 # Check logs
-docker-compose -f docker-compose.production.green.yml logs app-green
+docker-compose -f docker-compose.green.yml logs
 
 # Check database connection
-docker exec nocturna-prod-db pg_isready -U nocturna_prod_user
+docker exec nocturna-postgres pg_isready
 
 # Check if port is already in use
-netstat -an | grep 8201
+netstat -an | grep 18201
 
 # Rebuild if needed
-./scripts/deploy/production-deploy-green.sh --rebuild
+./scripts/deploy.sh green --rebuild
 ```
 
-### Nginx Switch Fails
+### Traffic Switch Fails
 
 **Symptoms:**
 ```bash
@@ -305,17 +308,17 @@ Error: Could not verify traffic switch
 
 **Solution:**
 ```bash
-# Check nginx is running
-docker ps | grep nocturna-nginx
+# Check instance is healthy
+curl http://localhost:18200/health  # or 18201 for green
 
-# Test nginx config
-docker exec nocturna-nginx nginx -t
+# Check status
+./scripts/status.sh
 
-# Check logs
-docker logs nocturna-nginx
+# Try manual switch
+./scripts/switch.sh blue  # or green
 
-# Restart nginx
-docker-compose -f docker-compose.nginx.yml restart
+# Check metadata file
+cat .current-env
 ```
 
 ### Database Connection Errors
@@ -327,14 +330,14 @@ Could not connect to database
 
 **Solution:**
 ```bash
-# Ensure database is running
-docker-compose -f docker-compose.production.blue.yml up -d db-prod
+# Ensure shared infrastructure is running
+docker-compose -f docker-compose.shared.yml up -d
 
 # Check database health
-docker exec nocturna-prod-db pg_isready -U nocturna_prod_user -d nocturna_prod
+docker exec nocturna-postgres pg_isready
 
 # Check database logs
-docker logs nocturna-prod-db
+docker logs nocturna-postgres
 ```
 
 ### Both Slots Consuming Resources
@@ -344,9 +347,9 @@ docker logs nocturna-prod-db
 **Solution:**
 ```bash
 # Stop inactive slot after successful switch
-docker-compose -f docker-compose.production.blue.yml stop app-blue
+docker-compose -f docker-compose.blue.yml down
 # OR
-docker-compose -f docker-compose.production.green.yml stop app-green
+docker-compose -f docker-compose.green.yml down
 ```
 
 ## Rollback Strategies
@@ -357,7 +360,7 @@ If the new deployment has issues but database is compatible:
 
 ```bash
 # Immediate rollback
-./scripts/deploy/switch-to-green.sh --rollback
+./scripts/rollback.sh
 ```
 
 Response time: ~5 seconds
@@ -368,10 +371,10 @@ If you need to revert to a previous version:
 
 ```bash
 # Deploy old version to inactive slot
-./scripts/deploy/production-deploy-blue.sh --tag v1.0.0
+./scripts/deploy.sh blue
 
 # Switch traffic
-./scripts/deploy/switch-to-blue.sh
+./scripts/switch.sh blue
 ```
 
 ### Database Rollback
@@ -380,27 +383,32 @@ If migrations need to be reverted:
 
 ```bash
 # Stop application
-docker-compose -f docker-compose.production.blue.yml stop app-blue
-docker-compose -f docker-compose.production.green.yml stop app-green
+docker-compose -f docker-compose.blue.yml down
+docker-compose -f docker-compose.green.yml down
 
-# Restore database from backup
-docker exec -i nocturna-prod-db psql -U nocturna_prod_user nocturna_prod < backups/postgres/backup_YYYYMMDD_HHMMSS.sql
+# Restore database from backup (if you have backups configured)
+# docker exec -i nocturna-postgres psql -U user dbname < backup.sql
 
 # Deploy old version
-./scripts/deploy/production-deploy-blue.sh --tag v1.0.0
+./scripts/deploy.sh blue
 ```
 
 ## Best Practices
 
-### 1. Version Tagging
+### 1. Version Management
 
-Use semantic versioning for production images:
+Deploy to specific instances:
 
 ```bash
-./scripts/deploy/production-deploy-green.sh --tag v1.2.0
-```
+# Deploy to blue
+./scripts/deploy.sh blue
 
-Never use `latest` in production.
+# Deploy to green
+./scripts/deploy.sh green
+
+# Auto-deploy to inactive instance
+./scripts/deploy.sh auto
+```
 
 ### 2. Testing Before Switch
 
@@ -408,34 +416,35 @@ Always test the new deployment thoroughly:
 
 ```bash
 # Functional tests
-curl http://localhost:8201/health
-curl http://localhost:8201/v1/calculate/natal
+curl http://localhost:18201/health
+curl http://localhost:18201/v1/calculate/natal
 
 # Load test (optional)
-ab -n 1000 -c 10 http://localhost:8201/health
+ab -n 1000 -c 10 http://localhost:18201/health
 
 # Check logs for errors
-docker-compose -f docker-compose.production.green.yml logs app-green
+docker-compose -f docker-compose.green.yml logs
 ```
 
-### 3. Gradual Rollout
+### 3. Monitoring
 
-For high-risk changes, consider canary deployment:
+Check deployment status regularly:
 
-```nginx
-# nginx/conf.d/upstream-canary.conf
-upstream nocturna_backend {
-    server nocturna-prod-blue-api:8000 weight=9;   # 90% traffic
-    server nocturna-prod-green-api:8000 weight=1;  # 10% traffic
-}
+```bash
+# Check overall status
+./scripts/status.sh
+
+# Monitor active instance
+watch -n 5 './scripts/status.sh'
 ```
 
 ### 4. Database Backups
 
-Backups are automatic before deployment, but verify:
+Ensure you have database backup strategy in place:
 
 ```bash
-ls -lh backups/postgres/
+# Manual backup example
+docker exec nocturna-postgres pg_dump -U user dbname > backup_$(date +%Y%m%d).sql
 ```
 
 ### 5. Monitor After Switch
@@ -444,10 +453,13 @@ Watch logs and metrics for at least 15 minutes after switching:
 
 ```bash
 # Monitor logs
-docker-compose -f docker-compose.production.green.yml logs -f app-green
+docker-compose -f docker-compose.green.yml logs -f
+
+# Check status
+./scripts/status.sh
 
 # Monitor resource usage
-docker stats nocturna-prod-green-api
+docker stats
 ```
 
 ### 6. Keep Inactive Slot Ready
@@ -476,16 +488,15 @@ Keep a deployment log:
 If both slots need to be down:
 
 ```bash
-# Switch to maintenance page in nginx
-cp nginx/conf.d/upstream-maintenance.conf nginx/conf.d/upstream.conf
-docker exec nocturna-nginx nginx -s reload
+# Stop both instances
+docker-compose -f docker-compose.blue.yml down
+docker-compose -f docker-compose.green.yml down
 
 # Perform maintenance
-docker-compose -f docker-compose.production.blue.yml down
 # Do maintenance work
 
 # Restart
-./scripts/deploy/production-deploy-blue.sh
+./scripts/deploy.sh blue
 ```
 
 ### Scaling
@@ -493,11 +504,11 @@ docker-compose -f docker-compose.production.blue.yml down
 To scale up workers:
 
 ```bash
-# Edit docker-compose.production.blue.yml
-CMD ["uvicorn", "...", "--workers", "8"]  # Increase workers
+# Edit docker-compose.blue.yml
+# Modify WORKERS environment variable or command
 
 # Rebuild and deploy
-./scripts/deploy/production-deploy-blue.sh --rebuild
+./scripts/deploy.sh blue --rebuild
 ```
 
 ### Multi-Server Deployment
@@ -506,11 +517,10 @@ For multiple servers, use Docker Swarm or Kubernetes:
 
 ```bash
 # Docker Swarm example
-docker stack deploy -c docker-compose.production.blue.yml nocturna-blue
+docker stack deploy -c docker-compose.blue.yml nocturna-blue
 ```
 
 ## Related Documentation
 
 - [Docker Deployment](docker.md)
-- [Deployment Scripts](../../scripts/deploy/README.md)
 - [Troubleshooting Guide](../guides/troubleshooting.md)
