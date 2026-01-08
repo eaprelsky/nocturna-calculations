@@ -110,16 +110,17 @@ wait_for_health() {
 ensure_shared_infrastructure() {
     log_info "Ensuring shared infrastructure is running..."
     
+    # Ensure network exists (create if doesn't exist, don't recreate if exists)
+    if ! docker network inspect nocturna-calc-network >/dev/null 2>&1; then
+        log_info "Creating network nocturna-calc-network..."
+        docker network create nocturna-calc-network
+    else
+        log_info "Network nocturna-calc-network already exists"
+    fi
+    
     # Check if postgres container is running
     if docker ps --format '{{.Names}}' | grep -q "^nocturna-calc-postgres$"; then
         log_info "Postgres is already running"
-        
-        # Verify network exists
-        if ! docker network inspect nocturna-network >/dev/null 2>&1; then
-            log_warning "Network not found, recreating shared infrastructure..."
-            docker-compose -f "$PROJECT_ROOT/docker-compose.shared.yml" down
-            docker-compose -f "$PROJECT_ROOT/docker-compose.shared.yml" up -d
-        fi
     else
         log_info "Starting shared infrastructure (postgres + redis + network)..."
         
@@ -134,10 +135,7 @@ ensure_shared_infrastructure() {
             docker rm -f nocturna-redis || true
         fi
         
-        # Stop any partial infrastructure first
-        docker-compose -f "$PROJECT_ROOT/docker-compose.shared.yml" down 2>/dev/null || true
-        
-        # Start fresh
+        # Start infrastructure (don't use 'down' to preserve network)
         if ! docker-compose -f "$PROJECT_ROOT/docker-compose.shared.yml" up -d; then
             log_error "Failed to start shared infrastructure"
             docker-compose -f "$PROJECT_ROOT/docker-compose.shared.yml" logs
@@ -154,11 +152,11 @@ ensure_shared_infrastructure() {
                 log_success "Postgres is healthy!"
                 
                 # Verify network was created
-                if docker network inspect nocturna-network >/dev/null 2>&1; then
-                    log_success "Network nocturna-network is ready!"
+                if docker network inspect nocturna-calc-network >/dev/null 2>&1; then
+                    log_success "Network nocturna-calc-network is ready!"
                     return 0
                 else
-                    log_error "Network nocturna-network was not created"
+                    log_error "Network nocturna-calc-network was not created"
                     return 1
                 fi
             fi

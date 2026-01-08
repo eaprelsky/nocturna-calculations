@@ -25,7 +25,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - nocturna-network
+      - nocturna-calc-network
 
   # Redis cache (shared)
   redis:
@@ -44,7 +44,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - nocturna-network
+      - nocturna-calc-network
 
 volumes:
   postgres_data:
@@ -53,5 +53,6 @@ volumes:
     driver: local
 
 networks:
-  nocturna-network:
-    driver: bridge
+  nocturna-calc-network:
+    external: true
+    name: nocturna-calc-network

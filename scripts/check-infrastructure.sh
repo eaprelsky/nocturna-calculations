@@ -85,17 +85,17 @@ echo ""
 
 # Check Network
 echo -e "${BLUE}5. Docker Network${NC}"
-if docker network inspect nocturna-network >/dev/null 2>&1; then
-    echo -e "   ${GREEN}✓${NC} Network 'nocturna-network' exists"
+if docker network inspect nocturna-calc-network >/dev/null 2>&1; then
+    echo -e "   ${GREEN}✓${NC} Network 'nocturna-calc-network' exists"
     
     # Show connected containers
-    containers=$(docker network inspect nocturna-network --format='{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null)
+    containers=$(docker network inspect nocturna-calc-network --format='{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null)
     if [ -n "$containers" ]; then
         echo -e "   ${BLUE}ℹ${NC} Connected: $containers"
     fi
 else
-    echo -e "   ${RED}✗${NC} Network 'nocturna-network' not found"
-    echo -e "   ${YELLOW}➜${NC} Fix: docker-compose -f docker-compose.shared.yml down && docker-compose -f docker-compose.shared.yml up -d"
+    echo -e "   ${RED}✗${NC} Network 'nocturna-calc-network' not found"
+    echo -e "   ${YELLOW}➜${NC} Fix: docker network create nocturna-calc-network"
 fi
 
 echo ""
@@ -194,7 +194,7 @@ if ! docker ps --format '{{.Names}}' | grep -q "^nocturna-redis$"; then
     fi
 fi
 
-if ! docker network inspect nocturna-network >/dev/null 2>&1; then
+if ! docker network inspect nocturna-calc-network >/dev/null 2>&1; then
     issues=$((issues + 1))
     echo -e "${RED}✗${NC} Network is missing"
 fi

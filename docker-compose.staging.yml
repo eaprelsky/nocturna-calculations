@@ -56,7 +56,7 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - nocturna-staging-network
+      - nocturna-calc-staging-network
 
   # PostgreSQL database (Staging)
   db-staging:
@@ -80,7 +80,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - nocturna-staging-network
+      - nocturna-calc-staging-network
 
   # Redis cache (Staging)
   redis-staging:
@@ -99,7 +99,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - nocturna-staging-network
+      - nocturna-calc-staging-network
 
   # Database migrations (init container)
   migrations-staging:
@@ -116,7 +116,7 @@ services:
         condition: service_healthy
     command: ["alembic", "upgrade", "head"]
     networks:
-      - nocturna-staging-network
+      - nocturna-calc-staging-network
     restart: "no"
 
 volumes:
@@ -126,5 +126,6 @@ volumes:
     driver: local
 
 networks:
-  nocturna-staging-network:
+  nocturna-calc-staging-network:
     driver: bridge
+    name: nocturna-calc-staging-network

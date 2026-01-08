@@ -221,10 +221,10 @@ main() {
     fi
     
     # Network
-    if docker network inspect nocturna-network >/dev/null 2>&1; then
-        log_item "Network" "nocturna-network exists"
+    if docker network inspect nocturna-calc-network >/dev/null 2>&1; then
+        log_item "Network" "nocturna-calc-network exists"
     else
-        log_item_error "Network" "nocturna-network missing"
+        log_item_error "Network" "nocturna-calc-network missing"
     fi
     
     # Quick actions

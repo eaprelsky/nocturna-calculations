@@ -50,11 +50,12 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - nocturna-network
+      - nocturna-calc-network
     external_links:
       - nocturna-calc-postgres:postgres
       - nocturna-calc-redis:redis
 
 networks:
-  nocturna-network:
+  nocturna-calc-network:
     external: true
+    name: nocturna-calc-network

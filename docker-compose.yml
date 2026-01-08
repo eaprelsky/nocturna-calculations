@@ -50,7 +50,7 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - nocturna-network
+      - nocturna-calc-network
 
   # PostgreSQL database
   db:
@@ -74,7 +74,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - nocturna-network
+      - nocturna-calc-network
 
   # Redis cache
   redis:
@@ -93,7 +93,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - nocturna-network
+      - nocturna-calc-network
 
   # Database migrations (init container)
   migrations:
@@ -109,7 +109,7 @@ services:
         condition: service_healthy
     command: ["alembic", "upgrade", "head"]
     networks:
-      - nocturna-network
+      - nocturna-calc-network
     restart: "no"
 
 volumes:
@@ -119,5 +119,6 @@ volumes:
     driver: local
 
 networks:
-  nocturna-network:
-    driver: bridge 
+  nocturna-calc-network:
+    driver: bridge
+    name: nocturna-calc-network 
