@@ -2,7 +2,7 @@
 # Convenience commands for deployment operations
 
 .PHONY: help staging-deploy staging-logs staging-stop
-.PHONY: prod-blue prod-green switch-to-blue switch-to-green
+.PHONY: prod-blue prod-green prod-full-update switch-to-blue switch-to-green rollback
 .PHONY: nginx-start nginx-stop nginx-reload nginx-logs
 .PHONY: setup-configs build-base build-deps
 
