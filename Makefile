@@ -568,17 +568,29 @@ deploy-prod-green: ## Deploy to green production instance
 .PHONY: deploy-prod-full
 deploy-prod-full: ## Full production update (both blue & green instances)
 	$(call print_header,"Full production update (rolling deployment)")
-	@bash -c 'set -e; \
-		./scripts/deploy.sh auto || exit 1; \
-		sleep 5; \
-		CURRENT=$$(cat .current-env 2>/dev/null || echo "none"); \
-		if [ "$$CURRENT" = "blue" ]; then TARGET="green"; \
-		elif [ "$$CURRENT" = "green" ]; then TARGET="blue"; \
-		else TARGET="blue"; fi; \
-		./scripts/switch.sh $$TARGET || exit 1; \
-		sleep 10; \
-		./scripts/deploy.sh auto || exit 1; \
-		./scripts/status.sh'
+	@echo "Step 1: Deploying to inactive instance..."
+	@bash scripts/deploy.sh auto
+	@echo ""
+	@echo "Step 2: Checking status..."
+	@bash scripts/status.sh
+	@echo ""
+	@echo "Step 3: Switching traffic..."
+	@bash -c 'CURRENT=$$(cat .current-env 2>/dev/null || echo "none"); \
+		if [ "$$CURRENT" = "blue" ]; then \
+			bash scripts/switch.sh green; \
+		elif [ "$$CURRENT" = "green" ]; then \
+			bash scripts/switch.sh blue; \
+		else \
+			bash scripts/switch.sh blue; \
+		fi'
+	@echo ""
+	@echo "Step 4: Waiting 10 seconds..."
+	@sleep 10
+	@echo "Step 5: Deploying to second instance..."
+	@bash scripts/deploy.sh auto
+	@echo ""
+	@echo "✓ Full update complete!"
+	@bash scripts/status.sh
 
 .PHONY: deploy-status
 deploy-status: ## Show deployment status
