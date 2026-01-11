@@ -277,7 +277,9 @@ async def calculate_returns_stateless(
 
         # Calculate return based on type
         if request.return_type.lower() == "solar":
+            from ...core.constants import SolarReturnType
             return_data = natal_chart.calculate_solar_return(
+                return_type=SolarReturnType.SPECIFIC,
                 target_year=target_year
             )
         elif request.return_type.lower() == "lunar":
