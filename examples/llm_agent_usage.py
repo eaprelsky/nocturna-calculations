@@ -168,6 +168,41 @@ class NocturnaStatelessClient:
         )
         response.raise_for_status()
         return response.json()
+    
+    def calculate_special_points(
+        self,
+        chart_data: Dict[str, Any],
+        include_nodes: bool = True,
+        include_lilith: bool = True,
+        include_selena: bool = True,
+        use_true_node: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Calculate karmic and spiritual points: Lunar Nodes, Lilith, Selena.
+        
+        Args:
+            chart_data: Chart data (date, time, location)
+            include_nodes: Include North/South Nodes (Rahu/Ketu)
+            include_lilith: Include Black Moon Lilith
+            include_selena: Include White Moon Selena
+            use_true_node: Use true node instead of mean node
+            
+        Returns:
+            Special points data
+        """
+        response = requests.post(
+            f"{self.base_url}/api/stateless/special-points",
+            headers=self.headers,
+            json={
+                "chart_data": chart_data,
+                "include_nodes": include_nodes,
+                "include_lilith": include_lilith,
+                "include_selena": include_selena,
+                "use_true_node": use_true_node
+            }
+        )
+        response.raise_for_status()
+        return response.json()
 
 
 # Example usage for LLM function calling
@@ -253,6 +288,25 @@ def example_openai_function_definitions():
                     "transit_date", "transit_time"
                 ]
             }
+        },
+        {
+            "name": "calculate_special_points",
+            "description": "Calculate karmic and spiritual points: Lunar Nodes (Rahu/Ketu), Black Moon Lilith, White Moon Selena",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "date": {"type": "string", "description": "Date in YYYY-MM-DD format"},
+                    "time": {"type": "string", "description": "Time in HH:MM:SS format"},
+                    "latitude": {"type": "number", "description": "Latitude in degrees"},
+                    "longitude": {"type": "number", "description": "Longitude in degrees"},
+                    "timezone": {"type": "string", "description": "Timezone (e.g., 'America/New_York')"},
+                    "include_nodes": {"type": "boolean", "description": "Include North/South Nodes", "default": True},
+                    "include_lilith": {"type": "boolean", "description": "Include Black Moon Lilith", "default": True},
+                    "include_selena": {"type": "boolean", "description": "Include White Moon Selena", "default": True},
+                    "use_true_node": {"type": "boolean", "description": "Use true node instead of mean", "default": False}
+                },
+                "required": ["date", "time", "latitude", "longitude"]
+            }
         }
     ]
 
@@ -314,3 +368,24 @@ if __name__ == "__main__":
         return_year=2026
     )
     print(f"Success: {solar_return['success']}")
+    
+    # Example 5: Karmic Points (Nodes, Lilith, Selena)
+    print("\nExample 5: Karmic Points")
+    karmic = client.calculate_special_points(
+        chart_data=person1,
+        include_nodes=True,
+        include_lilith=True,
+        include_selena=True,
+        use_true_node=False
+    )
+    print(f"Success: {karmic['success']}")
+    if karmic['success']:
+        data = karmic['data']
+        if 'north_node' in data:
+            print(f"North Node (Rahu): {data['north_node']['longitude']:.2f}°")
+        if 'south_node' in data:
+            print(f"South Node (Ketu): {data['south_node']['longitude']:.2f}°")
+        if 'lilith_mean' in data:
+            print(f"Black Moon Lilith: {data['lilith_mean']['longitude']:.2f}°")
+        if 'selena' in data:
+            print(f"White Moon Selena: {data['selena']['longitude']:.2f}°")

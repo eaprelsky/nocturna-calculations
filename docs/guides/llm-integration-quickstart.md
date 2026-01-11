@@ -135,8 +135,25 @@ tools = [
 ✅ **Zero Database Latency** - pure calculations  
 ✅ **Horizontal Scaling** - each instance is independent  
 ✅ **LLM-Optimized** - perfect for function calling  
+✅ **Karmic Points Included** - North Node, South Node, Lilith included by default  
 ✅ **Backward Compatible** - legacy endpoints still work  
 ✅ **Simple Integration** - one request = one result  
+
+## Special Features
+
+### Karmic Points
+
+All planetary calculations now include karmic points by default:
+- **North Node (Rahu)** - Evolutionary direction, life path
+- **South Node (Ketu)** - Past life patterns, release points
+- **Black Moon Lilith** - Shadow self, repressed desires
+
+For selective calculation with both mean and true variants:
+```bash
+POST /api/stateless/special-points
+```
+
+See [Special Karmic Points](../api/stateless-api.md#17-special-karmic-points) documentation.
 
 ## Next Steps
 

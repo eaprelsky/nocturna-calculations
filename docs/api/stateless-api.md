@@ -14,6 +14,7 @@ The Stateless API provides a complete set of astrological calculation endpoints 
 
 ✅ **100% Stateless** - No database or session storage required  
 ✅ **Complete Functionality** - All features available (natal, synastry, transits, progressions, etc.)  
+✅ **Karmic Points Included** - North Node (Rahu), South Node (Ketu), and Black Moon Lilith included in all calculations by default  
 ✅ **LLM-Optimized** - Designed for easy function calling by AI agents  
 ✅ **Backward Compatible** - Original database-backed endpoints remain available  
 ✅ **RESTful Design** - Clean, predictable API structure  
@@ -63,11 +64,15 @@ Optional calculation parameters:
 
 ```json
 {
-  "planets": ["SUN", "MOON", "MERCURY", "VENUS", "MARS"],
+  "planets": ["SUN", "MOON", "MERCURY", "VENUS", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO", "NORTH_NODE", "LILITH"],
   "aspects": ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE"],
   "orb_multiplier": 1.0
 }
 ```
+
+**Default planets** (if not specified): SUN, MOON, MERCURY, VENUS, MARS, JUPITER, SATURN, URANUS, NEPTUNE, PLUTO, NORTH_NODE, LILITH
+
+**Additional available points**: TRUE_NODE, SOUTH_NODE, LILITH_TRUE, CHIRON
 
 ## Endpoints
 
@@ -460,6 +465,80 @@ Refine birth time based on life events.
   "time_range_minutes": 120
 }
 ```
+
+---
+
+### 17. Special Karmic Points
+
+Calculate karmic and spiritual astrological points: Lunar Nodes (Rahu/Ketu), Black Moon Lilith, and White Moon Selena.
+
+**Endpoint:** `POST /api/stateless/special-points`
+
+**Request:**
+```json
+{
+  "chart_data": {
+    "date": "1990-01-15",
+    "time": "14:30:00",
+    "latitude": 40.7128,
+    "longitude": -74.0060,
+    "timezone": "America/New_York"
+  },
+  "include_nodes": true,
+  "include_lilith": true,
+  "include_selena": true,
+  "use_true_node": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "north_node": {
+      "longitude": 334.5678,
+      "latitude": 0.0,
+      "speed": -0.053,
+      "type": "mean"
+    },
+    "south_node": {
+      "longitude": 154.5678,
+      "latitude": 0.0,
+      "speed": -0.053,
+      "type": "mean"
+    },
+    "lilith_mean": {
+      "longitude": 123.4567,
+      "latitude": 5.2341,
+      "speed": 0.111,
+      "type": "mean"
+    },
+    "lilith_true": {
+      "longitude": 124.1234,
+      "latitude": 5.3456,
+      "speed": 0.108,
+      "type": "osculating"
+    },
+    "selena": {
+      "longitude": 303.4567,
+      "latitude": -5.2341,
+      "speed": 0.111,
+      "type": "mean_opposite"
+    }
+  }
+}
+```
+
+**Parameters:**
+- `include_nodes` (boolean): Include Lunar Nodes (North Node/Rahu, South Node/Ketu)
+- `include_lilith` (boolean): Include Black Moon Lilith (mean and osculating)
+- `include_selena` (boolean): Include White Moon Selena
+- `use_true_node` (boolean): Use true node instead of mean node
+
+**Use Case:** Karmic astrology, evolutionary astrology, Vedic astrology integration, spiritual guidance.
+
+**Note:** North Node and Lilith are also included by default in all planetary position calculations (natal charts, transits, synastry, progressions, etc.). This endpoint allows selective calculation and provides both mean and true/osculating variants.
 
 ---
 
