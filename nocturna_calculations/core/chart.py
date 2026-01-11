@@ -106,13 +106,43 @@ class Chart(BaseModel):
             dt.hour + dt.minute/60.0 + dt.second/3600.0
         )
     
+    def _get_birth_datetime(self) -> datetime:
+        """Get birth datetime as datetime object (helper for internal use)"""
+        import swisseph as swe
+        
+        # Parse date
+        if isinstance(self.date, str):
+            date = datetime.strptime(self.date, "%Y-%m-%d").date()
+        else:
+            date = self.date
+            
+        # Parse time
+        if isinstance(self.time, str):
+            time = datetime.strptime(self.time, "%H:%M:%S").time()
+        else:
+            time = self.time
+        
+        # Combine date and time
+        dt = datetime.combine(date, time)
+        
+        # Convert to UTC if timezone is specified
+        if self.timezone != "UTC":
+            tz = pytz.timezone(self.timezone)
+            dt = tz.localize(dt).astimezone(pytz.UTC)
+        
+        return dt
+    
     def calculate_planetary_positions(self, planets: List[str] = None) -> Dict[str, Any]:
         """Calculate planetary positions for the chart"""
         import swisseph as swe
         
         # Define default planets to calculate if none specified
         if planets is None:
-            planets = ["SUN", "MOON", "MERCURY", "VENUS", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"]
+            planets = [
+                "SUN", "MOON", "MERCURY", "VENUS", "MARS", 
+                "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO",
+                "NORTH_NODE", "LILITH"  # Added karmic points
+            ]
         
         # Map planet names to swisseph constants
         planet_constants = {
@@ -125,7 +155,13 @@ class Chart(BaseModel):
             "SATURN": swe.SATURN,
             "URANUS": swe.URANUS,
             "NEPTUNE": swe.NEPTUNE,
-            "PLUTO": swe.PLUTO
+            "PLUTO": swe.PLUTO,
+            "NORTH_NODE": swe.MEAN_NODE,       # Mean North Node
+            "TRUE_NODE": swe.TRUE_NODE,        # True North Node
+            "SOUTH_NODE": swe.MEAN_NODE,       # South Node (calculated as North + 180°)
+            "LILITH": swe.MEAN_APOG,           # Mean Black Moon Lilith
+            "LILITH_TRUE": swe.OSCU_APOG,      # True/Osculating Lilith
+            "CHIRON": swe.CHIRON               # Chiron
         }
         
         # Convert planet names to constants
@@ -149,7 +185,12 @@ class Chart(BaseModel):
             swe.SATURN: "SATURN",
             swe.URANUS: "URANUS",
             swe.NEPTUNE: "NEPTUNE",
-            swe.PLUTO: "PLUTO"
+            swe.PLUTO: "PLUTO",
+            swe.MEAN_NODE: "NORTH_NODE",
+            swe.TRUE_NODE: "TRUE_NODE",
+            swe.MEAN_APOG: "LILITH",
+            swe.OSCU_APOG: "LILITH_TRUE",
+            swe.CHIRON: "CHIRON"
         }
         
         for planet_const, pos in positions.items():
@@ -447,7 +488,7 @@ class Chart(BaseModel):
             - angles: Dictionary of angle positions
         """
         return self._adapter.calculate_solar_return(
-            self.date,
+            self._get_birth_datetime(),
             self.latitude,
             self.longitude,
             return_type,
@@ -478,7 +519,7 @@ class Chart(BaseModel):
             - angles: Dictionary of angle positions
         """
         return self._adapter.calculate_lunar_return(
-            self.date,
+            self._get_birth_datetime(),
             self.latitude,
             self.longitude,
             return_type,
@@ -510,7 +551,7 @@ class Chart(BaseModel):
             - solar_arc: Solar arc in degrees (for solar arc progression)
         """
         return self._adapter.calculate_progressed_chart(
-            self.date,
+            self._get_birth_datetime(),
             self.latitude,
             self.longitude,
             target_date,
@@ -646,7 +687,7 @@ class Chart(BaseModel):
             - total_strength: Overall direction strength (0-1)
         """
         return self._adapter.calculate_solar_arc_directions(
-            self.date,
+            self._get_birth_datetime(),
             self.latitude,
             self.longitude,
             target_date,

@@ -14,7 +14,7 @@ from ..core.constants import (
     Antiscia, AntisciaType, Declination, DeclinationType,
     Planet, HouseSystem, AspectType, SolarReturnType, SolarReturn,
     LunarReturnType, LunarReturn, ProgressionType, ProgressedChart,
-    SolarArcDirection
+    SolarArcDirection, CompositeChart, HarmonicChart
 )
 
 class SwissEphAdapter:
@@ -191,8 +191,27 @@ class SwissEphAdapter:
         
         for star in stars:
             # Calculate star position
-            # Note: Swiss Ephemeris uses star number + 10000 for fixed stars
-            result = swe.fixstar2_ut(julian_day, star.value + 10000, self.flags)
+            # Note: Swiss Ephemeris traditional star names (no prefix)
+            star_map = {
+                'ALDEBARAN': 'Aldebaran',
+                'ALGOL': 'Algol',
+                'ALPHA_CENTAURI': 'Rigil Kentaurus',
+                'ANTARES': 'Antares',
+                'ARCTURUS': 'Arcturus',
+                'BETELGEUSE': 'Betelgeuse',
+                'CANOPUS': 'Canopus',
+                'CAPELLA': 'Capella',
+                'DENEB': 'Deneb',
+                'FOMALHAUT': 'Fomalhaut',
+                'POLLUX': 'Pollux',
+                'PROCYON': 'Procyon',
+                'REGULUS': 'Regulus',
+                'SIRIUS': 'Sirius',
+                'SPICA': 'Spica',
+                'VEGA': 'Vega'
+            }
+            star_name = star_map.get(star.name, star.name.capitalize())
+            result, ret_flag = swe.fixstar2_ut(star_name, julian_day, self.flags)
             
             # Extract position data
             positions[star.name] = {
@@ -345,45 +364,45 @@ class SwissEphAdapter:
         for part in parts:
             # Calculate part longitude based on formula
             if part == ArabicPart.FORTUNA:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Moon') - get_planet_longitude('Sun'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('MOON') - get_planet_longitude('SUN'))
             elif part == ArabicPart.SPIRIT:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Sun') - get_planet_longitude('Moon'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('SUN') - get_planet_longitude('MOON'))
             elif part == ArabicPart.NECESSITY:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Saturn') - get_planet_longitude('Moon'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('SATURN') - get_planet_longitude('MOON'))
             elif part == ArabicPart.VALOR:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Mars') - get_planet_longitude('Sun'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('MARS') - get_planet_longitude('SUN'))
             elif part == ArabicPart.VICTORY:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Jupiter') - get_planet_longitude('Sun'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('JUPITER') - get_planet_longitude('SUN'))
             elif part == ArabicPart.BASIS:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Moon') - get_planet_longitude('Saturn'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('MOON') - get_planet_longitude('SATURN'))
             elif part == ArabicPart.MARRIAGE:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Venus') - get_planet_longitude('Saturn'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('VENUS') - get_planet_longitude('SATURN'))
             elif part == ArabicPart.CHILDREN:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Jupiter') - get_planet_longitude('Saturn'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('JUPITER') - get_planet_longitude('SATURN'))
             elif part == ArabicPart.FATHER:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Sun') - get_planet_longitude('Saturn'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('SUN') - get_planet_longitude('SATURN'))
             elif part == ArabicPart.MOTHER:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Venus') - get_planet_longitude('Moon'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('VENUS') - get_planet_longitude('MOON'))
             elif part == ArabicPart.BROTHERS:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Jupiter') - get_planet_longitude('Mercury'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('JUPITER') - get_planet_longitude('MERCURY'))
             elif part == ArabicPart.SISTERS:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Venus') - get_planet_longitude('Mercury'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('VENUS') - get_planet_longitude('MERCURY'))
             elif part == ArabicPart.HEALTH:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Mars') - get_planet_longitude('Saturn'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('MARS') - get_planet_longitude('SATURN'))
             elif part == ArabicPart.DEATH:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Saturn') - get_planet_longitude('Mars'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('SATURN') - get_planet_longitude('MARS'))
             elif part == ArabicPart.TRAVEL:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Mercury') - get_planet_longitude('Moon'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('MERCURY') - get_planet_longitude('MOON'))
             elif part == ArabicPart.WEALTH:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Jupiter') - get_planet_longitude('Venus'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('JUPITER') - get_planet_longitude('VENUS'))
             elif part == ArabicPart.CAREER:
-                lon = normalize_longitude(ascendant + mc - get_planet_longitude('Sun'))
+                lon = normalize_longitude(ascendant + mc - get_planet_longitude('SUN'))
             elif part == ArabicPart.HONOR:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Sun') - get_planet_longitude('Jupiter'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('SUN') - get_planet_longitude('JUPITER'))
             elif part == ArabicPart.RELIGION:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Jupiter') - get_planet_longitude('Moon'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('JUPITER') - get_planet_longitude('MOON'))
             elif part == ArabicPart.HAPPINESS:
-                lon = normalize_longitude(ascendant + get_planet_longitude('Jupiter') - get_planet_longitude('Venus'))
+                lon = normalize_longitude(ascendant + get_planet_longitude('JUPITER') - get_planet_longitude('VENUS'))
             
             positions[part.name] = lon 
     
@@ -551,11 +570,11 @@ class SwissEphAdapter:
             # Store antiscia data
             antiscia_points[name] = {
                 'longitude': antiscia_lon,
-                'latitude': pos['latitude'],  # Latitude remains the same
-                'distance': pos['distance'],  # Distance remains the same
-                'speed_long': -pos['speed_long'],  # Speed is reversed
-                'speed_lat': pos['speed_lat'],  # Lat speed remains the same
-                'speed_dist': pos['speed_dist'],  # Dist speed remains the same
+                'latitude': pos.get('latitude', 0),  # Latitude remains the same
+                'distance': pos.get('distance', 1),  # Distance remains the same
+                'speed_long': -pos.get('speed_long', pos.get('speed', 0)),  # Speed is reversed
+                'speed_lat': pos.get('speed_lat', 0),  # Lat speed remains the same
+                'speed_dist': pos.get('speed_dist', 0),  # Dist speed remains the same
                 'antiscia_type': antiscia_type,
                 'original_point': name
             }
@@ -672,21 +691,18 @@ class SwissEphAdapter:
         )
         
         # Calculate planetary positions
-        planets = self.calculate_planetary_positions(return_jd, swe.calc_ut(return_jd, swe.SUN, swe.SEFLG_SWIEPH | swe.SEFLG_SPEED)[0:])
+        planets_list = [swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS, 
+                       swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO]
+        planets = self.calculate_planetary_positions(return_jd, planets_list)
         
         # Calculate house cusps
-        houses = self.calculate_houses(
+        houses_data = self.calculate_houses(
             return_jd,
             birth_latitude,
             birth_longitude
         )
-        
-        # Calculate angles
-        angles = self.calculate_angles(
-            return_jd,
-            birth_latitude,
-            birth_longitude
-        )
+        houses = houses_data
+        angles = houses_data.get('angles', [])
         
         return {
             "return_time": return_time,
@@ -734,21 +750,18 @@ class SwissEphAdapter:
         )
         
         # Calculate planetary positions
-        planets = self.calculate_planetary_positions(return_jd, swe.calc_ut(return_jd, swe.SUN, swe.SEFLG_SWIEPH)[0:])
+        planets_list = [swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS, 
+                       swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO]
+        planets = self.calculate_planetary_positions(return_jd, planets_list)
         
         # Calculate house cusps
-        houses = self.calculate_houses(
+        houses_data = self.calculate_houses(
             return_jd,
             birth_latitude,
             birth_longitude
         )
-        
-        # Calculate angles
-        angles = self.calculate_angles(
-            return_jd,
-            birth_latitude,
-            birth_longitude
-        )
+        houses = houses_data
+        angles = houses_data.get('angles', [])
         
         return {
             "return_time": return_time,
@@ -803,21 +816,18 @@ class SwissEphAdapter:
         )
         
         # Calculate planetary positions
-        planets = self.calculate_planetary_positions(progressed_jd, swe.calc_ut(progressed_jd, swe.SUN, swe.SEFLG_SWIEPH)[0:])
+        planets_list = [swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS, 
+                       swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO]
+        planets = self.calculate_planetary_positions(progressed_jd, planets_list)
         
         # Calculate house cusps
-        houses = self.calculate_houses(
+        houses_data = self.calculate_houses(
             progressed_jd,
             birth_latitude,
             birth_longitude
         )
-        
-        # Calculate angles
-        angles = self.calculate_angles(
-            progressed_jd,
-            birth_latitude,
-            birth_longitude
-        )
+        houses = houses_data
+        angles = houses_data.get('angles', [])
         
         # Calculate solar arc if needed
         solar_arc = None
@@ -829,11 +839,11 @@ class SwissEphAdapter:
                 birth_date.day,
                 birth_date.hour + birth_date.minute/60.0 + birth_date.second/3600.0
             )
-            birth_sun = swe.calc_ut(birth_jd, swe.SUN, swe.SEFLG_SWIEPH)
+            birth_sun = swe.calc_ut(birth_jd, swe.SUN, 0)
             birth_sun_pos = birth_sun[0]
             
             # Get progressed Sun position
-            progressed_sun = swe.calc_ut(progressed_jd, swe.SUN, swe.SEFLG_SWIEPH)
+            progressed_sun = swe.calc_ut(progressed_jd, swe.SUN, 0)
             progressed_sun_pos = progressed_sun[0]
             
             # Calculate solar arc
@@ -908,13 +918,22 @@ class SwissEphAdapter:
             harmonic = harmonic.value
         
         # Calculate planetary positions
-        planets = self.calculate_planetary_positions(julian_day, swe.calc_ut(julian_day, swe.SUN, swe.SEFLG_SWIEPH)[0:])
+        planets_list = [swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS, 
+                       swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO]
+        planets_raw = self.calculate_planetary_positions(julian_day, planets_list)
+        
+        # Convert planet constants to names
+        planet_names = {
+            swe.SUN: "SUN", swe.MOON: "MOON", swe.MERCURY: "MERCURY", swe.VENUS: "VENUS",
+            swe.MARS: "MARS", swe.JUPITER: "JUPITER", swe.SATURN: "SATURN",
+            swe.URANUS: "URANUS", swe.NEPTUNE: "NEPTUNE", swe.PLUTO: "PLUTO"
+        }
+        planets = {planet_names.get(k, str(k)): v for k, v in planets_raw.items()}
         
         # Calculate house cusps
-        houses = self.calculate_houses(julian_day, latitude, longitude)
-        
-        # Calculate angles
-        angles = self.calculate_angles(julian_day, latitude, longitude)
+        houses_data = self.calculate_houses(julian_day, latitude, longitude)
+        houses = houses_data
+        angles = houses_data.get('angles', [])
         
         # Calculate harmonic positions
         harmonic_planets = {}
@@ -936,18 +955,28 @@ class SwissEphAdapter:
                 'harmonic': harmonic
             }
         
-        # Calculate harmonic house cusps
-        harmonic_houses = {
-            'cusps': [HarmonicChart.calculate_harmonic_position(cusp, 0, 1, harmonic)[0] for cusp in houses['cusps']],
-            'angles': [HarmonicChart.calculate_harmonic_position(angle, 0, 1, harmonic)[0] for angle in houses['angles']],
-            'system': houses['system']
-        }
-        
-        # Calculate harmonic angles
-        harmonic_angles = {
-            name: HarmonicChart.calculate_harmonic_position(angle, 0, 1, harmonic)[0]
-            for name, angle in angles.items()
-        }
+        # Calculate harmonic angles (handle both dict and list formats)
+        if isinstance(angles, dict):
+            harmonic_angles = {
+                name: HarmonicChart.calculate_harmonic_position(angle, 0, 1, harmonic)[0]
+                for name, angle in angles.items()
+            }
+            harmonic_houses = {
+                'cusps': [HarmonicChart.calculate_harmonic_position(cusp, 0, 1, harmonic)[0] for cusp in houses['cusps']],
+                'angles': harmonic_angles,
+                'system': houses['system']
+            }
+        else:
+            # List format
+            harmonic_angles_list = [HarmonicChart.calculate_harmonic_position(angle, 0, 1, harmonic)[0] for angle in angles]
+            harmonic_houses = {
+                'cusps': [HarmonicChart.calculate_harmonic_position(cusp, 0, 1, harmonic)[0] for cusp in houses['cusps']],
+                'angles': harmonic_angles_list,
+                'system': houses['system']
+            }
+            # Convert list to dict for consistency
+            angle_names = ['ASC', 'MC', 'ARMC', 'VERTEX']
+            harmonic_angles = {angle_names[i]: harmonic_angles_list[i] for i in range(min(len(harmonic_angles_list), 4))}
         
         # Calculate harmonic aspects
         aspects = []
@@ -1017,10 +1046,10 @@ class SwissEphAdapter:
                     (pos2['longitude'], pos2['latitude'], pos2['distance'])
                 )
                 
-                # Calculate composite speeds
-                composite_speed_long = (pos1['speed_long'] + pos2['speed_long']) / 2
-                composite_speed_lat = (pos1['speed_lat'] + pos2['speed_lat']) / 2
-                composite_speed_dist = (pos1['speed_dist'] + pos2['speed_dist']) / 2
+                # Calculate composite speeds (handle both formats)
+                composite_speed_long = (pos1.get('speed_long', pos1.get('speed', 0)) + pos2.get('speed_long', pos2.get('speed', 0))) / 2
+                composite_speed_lat = (pos1.get('speed_lat', 0) + pos2.get('speed_lat', 0)) / 2
+                composite_speed_dist = (pos1.get('speed_dist', 0) + pos2.get('speed_dist', 0)) / 2
                 
                 composite_planets[name] = {
                     'longitude': composite_lon,
@@ -1048,15 +1077,31 @@ class SwissEphAdapter:
             )[0]
             composite_houses['cusps'].append(composite_cusp)
         
-        # Calculate composite angles
-        for i in range(len(chart1_data['houses']['angles'])):
-            angle1 = chart1_data['houses']['angles'][i]
-            angle2 = chart2_data['houses']['angles'][i]
-            composite_angle = CompositeChart.calculate_composite_position(
-                (angle1, 0, 1),
-                (angle2, 0, 1)
-            )[0]
-            composite_houses['angles'].append(composite_angle)
+        # Calculate composite angles (handle both list and dict formats)
+        angles1 = chart1_data['houses']['angles']
+        angles2 = chart2_data['houses']['angles']
+        
+        if isinstance(angles1, dict) and isinstance(angles2, dict):
+            # Dict format from CoreChart
+            composite_houses['angles'] = {}
+            for key in angles1.keys():
+                if key in angles2:
+                    composite_angle = CompositeChart.calculate_composite_position(
+                        (angles1[key], 0, 1),
+                        (angles2[key], 0, 1)
+                    )[0]
+                    composite_houses['angles'][key] = composite_angle
+        else:
+            # List format from adapter
+            composite_houses['angles'] = []
+            for i in range(len(angles1)):
+                angle1 = angles1[i]
+                angle2 = angles2[i]
+                composite_angle = CompositeChart.calculate_composite_position(
+                    (angle1, 0, 1),
+                    (angle2, 0, 1)
+                )[0]
+                composite_houses['angles'].append(composite_angle)
         
         # Calculate composite aspects
         aspects = []
@@ -1322,9 +1367,9 @@ class SwissEphAdapter:
         )
         
         # Get Sun positions
-        birth_sun = swe.calc_ut(birth_jd, swe.SUN, swe.SEFLG_SWIEPH)
-        target_sun = swe.calc_ut(target_jd, swe.SUN, swe.SEFLG_SWIEPH)
-        
+        birth_sun, ret_flag1 = swe.calc_ut(birth_jd, swe.SUN, 0)
+        target_sun, ret_flag2 = swe.calc_ut(target_jd, swe.SUN, 0)
+
         # Calculate solar arc
         solar_arc = SolarArcDirection.calculate_solar_arc(
             birth_date,
@@ -1334,8 +1379,18 @@ class SwissEphAdapter:
         )
         
         # Get natal positions
-        natal_planets = self.calculate_planetary_positions(birth_jd)
+        planets_list = [swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS, 
+                       swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO]
+        natal_planets_raw = self.calculate_planetary_positions(birth_jd, planets_list)
         natal_houses = self.calculate_houses(birth_jd, birth_latitude, birth_longitude)
+        
+        # Convert planet constants to names
+        planet_names = {
+            swe.SUN: "SUN", swe.MOON: "MOON", swe.MERCURY: "MERCURY", swe.VENUS: "VENUS",
+            swe.MARS: "MARS", swe.JUPITER: "JUPITER", swe.SATURN: "SATURN",
+            swe.URANUS: "URANUS", swe.NEPTUNE: "NEPTUNE", swe.PLUTO: "PLUTO"
+        }
+        natal_planets = {planet_names.get(k, str(k)): v for k, v in natal_planets_raw.items()}
         
         # Calculate directed positions
         directed_planets = {}
@@ -1369,15 +1424,27 @@ class SwissEphAdapter:
             )
             directed_houses['cusps'].append(directed_cusp)
         
-        # Calculate directed angles
+        # Calculate directed angles (handle both dict and list formats)
         directed_angles = {}
-        for name, angle in natal_houses['angles'].items():
-            directed_angle = SolarArcDirection.calculate_directed_position(
-                angle,
-                solar_arc,
-                direction_type
-            )
-            directed_angles[name] = directed_angle
+        angles_data = natal_houses['angles']
+        if isinstance(angles_data, dict):
+            for name, angle in angles_data.items():
+                directed_angle = SolarArcDirection.calculate_directed_position(
+                    angle,
+                    solar_arc,
+                    direction_type
+                )
+                directed_angles[name] = directed_angle
+        else:
+            # List format - convert to dict
+            angle_names = ['ASC', 'MC', 'ARMC', 'VERTEX']
+            for i, angle in enumerate(angles_data[:4]):
+                directed_angle = SolarArcDirection.calculate_directed_position(
+                    angle,
+                    solar_arc,
+                    direction_type
+                )
+                directed_angles[angle_names[i]] = directed_angle
         
         # Calculate aspects
         aspects = []
@@ -1412,10 +1479,13 @@ class SwissEphAdapter:
         
         # Planet to angle aspects
         for name, pos in directed_planets.items():
-            for angle_name, angle in natal_houses['angles'].items():
+            # Use converted directed_angles dict
+            for angle_name, angle in directed_angles.items():
+                # Get natal angle value
+                natal_angle = natal_houses['angles'].get(angle_name) if isinstance(natal_houses['angles'], dict) else natal_houses['angles'][['ASC', 'MC', 'ARMC', 'VERTEX'].index(angle_name)]
                 aspect_result = SolarArcDirection.calculate_directed_aspect(
                     pos['longitude'],
-                    angle,
+                    natal_angle,
                     orb
                 )
                 

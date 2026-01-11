@@ -22,6 +22,22 @@ class DirectCalculationRequest(BaseModel):
     aspects: Optional[List[str]] = None
     house_system: Optional[str] = None
 
+# Stateless schemas for LLM-agent integration
+class ChartDataInput(BaseModel):
+    """Universal chart data input for stateless calculations."""
+    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    time: str = Field(..., description="Time in HH:MM:SS format")
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude in degrees")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude in degrees")
+    timezone: str = Field(default="UTC", description="Timezone identifier")
+    house_system: Optional[str] = Field(default="PLACIDUS", description="House system to use")
+    
+class StatelessCalculationOptions(BaseModel):
+    """Common options for stateless calculations."""
+    planets: Optional[List[str]] = Field(default=None, description="List of planets to calculate")
+    aspects: Optional[List[str]] = Field(default=None, description="List of aspects to calculate")
+    orb_multiplier: float = Field(default=1.0, ge=0.1, le=3.0, description="Multiplier for aspect orbs")
+
 class CalculationResponse(BaseModel):
     """Base schema for calculation responses."""
     success: bool = True
@@ -249,4 +265,106 @@ class TransitResponse(BaseModel):
     """Response schema for transit calculation."""
     success: bool = True
     data: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None 
+    error: Optional[str] = None
+
+# Stateless request schemas
+class StatelessSynastryRequest(BaseModel):
+    """Stateless synastry calculation request."""
+    chart1: ChartDataInput = Field(..., description="First chart data (natal)")
+    chart2: ChartDataInput = Field(..., description="Second chart data (partner)")
+    options: Optional[StatelessCalculationOptions] = Field(default_factory=StatelessCalculationOptions)
+
+class StatelessTransitRequest(BaseModel):
+    """Stateless transit calculation request."""
+    natal_chart: ChartDataInput = Field(..., description="Natal chart data")
+    transit_date: str = Field(..., description="Transit date in YYYY-MM-DD format")
+    transit_time: str = Field(..., description="Transit time in HH:MM:SS format")
+    options: Optional[StatelessCalculationOptions] = Field(default_factory=StatelessCalculationOptions)
+
+class StatelessProgressionRequest(BaseModel):
+    """Stateless progression calculation request."""
+    natal_chart: ChartDataInput = Field(..., description="Natal chart data")
+    progression_date: str = Field(..., description="Progression date in YYYY-MM-DD format")
+    progression_type: str = Field(default="secondary", description="Type of progression: secondary, tertiary, minor")
+    options: Optional[StatelessCalculationOptions] = Field(default_factory=StatelessCalculationOptions)
+
+class StatelessCompositeRequest(BaseModel):
+    """Stateless composite chart calculation request."""
+    chart1: ChartDataInput = Field(..., description="First chart data")
+    chart2: ChartDataInput = Field(..., description="Second chart data")
+    composite_type: str = Field(default="midpoint", description="Type of composite: midpoint, davison")
+    options: Optional[StatelessCalculationOptions] = Field(default_factory=StatelessCalculationOptions)
+
+class StatelessReturnsRequest(BaseModel):
+    """Stateless returns calculation request."""
+    natal_chart: ChartDataInput = Field(..., description="Natal chart data")
+    return_date: str = Field(..., description="Return date in YYYY-MM-DD format")
+    return_type: str = Field(default="solar", description="Type of return: solar, lunar, planetary")
+    planet: Optional[str] = Field(default="SUN", description="Planet for return calculation")
+    location: Optional[Dict[str, float]] = Field(default=None, description="Custom location for return chart")
+
+class StatelessDirectionsRequest(BaseModel):
+    """Stateless primary directions calculation request."""
+    natal_chart: ChartDataInput = Field(..., description="Natal chart data")
+    target_date: str = Field(..., description="Target date for directions")
+    direction_type: str = Field(default="primary", description="Type of direction: primary, symbolic")
+    key_rate: float = Field(default=1.0, description="Direction key rate (1° = 1 year)")
+
+class StatelessEclipsesRequest(BaseModel):
+    """Stateless eclipses calculation request."""
+    natal_chart: ChartDataInput = Field(..., description="Natal chart data")
+    start_date: str = Field(..., description="Start date for eclipse search")
+    end_date: str = Field(..., description="End date for eclipse search")
+    eclipse_type: Optional[str] = Field(default="all", description="Eclipse type: solar, lunar, all")
+
+class StatelessIngressesRequest(BaseModel):
+    """Stateless ingresses calculation request."""
+    natal_chart: ChartDataInput = Field(..., description="Natal chart data")
+    start_date: str = Field(..., description="Start date for ingress search")
+    end_date: str = Field(..., description="End date for ingress search")
+    planets: Optional[List[str]] = Field(default=None, description="Planets to track for ingresses")
+
+class StatelessFixedStarsRequest(BaseModel):
+    """Stateless fixed stars calculation request."""
+    chart_data: ChartDataInput = Field(..., description="Chart data")
+    orb: float = Field(default=1.0, description="Orb for fixed star conjunctions")
+    magnitude_limit: Optional[float] = Field(default=2.0, description="Maximum magnitude for stars")
+
+class StatelessArabicPartsRequest(BaseModel):
+    """Stateless Arabic parts calculation request."""
+    chart_data: ChartDataInput = Field(..., description="Chart data")
+    parts: Optional[List[str]] = Field(default=None, description="Specific Arabic parts to calculate")
+
+class StatelessDignitiesRequest(BaseModel):
+    """Stateless dignities calculation request."""
+    chart_data: ChartDataInput = Field(..., description="Chart data")
+    dignity_system: str = Field(default="traditional", description="Dignity system: traditional, modern")
+
+class StatelessAntisciaRequest(BaseModel):
+    """Stateless antiscia calculation request."""
+    chart_data: ChartDataInput = Field(..., description="Chart data")
+    include_contra: bool = Field(default=True, description="Include contra-antiscia")
+
+class StatelessDeclinationsRequest(BaseModel):
+    """Stateless declinations calculation request."""
+    chart_data: ChartDataInput = Field(..., description="Chart data")
+    parallel_orb: float = Field(default=1.0, description="Orb for parallel aspects")
+
+class StatelessHarmonicsRequest(BaseModel):
+    """Stateless harmonics calculation request."""
+    chart_data: ChartDataInput = Field(..., description="Chart data")
+    harmonics: List[int] = Field(default=[2, 3, 4, 5, 7, 9], description="Harmonic numbers to calculate")
+
+class StatelessRectificationRequest(BaseModel):
+    """Stateless rectification calculation request."""
+    chart_data: ChartDataInput = Field(..., description="Approximate chart data")
+    events: List[Dict[str, Any]] = Field(..., description="Life events for rectification")
+
+class StatelessSpecialPointsRequest(BaseModel):
+    """Stateless special points calculation request (Nodes, Lilith, Selena)."""
+    chart_data: ChartDataInput = Field(..., description="Chart data")
+    include_nodes: bool = Field(default=True, description="Include lunar nodes")
+    include_lilith: bool = Field(default=True, description="Include Black Moon Lilith")
+    include_selena: bool = Field(default=True, description="Include White Moon (Selena)")
+    use_true_node: bool = Field(default=False, description="Use true node instead of mean node")
+    time_range_minutes: int = Field(default=120, description="Time range for search in minutes") 

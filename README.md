@@ -165,11 +165,16 @@ nocturna-calculations/
 
 - **Astrological Calculations**: Comprehensive ephemeris calculations using Swiss Ephemeris
 - **REST API**: Modern FastAPI-based web service
+- **🆕 Stateless API**: Complete calculations without database - perfect for LLM agents
+  - ✨ All features available in stateless mode (natal, synastry, transits, progressions, etc.)
+  - 🤖 Optimized for AI agent function calling (ChatGPT, Claude, custom LLMs)
+  - ⚡ Zero database latency - pure computational service
+  - 🔧 Swiss Army knife for astrological calculations
 - **WebSocket Support**: Real-time astrological calculations and data streaming
 - **Docker Support**: Production-ready containerized deployment
 - **Service Component**: Designed for integration with larger systems
 - **Environment Management**: Separate environments for development, testing, and production
-- **Database Support**: PostgreSQL with migrations
+- **Database Support**: PostgreSQL with migrations (optional for stateless mode)
 - **Caching**: Redis integration for performance
 - **Documentation**: Auto-generated API docs
 - **Comprehensive Testing**: 92+ automated tests with server management
@@ -184,6 +189,7 @@ nocturna-calculations/
 - [Docker Deployment Guide](docs/deployment/docker.md) - **⭐ Recommended for Production**
 - [Installation Overview](docs/installation/README.md)
 - [API Documentation](docs/api/specification.md)
+- [🆕 Stateless API Guide](docs/api/stateless-api.md) - **🤖 Perfect for LLM Agents**
 - [Development Guide](docs/development/README.md)
 - [Architecture Documentation](docs/architecture/)
 - [Release Notes](docs/releases/)

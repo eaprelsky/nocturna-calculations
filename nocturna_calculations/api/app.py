@@ -9,7 +9,7 @@ import time
 import uuid
 
 from nocturna_calculations.api.config import settings
-from nocturna_calculations.api.routers import auth, charts, calculations, websocket
+from nocturna_calculations.api.routers import auth, charts, calculations, websocket, stateless
 
 # Create FastAPI app
 app = FastAPI(
@@ -72,6 +72,7 @@ async def add_request_id(request: Request, call_next):
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(charts.router, prefix="/api/charts", tags=["Charts"])
 app.include_router(calculations.router, prefix="/api/calculations", tags=["Calculations"])
+app.include_router(stateless.router, prefix="/api/stateless", tags=["Stateless Calculations"])
 app.include_router(websocket.router, prefix="/api/websockets", tags=["WebSockets"])
 
 # Root endpoint
@@ -112,6 +113,7 @@ async def api_info():
             "authentication": "/api/auth",
             "charts": "/api/charts",
             "calculations": "/api/calculations",
+            "stateless": "/api/stateless",
             "websockets": "/api/websockets"
         },
         "documentation": {

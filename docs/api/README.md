@@ -1,37 +1,37 @@
 # API Documentation Status
 
-## Актуальность документации (на 7 июня 2025)
+## Documentation Accuracy (as of June 7, 2025)
 
-### ✅ **Актуальные разделы:**
+### ✅ **Current Sections:**
 
-1. **Базовый URL** - обновлен для development и production
-2. **Health Check** - добавлен `/health` эндпоинт
-3. **Аутентификация** - полностью обновлена:
-   - User authentication (15 мин токены)
-   - Service authentication (30 дней + eternal)
-   - Все auth эндпоинты с правильными путями `/api/auth/*`
-4. **Admin эндпоинты** - добавлены все admin функции:
+1. **Base URL** - updated for development and production
+2. **Health Check** - `/health` endpoint added
+3. **Authentication** - fully updated:
+   - User authentication (15 min tokens)
+   - Service authentication (30 days + eternal)
+   - All auth endpoints with correct paths `/api/auth/*`
+4. **Admin Endpoints** - all admin functions added:
    - `/api/auth/admin/verify`
    - `/api/auth/admin/service-tokens` (CRUD)
    - `/api/auth/admin/registration-settings`
-5. **Service Token эндпоинты** - полная документация
-6. **Charts эндпоинты** - актуальные пути `/api/charts/*`
-7. **Calculations эндпоинты** - актуальные пути `/api/calculations/*`
+5. **Service Token Endpoints** - complete documentation
+6. **Charts Endpoints** - current paths `/api/charts/*`
+7. **Calculations Endpoints** - current paths `/api/calculations/*`
 
-### ⚠️ **Требует проверки:**
+### ⚠️ **Needs Verification:**
 
-1. **Форматы ответов** - некоторые могут отличаться от реальных
-2. **Параметры запросов** - нужно сверить с OpenAPI схемой
-3. **Коды ошибок** - проверить актуальные error responses
+1. **Response Formats** - some may differ from actual responses
+2. **Request Parameters** - needs to be cross-checked with OpenAPI schema
+3. **Error Codes** - verify actual error responses
 
-### 📊 **Статистика покрытия:**
+### 📊 **Coverage Statistics:**
 
-- **Эндпоинты**: ~95% покрыты документацией
-- **Аутентификация**: 100% актуальна
-- **Admin функции**: 100% документированы
-- **Service tokens**: 100% документированы
+- **Endpoints**: ~95% covered by documentation
+- **Authentication**: 100% up-to-date
+- **Admin Functions**: 100% documented
+- **Service Tokens**: 100% documented
 
-## Фактические эндпоинты API
+## Actual API Endpoints
 
 ### Authentication
 - ✅ `POST /api/auth/register`
@@ -90,24 +90,45 @@
 - ✅ `POST /api/calculations/charts/{chart_id}/eclipses`
 - ✅ `POST /api/calculations/charts/{chart_id}/ingresses`
 
+### Stateless Calculations (NEW - LLM-Optimized)
+- ✅ `POST /api/stateless/natal-chart` - Complete natal chart calculation
+- ✅ `POST /api/stateless/synastry` - Synastry between two charts
+- ✅ `POST /api/stateless/transits` - Transit calculations
+- ✅ `POST /api/stateless/progressions` - Secondary progressions
+- ✅ `POST /api/stateless/composite` - Composite charts
+- ✅ `POST /api/stateless/returns` - Solar/Lunar returns
+- ✅ `POST /api/stateless/directions` - Primary directions
+- ✅ `POST /api/stateless/eclipses` - Eclipse analysis
+- ✅ `POST /api/stateless/ingresses` - Planetary ingresses
+- ✅ `POST /api/stateless/fixed-stars` - Fixed stars
+- ✅ `POST /api/stateless/arabic-parts` - Arabic parts
+- ✅ `POST /api/stateless/dignities` - Essential dignities
+- ✅ `POST /api/stateless/antiscia` - Antiscia points
+- ✅ `POST /api/stateless/declinations` - Declinations
+- ✅ `POST /api/stateless/harmonics` - Harmonic charts
+- ✅ `POST /api/stateless/rectification` - Chart rectification
+
+**💡 All stateless endpoints work without database access - perfect for LLM agents!**
+
 ### Health
 - ✅ `GET /health`
 
-## Рекомендации
+## Recommendations
 
-### Для разработчиков:
-1. **Используйте актуальную документацию** в `docs/api/specification.md`
-2. **Проверяйте OpenAPI схему** на `/openapi.json` для точных параметров
-3. **Тестируйте с реальными токенами** из service token guide
+### For Developers:
+1. **Use current documentation** in `docs/api/specification.md`
+2. **Check OpenAPI schema** at `/openapi.json` for precise parameters
+3. **Test with real tokens** from service token guide
 
-### Для поддержки документации:
-1. **Автоматическая генерация** из OpenAPI схемы
-2. **Регулярные проверки** соответствия документации и кода
-3. **Примеры запросов** с реальными данными
+### For Documentation Maintenance:
+1. **Automatic generation** from OpenAPI schema
+2. **Regular checks** of documentation and code consistency
+3. **Request examples** with real data
 
-## Полезные ссылки
+## Useful Links
 
-- **[API Specification](specification.md)** - Полная документация API
-- **[Service Token Guide](../guides/service-token-management.md)** - Управление токенами
-- **[OpenAPI Schema](http://localhost:8000/openapi.json)** - Актуальная схема
-- **[Health Check](http://localhost:8000/health)** - Проверка состояния API 
+- **[API Specification](specification.md)** - Complete API documentation
+- **[Stateless API Guide](stateless-api.md)** - 🆕 Stateless API for LLM agents
+- **[Service Token Guide](../guides/service-token-management.md)** - Token management
+- **[OpenAPI Schema](http://localhost:8000/openapi.json)** - Current schema
+- **[Health Check](http://localhost:8000/health)** - API health status 

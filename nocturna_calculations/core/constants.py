@@ -435,7 +435,7 @@ class SolarReturn:
         )
         
         # Get birth Sun position
-        birth_sun = swe.calc_ut(birth_jd, swe.SUN, swe.SEFLG_SWIEPH)
+        birth_sun, ret_flag = swe.calc_ut(birth_jd, swe.SUN, 0)
         birth_sun_lon = birth_sun[0]
         
         # Calculate target date based on return type
@@ -464,7 +464,7 @@ class SolarReturn:
         
         for _ in range(max_iterations):
             # Calculate Sun position at target time
-            target_sun = swe.calc_ut(target_jd, swe.SUN, swe.SEFLG_SWIEPH)
+            target_sun, ret_flag = swe.calc_ut(target_jd, swe.SUN, 0)
             target_sun_lon = target_sun[0]
             
             # Calculate angular distance
@@ -531,7 +531,7 @@ class LunarReturn:
         )
         
         # Get birth Moon position
-        birth_moon = swe.calc_ut(birth_jd, swe.MOON, swe.SEFLG_SWIEPH)
+        birth_moon, ret_flag = swe.calc_ut(birth_jd, swe.MOON, 0)
         birth_moon_lon = birth_moon[0]
         
         # Calculate target date based on return type
@@ -562,7 +562,7 @@ class LunarReturn:
         
         for _ in range(max_iterations):
             # Calculate Moon position at target time
-            target_moon = swe.calc_ut(target_jd, swe.MOON, swe.SEFLG_SWIEPH)
+            target_moon, ret_flag = swe.calc_ut(target_jd, swe.MOON, 0)
             target_moon_lon = target_moon[0]
             
             # Calculate angular distance
