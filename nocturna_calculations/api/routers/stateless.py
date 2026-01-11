@@ -38,12 +38,6 @@ router = APIRouter()
 
 def create_core_chart(chart_data: ChartDataInput) -> CoreChart:
     """Helper function to create CoreChart from ChartDataInput."""
-    # #region agent log
-    import json
-    with open(r'd:\YandexDisk\cloudwork\personal\experiments\astrologist\nocturna-calculations\.cursor\debug.log', 'a') as f:
-        f.write(json.dumps({"sessionId":"debug-session","runId":"test1","hypothesisId":"H2","location":"stateless.py:create_core_chart","message":"Creating CoreChart","data":{"date":chart_data.date,"time":chart_data.time,"lat":chart_data.latitude,"lon":chart_data.longitude,"tz":chart_data.timezone},"timestamp":__import__('time').time()*1000})+'\n')
-    # #endregion
-    
     try:
         chart = CoreChart(
             date=chart_data.date,
@@ -52,18 +46,8 @@ def create_core_chart(chart_data: ChartDataInput) -> CoreChart:
             longitude=chart_data.longitude,
             timezone=chart_data.timezone
         )
-        
-        # #region agent log
-        with open(r'd:\YandexDisk\cloudwork\personal\experiments\astrologist\nocturna-calculations\.cursor\debug.log', 'a') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"test1","hypothesisId":"H2","location":"stateless.py:create_core_chart:success","message":"CoreChart created successfully","data":{"has_adapter":chart._adapter is not None},"timestamp":__import__('time').time()*1000})+'\n')
-        # #endregion
-        
         return chart
     except Exception as e:
-        # #region agent log
-        with open(r'd:\YandexDisk\cloudwork\personal\experiments\astrologist\nocturna-calculations\.cursor\debug.log', 'a') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"test1","hypothesisId":"H2","location":"stateless.py:create_core_chart:error","message":"Error creating CoreChart","data":{"error":str(e),"type":type(e).__name__},"timestamp":__import__('time').time()*1000})+'\n')
-        # #endregion
         raise
 
 
@@ -100,29 +84,13 @@ async def calculate_natal_chart_stateless(
     Returns planets, houses, and aspects for the given chart data.
     Perfect for one-time calculations or LLM function calling.
     """
-    # #region agent log
-    import json
-    with open(r'd:\YandexDisk\cloudwork\personal\experiments\astrologist\nocturna-calculations\.cursor\debug.log', 'a') as f:
-        f.write(json.dumps({"sessionId":"debug-session","runId":"test1","hypothesisId":"H1","location":"stateless.py:natal-chart:entry","message":"Natal chart endpoint called","data":{"date":request.date,"time":request.time},"timestamp":__import__('time').time()*1000})+'\n')
-    # #endregion
-    
     try:
         core_chart = create_core_chart(request)
-        
-        # #region agent log
-        with open(r'd:\YandexDisk\cloudwork\personal\experiments\astrologist\nocturna-calculations\.cursor\debug.log', 'a') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"test1","hypothesisId":"H3","location":"stateless.py:natal-chart:before_calc","message":"Before calculations","data":{"chart_created":True},"timestamp":__import__('time').time()*1000})+'\n')
-        # #endregion
         
         # Calculate all components
         planets_data = core_chart.calculate_planetary_positions()
         houses_data = core_chart.calculate_houses(house_system=request.house_system)
         aspects_data = core_chart.calculate_aspects()
-        
-        # #region agent log
-        with open(r'd:\YandexDisk\cloudwork\personal\experiments\astrologist\nocturna-calculations\.cursor\debug.log', 'a') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"test1","hypothesisId":"H3","location":"stateless.py:natal-chart:after_calc","message":"After calculations","data":{"planets_count":len(planets_data) if isinstance(planets_data,dict) else 0,"houses_count":len(houses_data.get('cusps',[])) if isinstance(houses_data,dict) else 0},"timestamp":__import__('time').time()*1000})+'\n')
-        # #endregion
         
         # Format response
         return {
@@ -134,10 +102,6 @@ async def calculate_natal_chart_stateless(
             }
         }
     except Exception as e:
-        # #region agent log
-        with open(r'd:\YandexDisk\cloudwork\personal\experiments\astrologist\nocturna-calculations\.cursor\debug.log', 'a') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"test1","hypothesisId":"H1,H2,H3","location":"stateless.py:natal-chart:error","message":"Error in natal chart","data":{"error":str(e),"type":type(e).__name__},"timestamp":__import__('time').time()*1000})+'\n')
-        # #endregion
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error calculating natal chart: {str(e)}"
