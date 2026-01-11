@@ -467,17 +467,20 @@ class SolarReturn:
             target_sun, ret_flag = swe.calc_ut(target_jd, swe.SUN, 0)
             target_sun_lon = target_sun[0]
             
-            # Calculate angular distance
+            # Calculate angular distance (normalize to [-180, 180])
             angle_diff = (target_sun_lon - birth_sun_lon) % 360
+            if angle_diff > 180:
+                angle_diff -= 360
             
             # Check if we've found the return
             if abs(angle_diff) < tolerance:
                 break
             
             # Adjust time based on angle difference
-            # One degree is approximately 4 minutes
-            time_adjustment = angle_diff * 4 / 60.0  # Convert to days
-            target_jd -= time_adjustment
+            # Sun moves ~1 degree per day, so angle difference in degrees ≈ days needed
+            # Positive angle_diff = Sun is ahead, need to go back in time
+            # Negative angle_diff = Sun is behind, need to go forward in time
+            target_jd -= angle_diff
         
         # Convert Julian day back to datetime
         year, month, day, hour = swe.revjul(target_jd)
@@ -564,16 +567,20 @@ class LunarReturn:
             # Calculate Moon position at target time
             target_moon, ret_flag = swe.calc_ut(target_jd, swe.MOON, 0)
             target_moon_lon = target_moon[0]
-            
-            # Calculate angular distance
+
+            # Calculate angular distance (normalize to [-180, 180])
             angle_diff = (target_moon_lon - birth_moon_lon) % 360
-            
+            if angle_diff > 180:
+                angle_diff -= 360
+
             # Check if we've found the return
             if abs(angle_diff) < tolerance:
                 break
-            
+
             # Adjust time based on angle difference
             # Moon moves about 13.2 degrees per day
+            # Positive angle_diff = Moon is ahead, need to go back in time
+            # Negative angle_diff = Moon is behind, need to go forward in time
             time_adjustment = angle_diff / 13.2  # Convert to days
             target_jd -= time_adjustment
         
