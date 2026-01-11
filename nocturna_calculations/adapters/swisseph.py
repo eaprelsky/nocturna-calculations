@@ -887,10 +887,46 @@ class SwissEphAdapter:
             progressed_date.hour + progressed_date.minute/60.0 + progressed_date.second/3600.0
         )
         
-        # Calculate planetary positions
-        planets_list = [swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS, 
-                       swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO]
-        planets = self.calculate_planetary_positions(progressed_jd, planets_list)
+        # Calculate planetary positions (including karmic points)
+        planets_list = [
+            swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS,
+            swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO,
+            swe.MEAN_NODE,  # North Node (Rahu)
+            swe.MEAN_APOG   # Black Moon Lilith
+        ]
+        planets_raw = self.calculate_planetary_positions(progressed_jd, planets_list)
+        
+        # Convert numeric keys to planet names
+        planet_names = {
+            swe.SUN: "SUN",
+            swe.MOON: "MOON",
+            swe.MERCURY: "MERCURY",
+            swe.VENUS: "VENUS",
+            swe.MARS: "MARS",
+            swe.JUPITER: "JUPITER",
+            swe.SATURN: "SATURN",
+            swe.URANUS: "URANUS",
+            swe.NEPTUNE: "NEPTUNE",
+            swe.PLUTO: "PLUTO",
+            swe.MEAN_NODE: "NORTH_NODE",
+            swe.MEAN_APOG: "LILITH"
+        }
+        
+        planets = {}
+        for planet_const, pos in planets_raw.items():
+            planet_name = planet_names.get(planet_const, f"PLANET_{planet_const}")
+            planets[planet_name] = pos
+        
+        # Calculate South Node (opposite to North Node)
+        if "NORTH_NODE" in planets:
+            planets["SOUTH_NODE"] = {
+                'longitude': (planets["NORTH_NODE"]['longitude'] + 180) % 360,
+                'latitude': -planets["NORTH_NODE"]['latitude'],
+                'distance': planets["NORTH_NODE"]['distance'],
+                'speed_long': planets["NORTH_NODE"]['speed_long'],
+                'speed_lat': -planets["NORTH_NODE"]['speed_lat'],
+                'speed_dist': planets["NORTH_NODE"]['speed_dist']
+            }
         
         # Calculate house cusps
         houses_data = self.calculate_houses(
@@ -989,18 +1025,34 @@ class SwissEphAdapter:
         if isinstance(harmonic, Harmonic):
             harmonic = harmonic.value
         
-        # Calculate planetary positions
-        planets_list = [swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS, 
-                       swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO]
+        # Calculate planetary positions (including karmic points)
+        planets_list = [
+            swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS,
+            swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO,
+            swe.MEAN_NODE,  # North Node (Rahu)
+            swe.MEAN_APOG   # Black Moon Lilith
+        ]
         planets_raw = self.calculate_planetary_positions(julian_day, planets_list)
         
         # Convert planet constants to names
         planet_names = {
             swe.SUN: "SUN", swe.MOON: "MOON", swe.MERCURY: "MERCURY", swe.VENUS: "VENUS",
             swe.MARS: "MARS", swe.JUPITER: "JUPITER", swe.SATURN: "SATURN",
-            swe.URANUS: "URANUS", swe.NEPTUNE: "NEPTUNE", swe.PLUTO: "PLUTO"
+            swe.URANUS: "URANUS", swe.NEPTUNE: "NEPTUNE", swe.PLUTO: "PLUTO",
+            swe.MEAN_NODE: "NORTH_NODE", swe.MEAN_APOG: "LILITH"
         }
         planets = {planet_names.get(k, str(k)): v for k, v in planets_raw.items()}
+        
+        # Calculate South Node (opposite to North Node)
+        if "NORTH_NODE" in planets:
+            planets["SOUTH_NODE"] = {
+                'longitude': (planets["NORTH_NODE"]['longitude'] + 180) % 360,
+                'latitude': -planets["NORTH_NODE"]['latitude'],
+                'distance': planets["NORTH_NODE"]['distance'],
+                'speed_long': planets["NORTH_NODE"]['speed_long'],
+                'speed_lat': -planets["NORTH_NODE"]['speed_lat'],
+                'speed_dist': planets["NORTH_NODE"]['speed_dist']
+            }
         
         # Calculate house cusps
         houses_data = self.calculate_houses(julian_day, latitude, longitude)
@@ -1450,9 +1502,13 @@ class SwissEphAdapter:
             target_sun[0]
         )
         
-        # Get natal positions
-        planets_list = [swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS, 
-                       swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO]
+        # Get natal positions (including karmic points)
+        planets_list = [
+            swe.SUN, swe.MOON, swe.MERCURY, swe.VENUS, swe.MARS,
+            swe.JUPITER, swe.SATURN, swe.URANUS, swe.NEPTUNE, swe.PLUTO,
+            swe.MEAN_NODE,  # North Node (Rahu)
+            swe.MEAN_APOG   # Black Moon Lilith
+        ]
         natal_planets_raw = self.calculate_planetary_positions(birth_jd, planets_list)
         natal_houses = self.calculate_houses(birth_jd, birth_latitude, birth_longitude)
         
@@ -1460,9 +1516,21 @@ class SwissEphAdapter:
         planet_names = {
             swe.SUN: "SUN", swe.MOON: "MOON", swe.MERCURY: "MERCURY", swe.VENUS: "VENUS",
             swe.MARS: "MARS", swe.JUPITER: "JUPITER", swe.SATURN: "SATURN",
-            swe.URANUS: "URANUS", swe.NEPTUNE: "NEPTUNE", swe.PLUTO: "PLUTO"
+            swe.URANUS: "URANUS", swe.NEPTUNE: "NEPTUNE", swe.PLUTO: "PLUTO",
+            swe.MEAN_NODE: "NORTH_NODE", swe.MEAN_APOG: "LILITH"
         }
         natal_planets = {planet_names.get(k, str(k)): v for k, v in natal_planets_raw.items()}
+        
+        # Calculate South Node (opposite to North Node)
+        if "NORTH_NODE" in natal_planets:
+            natal_planets["SOUTH_NODE"] = {
+                'longitude': (natal_planets["NORTH_NODE"]['longitude'] + 180) % 360,
+                'latitude': -natal_planets["NORTH_NODE"]['latitude'],
+                'distance': natal_planets["NORTH_NODE"]['distance'],
+                'speed_long': natal_planets["NORTH_NODE"]['speed_long'],
+                'speed_lat': -natal_planets["NORTH_NODE"]['speed_lat'],
+                'speed_dist': natal_planets["NORTH_NODE"]['speed_dist']
+            }
         
         # Calculate directed positions
         directed_planets = {}

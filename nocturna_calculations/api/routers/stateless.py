@@ -283,8 +283,10 @@ async def calculate_returns_stateless(
                 target_year=target_year
             )
         elif request.return_type.lower() == "lunar":
+            from ...core.constants import LunarReturnType
             return_data = natal_chart.calculate_lunar_return(
-                target_month=return_date
+                return_type=LunarReturnType.SPECIFIC,
+                target_month=(return_date.year, return_date.month)
             )
         else:
             raise ValueError(f"Unsupported return type: {request.return_type}")
