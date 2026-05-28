@@ -127,5 +127,5 @@ volumes:
 
 networks:
   nocturna-calc-staging-network:
-    driver: bridge
+    external: true
     name: nocturna-calc-staging-network

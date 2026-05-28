@@ -257,6 +257,11 @@ deploy_staging() {
     cd "$PROJECT_ROOT"
 
     export COMPOSE_IGNORE_ORPHANS=True
+
+    if ! docker network inspect nocturna-calc-staging-network >/dev/null 2>&1; then
+        log_info "Creating network nocturna-calc-staging-network..."
+        docker network create nocturna-calc-staging-network
+    fi
     
     # Stop only calculation-service staging containers. The directory name
     # "stage" is shared with other services on the host, so docker-compose down
