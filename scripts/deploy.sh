@@ -256,8 +256,15 @@ deploy_staging() {
     
     cd "$PROJECT_ROOT"
     
-    # Stop existing staging
-    docker-compose -f docker-compose.staging.yml down 2>/dev/null || true
+    # Stop only calculation-service staging containers. The directory name
+    # "stage" is shared with other services on the host, so docker-compose down
+    # can accidentally target unrelated containers with the same project label.
+    docker rm -f \
+        nocturna-staging-api \
+        nocturna-staging-migrations \
+        nocturna-staging-redis \
+        nocturna-staging-db \
+        2>/dev/null || true
     
     # Build and deploy
     if deploy_instance "staging" "$build_flag"; then
