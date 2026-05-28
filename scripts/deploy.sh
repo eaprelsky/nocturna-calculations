@@ -256,8 +256,6 @@ deploy_staging() {
     
     cd "$PROJECT_ROOT"
 
-    export COMPOSE_IGNORE_ORPHANS=True
-
     if ! docker network inspect nocturna-calc-staging-network >/dev/null 2>&1; then
         log_info "Creating network nocturna-calc-staging-network..."
         docker network create nocturna-calc-staging-network
@@ -296,7 +294,11 @@ main() {
     
     # Load environment
     load_env
-    
+
+    # Blue/green and shared infra are split across multiple compose files in the
+    # same project, so each file legitimately sees the others as "orphans".
+    export COMPOSE_IGNORE_ORPHANS=True
+
     log_info "Blue-Green Deployment Script"
     log_info "=============================="
     
