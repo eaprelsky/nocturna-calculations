@@ -255,6 +255,8 @@ deploy_staging() {
     log_info "Deploying to STAGING environment..."
     
     cd "$PROJECT_ROOT"
+
+    export COMPOSE_IGNORE_ORPHANS=True
     
     # Stop only calculation-service staging containers. The directory name
     # "stage" is shared with other services on the host, so docker-compose down
