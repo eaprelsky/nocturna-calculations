@@ -217,7 +217,8 @@ class Chart(BaseModel):
         houses_data = self._adapter.calculate_houses(
             self._julian_day,
             self.latitude,
-            self.longitude
+            self.longitude,
+            house_system=house_system
         )
         
         # Format the result
@@ -229,7 +230,7 @@ class Chart(BaseModel):
                 "DESC": (houses_data["angles"][0] + 180) % 360,
                 "IC": (houses_data["angles"][1] + 180) % 360
             },
-            "system": house_system
+            "system": houses_data.get("system", house_system)
         }
         
         return result
@@ -693,4 +694,4 @@ class Chart(BaseModel):
             target_date,
             direction_type,
             orb
-        ) 
+        )

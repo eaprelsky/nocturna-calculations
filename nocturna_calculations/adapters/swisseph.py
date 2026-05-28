@@ -19,6 +19,32 @@ from ..core.constants import (
 
 class SwissEphAdapter:
     """Adapter for Swiss Ephemeris calculations"""
+
+    HOUSE_SYSTEM_CODES = {
+        "PLACIDUS": b"P",
+        "KOCH": b"K",
+        "EQUAL": b"E",
+        "WHOLE_SIGN": b"W",
+        "CAMPANUS": b"C",
+        "REGIOMONTANUS": b"R",
+    }
+
+    HOUSE_SYSTEM_ALIASES = {
+        "P": "PLACIDUS",
+        "PLACIDUS": "PLACIDUS",
+        "K": "KOCH",
+        "KOCH": "KOCH",
+        "E": "EQUAL",
+        "EQUAL": "EQUAL",
+        "W": "WHOLE_SIGN",
+        "WHOLE": "WHOLE_SIGN",
+        "WHOLE_SIGN": "WHOLE_SIGN",
+        "WHOLESIGN": "WHOLE_SIGN",
+        "C": "CAMPANUS",
+        "CAMPANUS": "CAMPANUS",
+        "R": "REGIOMONTANUS",
+        "REGIOMONTANUS": "REGIOMONTANUS",
+    }
     
     def __init__(self):
         """Initialize Swiss Ephemeris adapter"""
@@ -31,6 +57,24 @@ class SwissEphAdapter:
         
         # Set calculation flags - use the correct constant names
         self.flags = swe.FLG_SWIEPH | swe.FLG_SPEED
+
+    @classmethod
+    def _resolve_house_system(cls, house_system: Union[str, HouseSystem, None]) -> Tuple[str, bytes]:
+        """Normalize public house-system names to Swiss Ephemeris hsys codes."""
+        if house_system is None:
+            house_system = "PLACIDUS"
+
+        if isinstance(house_system, HouseSystem):
+            raw_system = house_system.name
+        else:
+            raw_system = str(house_system)
+
+        normalized = raw_system.strip().upper().replace("-", "_").replace(" ", "_")
+        canonical = cls.HOUSE_SYSTEM_ALIASES.get(normalized)
+        if not canonical:
+            raise ValueError(f"Unsupported house system: {house_system}")
+
+        return canonical, cls.HOUSE_SYSTEM_CODES[canonical]
     
     def calculate_planetary_positions(
         self,
@@ -89,7 +133,8 @@ class SwissEphAdapter:
         self,
         julian_day: float,
         latitude: float,
-        longitude: float
+        longitude: float,
+        house_system: Union[str, HouseSystem, None] = "PLACIDUS"
     ) -> Dict[str, Any]:
         """
         Calculate house cusps and angles
@@ -98,17 +143,18 @@ class SwissEphAdapter:
             julian_day: Julian day for calculations
             latitude: Geographic latitude in degrees
             longitude: Geographic longitude in degrees
+            house_system: House system name or Swiss Ephemeris code
             
         Returns:
             Dict containing house cusps and angles
         """
-        # Calculate houses using Placidus system
-        cusps, ascmc = swe.houses(julian_day, latitude, longitude, b'P')
+        canonical_system, hsys = self._resolve_house_system(house_system)
+        cusps, ascmc = swe.houses(julian_day, latitude, longitude, hsys)
         
         return {
             'cusps': list(cusps),     # House cusps
             'angles': list(ascmc),    # Angles (ASC, MC, ARMC, Vertex)
-            'system': 'PLACIDUS'      # Placidus system
+            'system': canonical_system
         }
     
     def calculate_aspects(
